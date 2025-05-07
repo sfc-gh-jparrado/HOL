@@ -1,31 +1,31 @@
--- Using accountadmin is often suggested for quickstarts, but any role with sufficient privledges can work
+-- El uso de AccountAdmin a menudo se sugiere para laboratorios, pero cualquier role con privilegios suficientes puede funcionar
 USE ROLE ACCOUNTADMIN;
 
--- Create development database, schema for our work: 
+-- Crear base de datos de desarrollo y esquema
 CREATE OR REPLACE DATABASE quickstart;
 CREATE OR REPLACE SCHEMA ml_functions;
 
--- Use appropriate resources: 
+-- Usar los recursos apropiados
 USE DATABASE quickstart;
 USE SCHEMA ml_functions;
 
--- Create warehouse to work with: 
+-- Crear warehouse 
 CREATE OR REPLACE WAREHOUSE quickstart_wh;
 USE WAREHOUSE quickstart_wh;
 
--- Create a csv file format to be used to ingest from the stage: 
+-- Crear un file format para ingestar archivos CSV al stage
 CREATE OR REPLACE FILE FORMAT quickstart.ml_functions.csv_ff
     TYPE = 'csv'
     SKIP_HEADER = 1,
     COMPRESSION = AUTO;
 
--- Create an external stage pointing to AWS S3 for loading our data:
+-- Crear un external stage que apunte a AWS S3 para cargar datos
 CREATE OR REPLACE STAGE s3load 
     COMMENT = 'Quickstart S3 Stage Connection'
     URL = 's3://sfquickstarts/hol_snowflake_cortex_ml_for_sql/'
     FILE_FORMAT = quickstart.ml_functions.csv_ff;
 
--- Define our table schema
+-- Definir el esquema de nuestra tabla
 CREATE OR REPLACE TABLE quickstart.ml_functions.bank_marketing(
     CUSTOMER_ID TEXT,
     AGE NUMBER,
@@ -52,9 +52,10 @@ CREATE OR REPLACE TABLE quickstart.ml_functions.bank_marketing(
     TIMESTAMP TIMESTAMP_NTZ(9)
 );
 
--- Ingest data from S3 into our table:
+-- Ingestar los datos desde S3 en la tabla creada
 COPY INTO quickstart.ml_functions.bank_marketing
 FROM @s3load/customers.csv;
 
--- View a sample of the ingested data: 
+-- Analicemos los datos cargados
 SELECT * FROM quickstart.ml_functions.bank_marketing LIMIT 100;
+
