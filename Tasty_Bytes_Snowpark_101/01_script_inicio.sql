@@ -109,3 +109,6 @@ SELECT * FROM frostbyte_tasty_bytes_dev.harmonized.shift_sales;
 
 -- Visualizar datos de ventas por turno
 SELECT * FROM frostbyte_tasty_bytes_dev.analytics.shift_sales_v;
+
+--
+-- Ya que tenemos los datos, podemos pasar a CARGAR el NOTEBOOK en la base de datos frostbyte_tasty_bytes_dev.analytics
