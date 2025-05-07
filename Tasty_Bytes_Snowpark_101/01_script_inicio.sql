@@ -23,40 +23,41 @@ DROP ROLE IF EXISTS tasty_bytes_admin;
 DROP ROLE IF EXISTS tasty_bytes_ds_role;
 
 
--- create a development database for data science work
+-- create base de datos y esquemas:
 CREATE OR REPLACE DATABASE frostbyte_tasty_bytes_dev;
 
--- create raw, harmonized, and analytics schemas
--- raw zone for data ingestion
+-- raw zone para data ingestion
 CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes_dev.raw;
--- harmonized zone for data processing
+
+-- harmonized zone para data processing
 CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes_dev.harmonized;
--- analytics zone for development
+
+-- analytics zone para development
 CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes_dev.analytics;
 
--- create csv file format
+-- crear un file format para CSV
 CREATE OR REPLACE FILE FORMAT frostbyte_tasty_bytes_dev.raw.csv_ff 
 type = 'csv';
 
--- create an external stage pointing to S3
+-- crear un external stage que apunta a S3
 CREATE OR REPLACE STAGE frostbyte_tasty_bytes_dev.raw.s3load
 COMMENT = 'Quickstarts S3 Stage Connection'
 url = 's3://sfquickstarts/frostbyte_tastybytes/'
 file_format = frostbyte_tasty_bytes_dev.raw.csv_ff;
 
 
--- create and use a compute warehouse
+-- crear y usuar el compute warehouse 
 CREATE OR REPLACE WAREHOUSE tasty_dsci_wh AUTO_SUSPEND = 60;
 USE WAREHOUSE tasty_dsci_wh;
 show warehouses;
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------
--------- CREATE TABLES/VIEWS FOR SNOWPARK 101  ----------------
+-------- CREATE TABLES/VIEWS PARA SNOWPARK 101  ----------------
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 
--- define shift sales table
+-- definir tabla de ventas por turno
 CREATE OR REPLACE TABLE frostbyte_tasty_bytes_dev.raw.shift_sales(
 	location_id NUMBER(19,0),
 	city VARCHAR(16777216),
@@ -68,11 +69,20 @@ CREATE OR REPLACE TABLE frostbyte_tasty_bytes_dev.raw.shift_sales(
 	city_population NUMBER(38,0)
 );
 
--- ingest from S3 into the shift sales table
+-- Cargar desde S3 en la tabla de ventas por turno
 COPY INTO frostbyte_tasty_bytes_dev.raw.shift_sales
 FROM @frostbyte_tasty_bytes_dev.raw.s3load/analytics/shift_sales/;
 
--- join in SafeGraph data
+
+-- Complementemos esta información con datos externos y disponibles en el MARKETPLACE!
+-- Vamos al marketplace y busquemos un dataset llamado SafeGraph
+-- Coloca al dataset el nombre FROSTBYTE_SAFEGRAPH (en mayusculas)
+-- selecciona adicional el rol public para visualizar el dataset y dale GET.
+-- Ahora, ya tienes acceso a una nueva BD sin necesidad de realizar copias de información!
+
+
+
+-- Hagamos un join de nuestra tabla, con el dataset que acabamos de integrar desde el marketplace
 CREATE OR REPLACE TABLE frostbyte_tasty_bytes_dev.harmonized.shift_sales
   AS
 SELECT
@@ -91,10 +101,10 @@ FROM frostbyte_tasty_bytes_dev.raw.shift_sales a
 JOIN frostbyte_safegraph.public.frostbyte_tb_safegraph_s b
 ON a.location_id = b.location_id;
 
--- promote the harmonized table to the analytics layer for data science development
+-- Promover la tabla armonizada a la capa de analítica para el desarrollo de ciencia de datos.
 CREATE OR REPLACE VIEW frostbyte_tasty_bytes_dev.analytics.shift_sales_v
   AS
 SELECT * FROM frostbyte_tasty_bytes_dev.harmonized.shift_sales;
 
--- view shift sales data
+-- Visualizar datos de ventas por turno
 SELECT * FROM frostbyte_tasty_bytes_dev.analytics.shift_sales_v;
