@@ -75,7 +75,7 @@ FROM @frostbyte_tasty_bytes_dev.raw.s3load/analytics/shift_sales/;
 
 
 -- Complementemos esta información con datos externos y disponibles en el MARKETPLACE!
--- Vamos al marketplace y buscamos: SafeGraph
+-- Vamos al marketplace y buscamos: frostbyte
 -- Selecciona el dataset llamado "SafeGraph: frostbyte"
 -- Coloca al dataset el nombre FROSTBYTE_SAFEGRAPH (en mayusculas)
 -- selecciona adicional el rol public para visualizar el dataset y dale GET.
