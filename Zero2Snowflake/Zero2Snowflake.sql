@@ -115,12 +115,9 @@ file_format=CSV;
 -----------------------------------------
 select count(*) from T_CLIENTES;
 
-
 -- Hagamos una prueba rápida de performance.
 --------------------------------------------
 truncate table T_CLIENTES;
-
-
 
 
 -- Cambiemos el tamaño del warehouse
@@ -340,7 +337,7 @@ create or replace role OPERADOR_JUNIOR;
 
 -- Agrega tu nombre de usuario
 ------------------------------
-grant role OPERADOR_JUNIOR to user TU_USUARIO; ------ REEMPLAZA POR TU USUARIO
+grant role OPERADOR_JUNIOR to user JPARRADO; ------ REEMPLAZA POR TU USUARIO
 
 
 -- Permisos para nuestro Operador Junior
@@ -397,6 +394,10 @@ limit 100;
 use role accountadmin;
 
 
+-- Resolver preguntas con LLMs sin necesidad de APIs!
+select snowflake.cortex.complete('claude-3-5-sonnet','Cuales son las caracteristicas de Snowflake y cómo se están beneficiando sus clientes. Dame 5 casos de exito relevantes?');
+
+
 CREATE or REPLACE file format csvformat
   SKIP_HEADER = 1
   FIELD_OPTIONALLY_ENCLOSED_BY = '"'
@@ -429,45 +430,100 @@ select * from CALL_TRANSCRIPTS limit 20;
 
 -- Traducir sin necesidad de herramientas externas
 update CALL_TRANSCRIPTS
-set damage_type = snowflake.cortex.translate(damage_type,'en','es'),
-    transcript = snowflake.cortex.translate(transcript,'en','es'),
+set damage_type = snowflake.cortex.ai_translate(damage_type,'en','es'),
+    transcript = snowflake.cortex.ai_translate(transcript,'en','es'),
     language = 'Español'
 where language='English';
 
 
--- Análisis de sentimientos con Cortex
-select transcript, snowflake.cortex.sentiment(transcript) 
+-- Análisis agregados con AI_AGG
+select ai_agg(transcript,'Resuma el tipo de problema por producto') problemas
 from call_transcripts 
 where language = 'Español';
 
 
--- Utilizar LLMs de vanguardia y de múltiples fabricantes sin sacar los datos de nuestro entorno de seguridad
+-- Utilizar LLMs de vanguardia sin sacar los datos de su entorno de seguridad
 select transcript,
-       snowflake.cortex.complete('mistral-large',concat('resume en max. 30 palabras:',transcript)) as summary,
-       snowflake.cortex.count_tokens('mistral-large',concat('resume en max. 30 palabras:',transcript)) as number_of_tokens 
+       snowflake.cortex.ai_complete('claude-3-5-sonnet',concat('resume en max. 30 palabras:',transcript)) as summary,
+       snowflake.cortex.ai_sentiment(transcript, ['producto', 'resolucion', 'prefesionalismo']) sentimiento, -- clasificación po producto, resolucion y profesionalismo
 from call_transcripts 
 where language = 'Español' 
 limit 10;
 
+CREATE OR REPLACE stage ARCHIVOS 
+DIRECTORY = (ENABLE = TRUE)
+ENCRYPTION = ( TYPE = 'SNOWFLAKE_SSE');
 
--- Resolver preguntas con LLMs sin necesidad de APIs!
-select snowflake.cortex.complete('claude-3-5-sonnet','Que es Lulo Bank en Colombia?');
+-- CARGAR LOS 6 ARCHIVOS DE LA CARPETA AL STAGE ARCHIVOS 
+
+-- Una única transcripción
+SELECT AI_TRANSCRIBE(TO_FILE('@ARCHIVOS/problema-servicio.mp3'),{'timestamp_granularity': 'speaker'});
+
+-- transcripciones multiples
+CREATE OR REPLACE TABLE t_files AS 
+  (SELECT RELATIVE_PATH,TO_FILE('@ARCHIVOS', RELATIVE_PATH) AS audio_file 
+   FROM DIRECTORY(@ARCHIVOS));
+   
+with transc_audios as 
+( SELECT to_varchar(AI_TRANSCRIBE(audio_file)) transcripcion
+    FROM t_files
+   where RELATIVE_PATH like '%mp3')
+SELECT
+    transcripcion,
+    AI_SENTIMENT(transcripcion, ['Profesionalismo', 'Resolucion','tiempo de espera']) AS sentimiento,
+    AI_COMPLETE ('claude-3-5-sonnet', CONCAT ('Cómo el agente podría mejorar la atención? Genere máximo 3 bullets en no más de 10 palabras: ',transcripcion)) AS agent_assessment
+FROM transc_audios;
 
 
--- Resolver tareas complejas con GenAI LLMs muy fácil!
-select 
-snowflake.cortex.complete('claude-3-5-sonnet',
-           concat('Arma un XML, con los siguientes atributos: 
-           resumen del problema en no más de 100 palabras, 
-           sentimiento del cliente (negativo, neutro, positivo),
-           producto,
-           tiempo de resolución,
-           Solución otorgada (máximo 10 palabras).
-           Todo esto utilizando la transcripción de siguiente llamada: ',transcript) 
+-- Extraer información de documentos o imagenes, es MUY FÁCIL
+with contratos as 
+( SELECT RELATIVE_PATH
+    FROM t_files
+   where RELATIVE_PATH like '%docx')
+SELECT RELATIVE_PATH,
+       AI_EXTRACT(
+  file => TO_FILE('@ARCHIVOS',RELATIVE_PATH),
+  responseFormat => [['Arrendatario', 'Quién es el arrendatario?'],
+                     ['Arrendador', 'Quién es el arrendator?'],
+                     ['clausula_x_terminacion', 'Tiene cláusula de terminación anticipada (Si - NO)?'],
+                     ['fecha', 'Cuál es la fecha del contrato?'],
+                     ['inmueble_tipo', 'Qué tipo de inmueble es?'],
+                     ['inmueble_direccion', 'cuál es su direccion?'],
+                     ['deudor_solidario', 'Incluye deudor solidario o fiador (Si - NO)?'],
+                     ['fecha_inicio', 'Cuál es la fecha de inicio del contrato (formato: YYYY-MM-DD)?'],
+                     ['vigencia_contrato', 'Cuál es la vigencia del contrato?'],
+                     ['valor_contrato', 'Cuál es el valor del contrato (en números)?']                     
+                    ]
 )
-from call_transcripts 
-where language = 'Español'
-limit 2;
+from contratos;
+
+
+-- Requerimos inferencia multimodal? sencillo. Vamos con un documento de identidad y pixtral:
+SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
+    'pixtral-large',
+    'Dame todos los datos de esta cédula en este orden: número de cédula, nombre, apellido, nacionalidad, fecha de nacimiento, es mayor de edad? (si es mayor de 18 años sólo responde SI, o NO), Lugar de nacimiento, fecha de expedición, y si la cédula está vigente',
+    TO_FILE('@ARCHIVOS', 'cedula.jpg')
+);
+
+-- Vamos con algo más complejo. Una escena de un accidente:
+SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
+    'claude-3-5-sonnet',
+    'Responde:
+    1. Describe el incidente
+    2. ¿Cuántos vehículos están involucrados en el incidente?
+    3. ¿Dónde se produjo el impacto principal en el vehículo?
+    4. ¿El daño es severo o superficial?
+    5. ¿Qué parte del otro vehículo impactó al vehículo dañado?
+    6. ¿Hay partes desprendidas o elementos faltantes en el vehículo afectado?
+    7. ¿Las llantas están alineadas o presentan desplazamiento?
+    8. ¿Se observa daño en las luces, espejos o defensa del vehículo?
+    9. ¿Hay evidencia de fugas o manchas en el suelo?
+    10. ¿Qué colores tienen los vehículos involucrados?
+    11. ¿La imagen es clara y adecuada para radicar un siniestro?
+    12. ¿Cuál es el número de la placa del vehículo?
+    Ponlo en formato JSON, solo dos columnas, con el número de pregunta y respuesta',
+    TO_FILE('@ARCHIVOS', 'choque.png')
+);
 
 
 
@@ -478,7 +534,7 @@ limit 2;
 1. Vamos al MARKERPLACE y sincronicemos un dataset llamado: YOUTUBE_PROFILES__POSTS__COMMENTS
 
 
-2. Vamos a “AI & ML” -> “Studio” -> “Cortex Playground” 
+2. Vamos a "AI & ML" -> "Studio" -> "Cortex Playground" 
 3. Selecciona la base de datos recien creada, el esquema PUBLIC y la tabla YOUTUBE_PROFILES_NEW
 4. Columna DESCRIPTION y filtro SUBSCRIBERS. 
 5. Selecciona 2 LLMs a comparar
@@ -512,17 +568,11 @@ Genérame la traducción del texto y luego créame un json y un XML con los sigu
 -- Continuemos con el paso a paso del Script del paso anterior.
 
 
-/* ******************************* PARTE 11 - Opcional **********************************
- Eliminemos los elementos creados en este laboratorio
+
+/* ******************************* PARTE 11  **********************************
+ Cortex Intelligence
 ****************************************************************************************/
-use role accountadmin;
-show shares;
-drop share if exists clientes_share;
-drop database if exists DB_EMPRESA;
-drop database if exists DB_EMPRESA_DEV;
-drop database if exists db_clima;
-drop warehouse if exists COMPUTE_HOL_WH;
-drop role if exists OPERADOR_JUNIOR;
+
 
 -- Links recomendados:
 -- Explore múltiples labs y arquitecturas para implementar en minutos
@@ -542,3 +592,10 @@ drop role if exists OPERADOR_JUNIOR;
 
 -- Lab - Build A Document Search Assistant using Vector Embeddings in Cortex AI
 -- https://quickstarts.snowflake.com/guide/asking_questions_to_your_own_documents_with_snowflake_cortex
+
+-- Lab - Quickstart oficial Zero to Snowflake
+-- https://quickstarts.snowflake.com/guide/zero_to_snowflake/index.html
+
+-- Repositorio GitHub oficial
+-- https://github.com/Snowflake-Labs/sfguide-getting-started-from-zero-to-snowflake
+
