@@ -1,0 +1,550 @@
+# Botas de Esquí TDBootz Special - Guía Técnica y de Uso
+
+## Descripción General
+Las TDBootz Special son botas de esquí alpino de alto rendimiento diseñadas para esquiadores avanzados y expertos. Combinan precisión, potencia y comodidad en un diseño de 4 hebillas con tecnología de moldeo térmico personalizable.
+
+## Especificaciones Técnicas
+
+### Índice de Flex y Tallas
+
+| Modelo | Flex | Nivel | Peso Esquiador | Tallas Mondo (cm) |
+|--------|------|-------|----------------|-------------------|
+| TDBootz 110 | 110 | Avanzado | 65-85 kg | 25.0 - 30.5 |
+| TDBootz 120 | 120 | Experto | 75-95 kg | 25.0 - 30.5 |
+| TDBootz 130 | 130 | Experto/Race | 85+ kg | 26.0 - 30.5 |
+
+**Tallas Mondo Point**: Sistema métrico basado en longitud del pie en centímetros
+
+### Construcción y Materiales
+
+#### Carcasa (Shell)
+- **Material**: Poliuretano (PU) de alto rendimiento
+- **Construcción**: Inyección en molde de 2 piezas
+- **Ancho**: 100mm (horma media)
+- **Tecnología**: Grilamid reinforced en zonas de alta carga
+- **Moldeable**: Sí, termoformable a 80°C (servicio profesional requerido)
+
+#### Botín Interior (Liner)
+- **Material**: EVA termoformable de doble densidad
+- **Tecnología**: Heat-moldable a 60°C
+- **Aislamiento**: Thinsulate 200g para temperaturas hasta -15°C
+- **Plantilla**: EVA anatómica removible
+- **Forro**: Velour comfort en zonas de contacto
+- **Lengüeta**: Moldeable, con bloque de flex ajustable
+
+### Sistema de Cierre
+
+#### 4 Hebillas de Aluminio
+- **Material**: Aluminio micro-ajustable
+- **Posiciones**: Cada hebilla con 5 microajustes
+- **Distribución**:
+  - Hebilla 1 (inferior): Control de antepié
+  - Hebilla 2 (medial): Control de arco
+  - Hebilla 3 (superior): Control de caña baja
+  - Hebilla 4 (tope): Control de caña alta
+
+#### Power Strap
+- **Material**: Velcro de 50mm de ancho
+- **Función**: Cierre final de caña, mejora transmisión de potencia
+- **Ajustable**: Sí, múltiples posiciones
+
+### Suela
+
+#### Normativa y Compatibilidad
+- **Norma**: ISO 5355 (Alpine / DIN)
+- **Tipo**: GripWalk opcional (suela intercambiable)
+- **Material**: TPU resistente a la abrasión
+- **Compatible**: Fijaciones alpinas estándar y GripWalk
+- **Zona de caminata**: Tacos de goma en talón y punta
+
+#### Cambio de Suelas
+- Kit de suelas GripWalk disponible por separado
+- Mejora comodidad al caminar
+- Requiere fijaciones compatibles o ajuste de DIN
+
+### Rango de Movimiento
+
+- **Forward lean**: 13° - 17° (ajustable con spoilers intercambiables)
+- **Cuff alignment**: ±1.5° lateral (ajuste de cant)
+- **Flex progresivo**: Respuesta lineal en rango normal, progresivo en flexiones extremas
+
+### Características Avanzadas
+
+#### Sistema de Ventilación
+- Canales de aire en la plantilla
+- Ventilación en caña (abre/cierra)
+- Reduce acumulación de humedad
+
+#### Catch-Release System
+- Permite apertura amplia de bota con un solo movimiento
+- Facilita entrada/salida del pie
+- Hebillas permanecen en posición ajustada
+
+#### Ski/Walk Mode
+- **Modo Ski**: Bloqueo total de caña, máxima transmisión
+- **Modo Walk**: 35° de rango de movimiento para caminar
+- **Cambio**: Palanca en parte trasera de la bota
+
+### Peso
+- **Por bota** (talla 27.0): 1.950g (Flex 110), 2.050g (Flex 130)
+- **Par completo**: ~4 kg
+
+## Guía de Tallaje
+
+### Cómo Medir tu Pie
+
+#### Método 1: Mondo Point Exacto
+1. Colocar pie descalzo sobre hoja de papel contra pared
+2. Marcar punto más largo del pie
+3. Medir en centímetros
+4. Redondear a siguiente 0.5 cm
+5. **Ejemplo**: Pie de 27.3 cm = Talla Mondo 27.5
+
+#### Método 2: Talla de Zapato a Mondo
+| Talla EUR | Talla US | Mondo Point (aprox) |
+|-----------|----------|---------------------|
+| 40 | 7 | 25.0 - 25.5 |
+| 41 | 8 | 26.0 - 26.5 |
+| 42 | 9 | 27.0 - 27.5 |
+| 43 | 10 | 28.0 - 28.5 |
+| 44 | 11 | 29.0 - 29.5 |
+| 45 | 12 | 30.0 - 30.5 |
+
+⚠️ **IMPORTANTE**: Las botas de esquí deben quedar JUSTAS, no como zapato de calle.
+
+### Ajuste Correcto
+
+#### Prueba de Ajuste Inicial
+1. **Sin calcetín grueso**: Usar calcetín fino técnico
+2. **Introducir pie**: Con bota abierta completamente
+3. **Talón atrás**: Golpear talón contra suelo para posicionar
+4. **Cerrar progresivamente**: De abajo hacia arriba
+5. **Posición de pie**: Dedos deben tocar suavemente la punta
+6. **Flexionar**: Al flexionar rodilla hacia adelante, dedos se liberan
+
+#### Señales de Ajuste CORRECTO
+✓ Dedos tocan punta pero no duelen (de pie)  
+✓ Al flexionar, dedos se liberan ligeramente  
+✓ Talón NO se levanta al flexionar  
+✓ Sin puntos de presión extrema  
+✓ Sensación ajustada pero no dolorosa  
+✓ Pie no se mueve lateralmente dentro de bota  
+
+#### Señales de Bota GRANDE
+✗ Dedos no tocan la punta  
+✗ Talón se levanta al flexionar  
+✗ Pie se mueve dentro de la bota  
+✗ Sensación de falta de control  
+
+#### Señales de Bota PEQUEÑA
+✗ Dedos doblados o sobre otros dedos  
+✗ Dolor intenso en dedos incluso sin flexionar  
+✗ Entumecimiento rápido del pie  
+
+### Ajustes Personalizados Disponibles
+
+#### Boot Fitting Profesional
+**Servicios Comunes**:
+1. **Moldeo térmico**: Calentar carcasa para expandir en puntos específicos
+2. **Grinding**: Pulido interno para eliminar puntos de presión
+3. **Plantillas custom**: Moldeadas específicamente para tu pie
+4. **Ajuste de cant**: Alineación de rodilla según biomecánica
+5. **Ajuste de forward lean**: Modificar ángulo de caña
+
+**Cuándo necesitas boot fitting**:
+- Puntos de presión o dolor persistente
+- Entumecimiento de dedos
+- Talón que se levanta
+- Rodilla que cae hacia dentro o fuera
+- Pies anchos o estrechos (fuera de media estándar)
+
+**Coste típico**: 80-150€ según ajustes necesarios
+
+## Uso y Ajuste
+
+### Primera Puesta
+
+#### Preparación
+1. Abrir completamente todas las hebillas
+2. Abrir power strap
+3. Activar modo Walk (si aplica)
+4. Abrir lengüeta hacia adelante
+
+#### Colocación del Pie
+1. Insertar pie con calcetín técnico fino
+2. **Técnica del talón**: Golpear talón contra suelo 3-4 veces
+3. Flexionar rodilla hacia adelante (empuja talón atrás)
+4. Verificar que talón esté completamente atrás
+
+#### Cierre de Hebillas (Orden Importante)
+1. **Primera**: Hebilla inferior (antepié)
+2. **Segunda**: Hebilla media-baja (arco)
+3. **Tercera**: Hebilla media-alta (caña baja)
+4. **Cuarta**: Hebilla superior (caña alta)
+5. **Power Strap**: Cerrar con tensión firme
+
+**Ajuste de Tensión**:
+- Hebillas 1-2: Firme pero no extremadamente apretadas
+- Hebillas 3-4: Más apretadas, transmisión de potencia
+- Power Strap: Tenso, sin cortar circulación
+
+### Durante el Esquí
+
+#### Ajustes Según Condiciones
+
+**Días Fríos** (< -5°C):
+- Aflojar ligeramente hebillas 1-2
+- Mantener power strap firme
+- Usar calcetín térmico (no más grueso)
+- Cerrar ventilación
+
+**Días Cálidos** (> 5°C):
+- Puede apretar un punto más
+- Abrir ventilación
+- El botín se compacta con calor
+
+**Después de Comer** (Lunch Break):
+- Es normal tener que reajustar
+- Pies se hinchan ligeramente durante el día
+- Aflojar si sientes mucha presión
+
+#### Posición y Flex
+
+**Posición Neutral Correcta**:
+- Espinillas presionan lengüeta suavemente
+- Peso distribuido en planta del pie
+- Talón pegado al fondo de la bota
+
+**Al Flexionar**:
+- Flex progresivo debe sentirse consistente
+- No debe haber "punto muerto"
+- Retorno debe ser firme pero no violento
+
+### Después del Esquí
+
+#### Apertura de Botas
+1. Abrir power strap completamente
+2. Abrir hebillas 4, 3, 2, 1 (orden inverso)
+3. Activar modo Walk (si aplica)
+4. Sacar pie con movimiento hacia arriba y atrás
+
+#### Secado y Almacenamiento
+1. **Remover botín interior**:
+   - Sacar completamente de carcasa
+   - Separar plantilla
+   
+2. **Secar al aire**:
+   - Colocar en lugar ventilado y seco
+   - NO cerca de radiadores o fuego directo
+   - NO bajo sol directo intenso
+   - Temperatura ambiente óptima
+
+3. **Usar secadores de botas** (recomendado):
+   - Secadores eléctricos de baja temperatura
+   - 2-4 horas en potencia baja
+   - Elimina humedad y malos olores
+
+4. **Almacenamiento nocturno**:
+   - Dejar hebillas abiertas
+   - Botín fuera de carcasa si está muy húmedo
+   - Almacenar en lugar seco
+
+### Almacenamiento Estacional (Verano)
+
+1. **Limpieza Final**:
+   - Limpiar carcasa con paño húmedo
+   - Lavar botín si es necesario (mano, agua fría, secar completamente)
+   - Desinfectar con spray específico
+
+2. **Secado Completo**:
+   - Asegurar que todo esté 100% seco
+   - Usar secadores de bota 24 horas
+
+3. **Almacenamiento**:
+   - Hebillas cerradas en posición intermedia (no completamente flojas)
+   - Botín dentro de carcasa
+   - Guardar en bolsa de tela (no plástico)
+   - Lugar fresco y seco
+   - NO en sótano húmedo o garaje caliente
+
+4. **Protección**:
+   - Usar protectores de suela para transporte
+   - Evitar dejar peso sobre las botas
+
+## Mantenimiento
+
+### Mantenimiento Regular (Durante Temporada)
+
+#### Semanal
+- Limpiar suela de barro y nieve
+- Verificar estado de hebillas (lubricar si crujen)
+- Secar completamente botines
+
+#### Mensual
+- Inspeccionar hebillas por desgaste o daño
+- Verificar que tornillos de hebillas estén apretados
+- Revisar suela por desgaste excesivo
+- Lavar botín (si acumula olor)
+
+### Mantenimiento Profesional (Anual)
+
+**Llevar a tienda especializada para**:
+- Revisión completa de hebillas y remaches
+- Reemplazo de piezas desgastadas
+- Limpieza profunda de carcasa
+- Re-moldeo si es necesario
+
+### Reemplazo de Componentes
+
+#### Plantillas
+- **Cuándo**: Pérdida de soporte, compresión excesiva
+- **Frecuencia**: Cada 100-150 días de esquí o cada 2-3 temporadas
+- **Opciones**: Plantillas estándar o custom
+
+#### Botín Interior
+- **Cuándo**: Pérdida de ajuste, compresión excesiva (pie se mueve)
+- **Frecuencia**: Cada 150-250 días de esquí o 4-6 temporadas
+- **Coste**: 120-180€
+
+#### Hebillas
+- **Cuándo**: Rotura, pérdida de micro-ajuste
+- **Disponibilidad**: Piezas de repuesto disponibles
+- **Coste**: 15-30€ por hebilla
+
+#### Suelas
+- **Cuándo**: Desgaste que afecta liberación de fijación
+- **Importante**: Crucial para seguridad
+- **Frecuencia**: Inspeccionar cada temporada
+- **Coste**: 50-80€ (reemplazo completo)
+
+## Compatibilidad con Fijaciones
+
+### Norma ISO 5355 (Alpine)
+✓ Compatible con todas las fijaciones alpinas estándar  
+✓ DIN release correcto  
+✓ Inspeccionar desgaste de suela anualmente  
+
+### GripWalk
+Si se instalan suelas GripWalk:
+- ⚠️ Requiere fijaciones compatibles GripWalk O ajuste profesional
+- Mejora comodidad al caminar
+- Mantiene seguridad de release
+- Verificar con técnico certificado antes de usar
+
+### Touring/AT
+✗ NO compatible con fijaciones tech/pin  
+✗ NO diseñada para touring  
+
+## Cuidado de Calcetines
+
+### Calcetines Correctos
+- **Material**: Merino o sintético técnico
+- **Grosor**: Fino a medio (NO grueso)
+- **Altura**: Hasta debajo de rodilla
+- **Costuras**: Mínimas, planas
+- **Compresión**: Ligera (mejora circulación)
+
+### Errores Comunes
+✗ Usar dos pares de calcetines  
+✗ Calcetines de algodón (retienen humedad)  
+✗ Calcetines con costuras gruesas  
+✗ Calcetines arrugados dentro de bota  
+✗ Calcetines demasiado gruesos  
+
+## Problemas Comunes y Soluciones
+
+### Problema: Dedos Fríos/Entumecidos
+**Causas posibles**:
+1. Bota demasiado apretada (corta circulación)
+2. Calcetines demasiado gruesos
+3. Dos pares de calcetines
+4. Bota demasiado pequeña
+
+**Soluciones**:
+- Aflojar hebillas inferiores un punto
+- Usar calcetín más fino
+- Verificar tallaje
+- Activar ventilación intermitentemente (contraproducente pero funciona)
+
+### Problema: Talón se Levanta
+**Causas**:
+- Bota demasiado grande
+- Botín comprimido/viejo
+- Técnica incorrecta de cierre
+- Forward lean inadecuado
+
+**Soluciones**:
+- Usar técnica correcta de cierre (golpear talón)
+- Apretar más hebillas superiores y power strap
+- Considerar boot fitting o plantillas custom
+- Puede requerir talla menor
+
+### Problema: Dolor en Puntos Específicos
+**Zonas comunes**:
+- **Tobillo interno**: Protuberancia ósea
+- **Antepié**: Pie ancho
+- **Arco**: Arco alto
+- **Dedos**: Bota pequeña o dedos martillo
+
+**Solución**:
+- Boot fitting profesional con moldeo térmico
+- Grinding en puntos de presión
+- Plantillas custom para distribuir presión
+- En casos severos: cambio de modelo
+
+### Problema: Botas Huelen Mal
+**Prevención**:
+- Secar completamente después de cada uso
+- Usar spray desinfectante semanalmente
+- Lavar calcetines después de cada uso
+
+**Solución**:
+- Lavar botines (mano, agua fría, detergente suave)
+- Desinfectar con spray antibacterial
+- Secar al sol (moderadamente)
+- Usar bolsitas de carbón activado
+
+## Transporte
+
+### Transporte Diario (Coche a Pista)
+- Usar bolsa porta-botas
+- Proteger suelas con protectores de plástico
+- NO dejar en coche durante la noche (congelan)
+
+### Viaje en Avión
+- **Equipaje Facturado**:
+  - Usar bolsa acolchada
+  - Remover botines y empacar separados
+  - Proteger hebillas con foam
+  
+- **Equipaje de Mano** (si cabe):
+  - Verificar dimensiones permitidas
+  - Proteger suelas
+
+### Viaje en Tren/Bus
+- Bolsa porta-botas obligatoria
+- Proteger de golpes
+- No colocar peso sobre ellas
+
+## Seguridad
+
+### Inspección Pre-Temporada
+Antes de primera salida de la temporada:
+✓ Verificar estado de hebillas (sin roturas)  
+✓ Inspeccionar suela por desgaste  
+✓ Comprobar que cierran correctamente  
+✓ Revisar botín por compresión excesiva  
+✓ Probar modo Walk si aplica  
+
+### Inspección de Suela (Crítico)
+**Frecuencia**: Inicio de temporada + cada 40 días de esquí
+
+**Qué revisar**:
+- Profundidad de suela en puntos AFD (< 1mm de desgaste OK)
+- Suavidad/dureza del material (PU viejo se endurece)
+- Grietas o roturas
+
+**Por qué es importante**:
+- Suela desgastada puede causar release prematuro o NO release
+- Afecta seguridad de la fijación
+- Inspección profesional anual recomendada
+
+### Riesgo de Lesiones
+
+**Botas Mal Ajustadas**:
+- Aumentan riesgo de esguinces
+- Reducen control del esquí
+- Causan fatiga prematura
+- Pueden causar caídas
+
+**Recomendación**:
+- Invertir en boot fitting profesional
+- No esquiar con dolor
+- Ajustar según condiciones
+- Reemplazar botín cuando esté comprimido
+
+## Compatibilidad con Esquís
+
+### Por Nivel y Flex
+
+**TDBootz 110 (Flex 110)**:
+- Esquís all-mountain 75-85mm patín
+- Esquís pista carving
+- Nivel intermedio-avanzado
+
+**TDBootz 120 (Flex 120)**:
+- Esquís all-mountain 85-100mm
+- Esquís pista deportivos
+- Esquís freeride ligeros
+- Nivel avanzado
+
+**TDBootz 130 (Flex 130)**:
+- Esquís race/competición
+- Esquís freeride agresivos
+- Esquís all-mountain rígidos
+- Nivel experto/competición
+
+## Garantía
+
+### Cobertura
+- **Duración**: 2 años desde fecha de compra
+- **Cubre**: Defectos de fabricación, roturas de materiales
+- **No cubre**: Desgaste normal, mal uso, modificaciones
+
+### Proceso de Garantía
+1. Contactar distribuidor donde se compraron
+2. Presentar factura
+3. Inspección del producto
+4. Reparación o reemplazo según caso
+
+## Información de Contacto
+
+**TDBootz**  
+Web: www.tdbootz.com  
+Email: soporte@tdbootz.com  
+Teléfono: +34 900 890 123  
+Horario: Lunes a Sábado, 9:00 - 19:00h (temporada de esquí)
+
+**Boot Fitting Specialist**:  
+Localizador de tiendas certificadas: www.tdbootz.com/bootfitters
+
+**Soporte Técnico**:  
+Chat en vivo: www.tdbootz.com/ayuda  
+Videos: www.youtube.com/tdbootz
+
+## Precio
+- **TDBootz 110**: 449€
+- **TDBootz 120**: 499€
+- **TDBootz 130**: 549€
+
+### Incluye
+- Botas completas (carcasa + botín)
+- Plantillas estándar EVA
+- Power strap
+- Manual de usuario
+
+### Accesorios Opcionales
+- Plantillas custom: 120-180€
+- Suelas GripWalk: 70€
+- Bolsa porta-botas premium: 59€
+- Secadores de botas eléctricos: 89€
+- Protectores de suela: 12€
+
+---
+
+## Consejos Finales
+
+**Las botas son EL componente más importante de tu equipo de esquí.**
+
+- Un esquí mediocre con botas excelentes > Esquís top con botas malas
+- Invierte tiempo en encontrar el ajuste perfecto
+- No escatimes en boot fitting si lo necesitas
+- Cuida tus botas y durarán muchas temporadas
+- Botas cómodas = más días en la montaña = mejor esquiador
+
+**¡Disfruta la montaña con seguridad y comodidad!** ⛷️
+
+---
+
+*© 2025 TDBootz - Performance Fit Technology*
+

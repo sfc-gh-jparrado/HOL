@@ -1,0 +1,93 @@
+# Guía de Especificaciones - Esquís Carver Pro Series
+
+## Descripción General
+Los Esquís Carver Pro Series están diseñados para esquiadores avanzados que buscan precisión y control en pistas preparadas. Fabricados con tecnología de punta y materiales de alta calidad.
+
+## Especificaciones Técnicas
+
+### Modelos Disponibles
+- **Carver Pro 170**: Longitud 170cm, ideal para pistas intermedias
+- **Carver Pro 180**: Longitud 180cm, para esquiadores expertos
+- **Carver Pro 190**: Longitud 190cm, máxima estabilidad a alta velocidad
+
+### Construcción
+- **Núcleo**: Madera de álamo y haya laminada con fibra de carbono
+- **Base**: Base sinterizada P-Tex 4000 para máxima velocidad
+- **Cantos**: Acero templado de 2.5mm para mayor durabilidad
+- **Laminado superior**: Fibra de vidrio triaxial
+
+### Geometría
+- **Radio de giro**: 
+  - 170cm: 14.5m
+  - 180cm: 16.2m
+  - 190cm: 18.0m
+- **Ancho en espátula**: 128mm
+- **Ancho en patín**: 75mm
+- **Ancho en cola**: 115mm
+- **Camber**: 2.8mm (tradicional)
+
+### Características Especiales
+- **Sistema de absorción de vibraciones**: Tecnología VDS (Vibration Dampening System)
+- **Refuerzo en espátula y cola**: Titanal para mayor respuesta
+- **Compatibilidad con fijaciones**: Sistema estándar alpino
+
+## Rendimiento
+
+### Tipo de Nieve
+- Óptimo: Nieve compactada y pistas preparadas
+- Bueno: Nieve dura y hielo
+- Limitado: Nieve profunda y fuera de pista
+
+### Nivel del Esquiador
+- **Recomendado**: Avanzado a Experto
+- **Experiencia mínima**: 3-5 años de esquí regular
+- **Peso del esquiador**: 60-95kg
+
+### Estilo de Esquí
+- Carving agresivo en pistas
+- Giros cortos a medianos
+- Alta velocidad en descensos
+
+## Mantenimiento
+
+### Afilado de Cantos
+- Frecuencia recomendada: Cada 5-7 días de uso
+- Ángulo de afilado: 88° base, 1° lateral
+
+### Encerado
+- Frecuencia: Cada 3-4 días de uso
+- Tipo de cera: Universal o específica según temperatura
+- Temperatura de aplicación: 140-150°C
+
+### Almacenamiento
+- Limpiar y secar después de cada uso
+- Encerar antes del almacenamiento prolongado
+- Guardar en lugar fresco y seco
+- Aflojar fijaciones durante el almacenamiento
+
+## Garantía
+- **Duración**: 2 años contra defectos de fabricación
+- **Cobertura**: Núcleo, cantos y laminado
+- **No cubre**: Desgaste normal, daños por uso incorrecto
+
+## Accesorios Recomendados
+- Fijaciones: Sistema Look SPX o equivalente
+- Botas: Flex 110-130
+- Bastones: Longitud según tabla estándar
+
+## Información de Contacto
+**Servicio al Cliente**: 
+- Email: soporte@carver-skis.com
+- Teléfono: +34 900 123 456
+- Horario: Lunes a Viernes, 9:00 - 18:00h
+
+**Distribuidor Autorizado**:
+Visite www.carver-skis.com/distribuidores para encontrar el más cercano a su ubicación.
+
+## Precio Sugerido
+- Carver Pro 170: 749€
+- Carver Pro 180: 799€
+- Carver Pro 190: 849€
+
+*Precios sujetos a variación según distribuidor y temporada*
+
