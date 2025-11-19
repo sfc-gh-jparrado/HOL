@@ -8,12 +8,12 @@ Si es tu primera vez con este proyecto, sigue estos pasos:
 📄 **[README.md](README.md)** - Documentación completa del proyecto
 
 ### 2. Explora los documentos de ejemplo
-📁 **[documentos/](documentos/)** - 8 documentos PDF originales (en inglés) sobre productos deportivos
+📁 **[documentos/](documentos/)** - 8 documentos PDF en español sobre productos deportivos
 - 3 guías de esquís (Carver, RacingFast, OutPiste)
 - 4 guías de bicicletas (Premium, Xtreme Road, Ultimate Downhill, Mondracer Infant)
 - 1 guía de botas de esquí (TDBootz Special)
 
-**Nota**: Los PDFs están en inglés (originales de Snowflake). Snowflake Cortex PARSE_DOCUMENT extrae automáticamente el contenido manteniendo el formato original.
+**Formato**: Los PDFs están en español con formato profesional (colores corporativos, tablas estructuradas, fuentes estándar). Snowflake Cortex PARSE_DOCUMENT extrae automáticamente el contenido.
 
 ### 3. Ejecuta el Notebook
 📓 **[RAG_Usando_Snowflake_Cortex_Search.ipynb](RAG_Usando_Snowflake_Cortex_Search.ipynb)** 

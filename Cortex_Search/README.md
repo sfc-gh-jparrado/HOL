@@ -31,15 +31,15 @@ Cortex_Search/
 ├── README.md                                  # Este archivo
 ├── RAG_Usando_Snowflake_Cortex_Search.ipynb  # Notebook de Snowflake con todo el proceso
 │
-└── documentos/                                # Documentos PDF originales (en inglés)
-    ├── Carver Skis Specification Guide.pdf
-    ├── RacingFast Skis Specification Guide.pdf
-    ├── OutPiste Skis Specification Guide.pdf
-    ├── Premium_Bicycle_User_Guide.pdf
-    ├── The_Xtreme_Road_Bike_105_SL.pdf
-    ├── The_Ultimate_Downhill_Bike.pdf
-    ├── Mondracer_Infant_Bike.pdf
-    └── Ski_Boots_TDBootz_Special.pdf
+└── documentos/                                # Documentos PDF en español
+    ├── Guia_Especificaciones_Esquis_Carver.pdf
+    ├── Guia_Especificaciones_Esquis_RacingFast.pdf
+    ├── Guia_Especificaciones_Esquis_OutPiste.pdf
+    ├── Guia_Usuario_Bicicleta_Premium.pdf
+    ├── Bicicleta_Xtreme_Road_105_SL.pdf
+    ├── Bicicleta_Ultimate_Downhill.pdf
+    ├── Bicicleta_Infantil_Mondracer.pdf
+    └── Botas_Esqui_TDBootz_Special.pdf
 ```
 
 ## Prerrequisitos
