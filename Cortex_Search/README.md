@@ -31,15 +31,15 @@ Cortex_Search/
 ├── README.md                                  # Este archivo
 ├── RAG_Usando_Snowflake_Cortex_Search.ipynb  # Notebook de Snowflake con todo el proceso
 │
-└── documentos/                                # Documentos de ejemplo en español
-    ├── Guia_Especificaciones_Esquis_Carver.txt
-    ├── Guia_Especificaciones_Esquis_RacingFast.txt
-    ├── Guia_Especificaciones_Esquis_OutPiste.txt
-    ├── Guia_Usuario_Bicicleta_Premium.txt
-    ├── Bicicleta_Xtreme_Road_105_SL.txt
-    ├── Bicicleta_Downhill_Ultimate.txt
-    ├── Bicicleta_Infantil_Mondracer.txt
-    └── Botas_Esqui_TDBootz_Special.txt
+└── documentos/                                # Documentos PDF originales (en inglés)
+    ├── Carver Skis Specification Guide.pdf
+    ├── RacingFast Skis Specification Guide.pdf
+    ├── OutPiste Skis Specification Guide.pdf
+    ├── Premium_Bicycle_User_Guide.pdf
+    ├── The_Xtreme_Road_Bike_105_SL.pdf
+    ├── The_Ultimate_Downhill_Bike.pdf
+    ├── Mondracer_Infant_Bike.pdf
+    └── Ski_Boots_TDBootz_Special.pdf
 ```
 
 ## Prerrequisitos
@@ -73,6 +73,9 @@ USE DATABASE CC_QUICKSTART_CORTEX_SEARCH_DOCS;
 
 CREATE SCHEMA IF NOT EXISTS DATA;
 USE SCHEMA DATA;
+
+-- Usar el warehouse
+USE WAREHOUSE COMPUTE_WH;  -- Cambia por tu warehouse
 ```
 
 ### Paso 2: Crear Stage y Subir Documentos
@@ -98,7 +101,19 @@ snowsql -c my_connection
 ```
 
 ```sql
-PUT file:///ruta/a/documentos/*.txt @docs AUTO_COMPRESS=FALSE;
+PUT file:///ruta/a/documentos/*.pdf @docs AUTO_COMPRESS=FALSE;
+```
+
+**O usar Python:**
+```python
+from snowflake.snowpark import Session
+import glob
+
+session = Session.builder.configs({...}).create()
+
+# Subir todos los PDFs
+for pdf_file in glob.glob("documentos/*.pdf"):
+    session.file.put(pdf_file, "@docs", auto_compress=False)
 ```
 
 ### Paso 3: Verificar Archivos Subidos
@@ -108,7 +123,7 @@ PUT file:///ruta/a/documentos/*.txt @docs AUTO_COMPRESS=FALSE;
 LS @docs;
 ```
 
-Deberías ver 8 archivos TXT listados.
+Deberías ver 8 archivos PDF listados.
 
 ### Paso 4: Ejecutar el Notebook
 
@@ -126,9 +141,9 @@ Opción 2: **Ejecutar SQL Manualmente**
 
 ### 1. Procesamiento de Documentos
 
-#### 1.1. Extraer Texto de Documentos
+#### 1.1. Extraer Texto de Documentos PDF
 
-Snowflake puede procesar documentos usando la función `PARSE_DOCUMENT`:
+Snowflake puede procesar documentos PDF usando la función `PARSE_DOCUMENT`. Esta función soporta PDF, DOCX, PPTX, TXT, HTML, XML, Markdown y otros formatos:
 
 ```sql
 CREATE OR REPLACE TEMPORARY TABLE RAW_TEXT AS
@@ -149,9 +164,10 @@ FROM
 ```
 
 **¿Qué hace esto?**
-- `PARSE_DOCUMENT`: Extrae texto de archivos (soporta TXT, PDF, DOCX, etc.)
-- `mode: LAYOUT`: Preserva el layout del documento
-- `DIRECTORY`: Lee metadata de archivos del stage
+- `PARSE_DOCUMENT`: Extrae texto de archivos PDF manteniendo la estructura
+- `mode: LAYOUT`: Preserva el layout del documento incluyendo tablas, columnas, formato
+- `DIRECTORY`: Lee metadata de archivos del stage (nombre, tamaño, URL)
+- El texto extraído mantiene el formato original del PDF
 
 #### 1.2. Crear Tabla para Chunks
 
