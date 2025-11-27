@@ -538,7 +538,7 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE('claude-3-5-sonnet',
      - Es una zona residencial (tipo_zona:)
      - Dame informacion adicional (adicional:)'
      ,
-    TO_FILE('@ARCHIVOS', 'empleados.png'));
+    TO_FILE('@ARCHIVOS', 'TELCO.png'));
 
 
 /* ************** PARTE 8 - Marketplace & Cortex Playground  **********
