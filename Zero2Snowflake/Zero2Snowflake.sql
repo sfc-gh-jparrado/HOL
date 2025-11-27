@@ -525,7 +525,20 @@ SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
     TO_FILE('@ARCHIVOS', 'choque.png')
 );
 
-
+SELECT SNOWFLAKE.CORTEX.COMPLETE('claude-3-5-sonnet',
+    'Describeme esta imagen. 
+     - Son empleados de qué empresa (empresa:)
+     - Indicame la cantidad de personas (cantidad:), 
+     - Todos utilizan elementos de seguridad (seguridad:), 
+     - Qué tipo de elementos de seguridad utilizando (tipo_elementos:), 
+     - Se encuentra la zona señalizada (señales:)
+     - Donde fue tomada la fotografia (lugar:)
+     - Que están haciendo? (Actividad:)
+     - Es trabajo sobre suelo o de altura (tipo_trabajo:)
+     - Es una zona residencial (tipo_zona:)
+     - Dame informacion adicional (adicional:)'
+     ,
+    TO_FILE('@ARCHIVOS', 'empleados.png'));
 
 
 /* ************** PARTE 8 - Marketplace & Cortex Playground  **********
