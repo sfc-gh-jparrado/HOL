@@ -197,50 +197,6 @@ drop database DB_EMPRESA;
 undrop database DB_EMPRESA;
 
 
--- actualicemos una columna para simular un error
--------------------------------------------------
-update t_clientes set start_station_name = 'UUPS! Un error de actualizacion.';
-
-
-select
-start_station_name as "station",
-count(*) as "rides"
-from t_clientes
-group by 1
-order by 2 desc
-limit 20;
-
-
--- Todo es auditable en Snowflake.
--- Recuperemos el id de la última transacción
-------------------------------------------------------------------------------
-set query_id =
-(select query_id from
-table(information_schema.query_history_by_session (result_limit=>5))
-where query_text like 'update%' order by start_time limit 1);
-
-
-select $query_id;
-
-
--- Recreamos la tabla antes de la última ejecución
---------------------------------------------------------
-create or replace table t_clientes as
-(select * from t_clientes before (statement => $query_id));
-
-
--- Verifiquemos que nuestros datos esten bien.
-select
-start_station_name as "station",
-count(*) as "rides"
-from t_clientes
-group by 1
-order by 2 desc
-limit 20;
-
-
-
-
 /* ************************************ PARTE 5 *****************************************
  Archivos JSON no son un problema en Snowflake.
  Vamos adelante!
