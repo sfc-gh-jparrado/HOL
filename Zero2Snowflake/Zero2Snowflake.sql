@@ -461,29 +461,9 @@ SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
     TO_FILE('@ARCHIVOS', 'cedula.jpg')
 );
 
--- Vamos con algo más complejo. Una escena de un accidente:
-SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
-    'claude-3-5-sonnet',
-    'Responde:
-    1. Describe el incidente
-    2. ¿Cuántos vehículos están involucrados en el incidente?
-    3. ¿Dónde se produjo el impacto principal en el vehículo?
-    4. ¿El daño es severo o superficial?
-    5. ¿Qué parte del otro vehículo impactó al vehículo dañado?
-    6. ¿Hay partes desprendidas o elementos faltantes en el vehículo afectado?
-    7. ¿Las llantas están alineadas o presentan desplazamiento?
-    8. ¿Se observa daño en las luces, espejos o defensa del vehículo?
-    9. ¿Hay evidencia de fugas o manchas en el suelo?
-    10. ¿Qué colores tienen los vehículos involucrados?
-    11. ¿La imagen es clara y adecuada para radicar un siniestro?
-    12. ¿Cuál es el número de la placa del vehículo?
-    Ponlo en formato JSON, solo dos columnas, con el número de pregunta y respuesta',
-    TO_FILE('@ARCHIVOS', 'choque.png')
-);
 
 SELECT SNOWFLAKE.CORTEX.COMPLETE('claude-3-5-sonnet',
     'Describeme esta imagen. 
-     - Son empleados de qué empresa (empresa:)
      - Indicame la cantidad de personas (cantidad:), 
      - Todos utilizan elementos de seguridad (seguridad:), 
      - Qué tipo de elementos de seguridad utilizando (tipo_elementos:), 
@@ -491,9 +471,7 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE('claude-3-5-sonnet',
      - Donde fue tomada la fotografia (lugar:)
      - Que están haciendo? (Actividad:)
      - Es trabajo sobre suelo o de altura (tipo_trabajo:)
-     - Es una zona residencial (tipo_zona:)
-     - Dame informacion adicional (adicional:)'
-     ,
+     - Dame informacion adicional (adicional:)',
     TO_FILE('@ARCHIVOS', 'TELCO.png'));
 
 
