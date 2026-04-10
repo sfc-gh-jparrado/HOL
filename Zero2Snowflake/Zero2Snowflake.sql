@@ -351,7 +351,7 @@ use role accountadmin;
 
 
 -- Resolver preguntas con LLMs sin necesidad de APIs!
-select snowflake.cortex.complete('claude-3-5-sonnet','Cuales son las caracteristicas de Snowflake y cómo se están beneficiando sus clientes. Dame 5 casos de exito relevantes?');
+select snowflake.cortex.complete('openai-gpt-4.1','Cuales son las caracteristicas de Snowflake y cómo se están beneficiando sus clientes. Dame 5 casos de exito relevantes?');
 
 
 CREATE or REPLACE file format csvformat
@@ -400,8 +400,8 @@ where language = 'Español';
 
 -- Utilizar LLMs de vanguardia sin sacar los datos de su entorno de seguridad
 select transcript,
-       snowflake.cortex.ai_complete('claude-3-5-sonnet',concat('resume en max. 30 palabras:',transcript)) as summary,
-       snowflake.cortex.ai_sentiment(transcript, ['producto', 'resolucion', 'prefesionalismo']) sentimiento, -- clasificación po producto, resolucion y profesionalismo
+       snowflake.cortex.ai_complete('openai-gpt-4.1',concat('resume en max. 30 palabras:',transcript)) as summary,
+       snowflake.cortex.ai_sentiment(transcript, ['producto', 'resolucion', 'profesionalismo']) sentimiento, -- clasificación por producto, resolucion y profesionalismo
 from call_transcripts 
 where language = 'Español' 
 limit 10;
@@ -462,7 +462,7 @@ SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
 );
 
 
-SELECT SNOWFLAKE.CORTEX.COMPLETE('claude-3-5-sonnet',
+SELECT SNOWFLAKE.CORTEX.COMPLETE('openai-gpt-4.1',
     'Describeme esta imagen. 
      - Indicame la cantidad de personas (cantidad:), 
      - Todos utilizan elementos de seguridad (seguridad:), 
