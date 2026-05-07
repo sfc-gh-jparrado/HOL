@@ -18,11 +18,32 @@ Hands-on Lab de **20 minutos** para descubrir cómo Snowflake procesa **imágene
 - Rol `ACCOUNTADMIN` (lo trae cualquier trial nueva).
 - Conocimientos: ninguno técnico avanzado.
 
-## Cómo ejecutarlo (3 pasos)
+## Cómo ejecutarlo (3 pasos, ~2 minutos)
 
-1. Inicia sesión en tu cuenta trial y abre un **Worksheet** (Projects > Worksheets > +).
-2. Copia y pega el contenido de [`bootstrap.sql`](bootstrap.sql) en el worksheet.
+### Paso 1: Crear cuenta trial (3 minutos)
+1. Ve a https://signup.snowflake.com/
+2. Llena el formulario y selecciona:
+   - **Edition:** Enterprise (default)
+   - **Cloud:** AWS
+   - **Region:** US West (Oregon) — `us-west-2` (recomendado)
+3. Confirma tu email y crea contraseña.
+
+### Paso 2: Abrir un Worksheet en Snowsight
+1. Inicia sesión en tu cuenta trial.
+2. En el menú lateral, ve a **Projects > Worksheets**.
+3. Haz clic en **+** (arriba a la derecha) → **SQL Worksheet**.
+
+### Paso 3: Ejecutar el bootstrap
+1. Abre el archivo [`bootstrap.sql`](bootstrap.sql) y copia su contenido completo.
+2. Pégalo en el worksheet.
 3. Selecciona todo (`Cmd/Ctrl + A`) y ejecuta (`Cmd/Ctrl + Return`).
+4. Espera ~2 minutos. Verás el mensaje `✅ Setup completo` al final.
+
+### Después del bootstrap
+- **Notebook:** abre **Projects > Notebooks > NB_HOL_AI_SUMMIT** y empieza los 5 ejercicios.
+- **Agente:** abre **AI & ML > Snowflake Intelligence > Agente Seguros 360** y conversa con tus datos.
+
+> **Tip:** si Snowflake Intelligence no aparece de inmediato, refresca la página de Snowsight (Cmd/Ctrl + R).
 
 En menos de 1 minuto tendrás:
 - Base de datos `HOL_AI_SUMMIT` con stages, tablas y un agente pre-configurado.
