@@ -311,8 +311,9 @@ tables:
     primary_key:
       columns:
         - ID
-    unique:
-      - NOMBRE
+    unique_keys:
+      - columns:
+          - NOMBRE
     dimensions:
       - name: nombre
         synonyms: ["nombre cliente", "asegurado"]
