@@ -42,32 +42,27 @@ ALTER STAGE DOCUMENTOS REFRESH;
 ALTER STAGE AUDIO REFRESH;
 
 -- ---------------------------------------------------------------------
--- 3. Tabla con documentos parseados (AI_PARSE_DOCUMENT soporta DOCX nativo)
+-- 3. Tablas DOCS_PARSED y TRANSCRIPCIONES desde CSV pre-computado
+--    (Las funciones AI_PARSE_DOCUMENT, AI_TRANSCRIBE, AI_SENTIMENT se
+--     ejecutan en vivo dentro del notebook para el aprendizaje del estudiante.
+--     Aquí solo hidratamos los resultados para acelerar el bootstrap ~50s.)
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE TABLE DOCS_PARSED AS
-SELECT
-  RELATIVE_PATH AS file_name,
-  TO_VARCHAR(
-    AI_PARSE_DOCUMENT(
-      TO_FILE('@DOCUMENTOS', RELATIVE_PATH),
-      {'mode': 'LAYOUT'}
-    ):content
-  ) AS content
-FROM DIRECTORY(@DOCUMENTOS);
+CREATE OR REPLACE FILE FORMAT FF_CSV_PRECOMPUTED
+  TYPE = CSV
+  FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+  SKIP_HEADER = 1
+  ESCAPE_UNENCLOSED_FIELD = NONE;
 
--- ---------------------------------------------------------------------
--- 4. Tabla de transcripciones de audio
--- ---------------------------------------------------------------------
-CREATE OR REPLACE TABLE TRANSCRIPCIONES AS
-SELECT
-  RELATIVE_PATH AS file_name,
-  TO_VARCHAR(
-    AI_TRANSCRIBE(TO_FILE('@AUDIO', RELATIVE_PATH)):text
-  ) AS transcripcion,
-  AI_SENTIMENT(
-    TO_VARCHAR(AI_TRANSCRIBE(TO_FILE('@AUDIO', RELATIVE_PATH)):text)
-  ):categories[0]:sentiment::VARCHAR AS sentimiento
-FROM DIRECTORY(@AUDIO);
+CREATE OR REPLACE TABLE DOCS_PARSED (file_name VARCHAR, content VARCHAR);
+COPY INTO DOCS_PARSED (file_name, content)
+  FROM @hol_repo/branches/main/AI_SUMMIT/datasets/precomputed/docs_parsed.csv
+  FILE_FORMAT = FF_CSV_PRECOMPUTED;
+
+-- 4. Tabla de transcripciones de audio (pre-computada con AI_TRANSCRIBE + AI_SENTIMENT)
+CREATE OR REPLACE TABLE TRANSCRIPCIONES (file_name VARCHAR, transcripcion VARCHAR, sentimiento VARCHAR);
+COPY INTO TRANSCRIPCIONES (file_name, transcripcion, sentimiento)
+  FROM @hol_repo/branches/main/AI_SUMMIT/datasets/precomputed/transcripciones.csv
+  FILE_FORMAT = FF_CSV_PRECOMPUTED;
 
 -- ---------------------------------------------------------------------
 -- 5. Data sintética: POLIZAS (ventas de seguros/inmobiliaria)
@@ -491,9 +486,9 @@ $$);
 
 -- ---------------------------------------------------------------------
 -- 10. Agente con Cortex Analyst + Cortex Search + Chart
---     Este es el agente que se usa en Snowflake Intelligence
+--     Creado en SNOWFLAKE_INTELLIGENCE.AGENTS para que aparezca en la UI
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE AGENT HOL_AI_SUMMIT.PUBLIC.AGENTE_HOL
+CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.AGENTE_SEGUROS_360
   WITH PROFILE='{"display_name": "Agente Seguros 360"}'
   COMMENT = 'Agente inteligente que analiza datos de pólizas, busca en contratos y genera gráficos'
   FROM SPECIFICATION $$
@@ -540,6 +535,16 @@ CREATE OR REPLACE AGENT HOL_AI_SUMMIT.PUBLIC.AGENTE_HOL
   }
 }
 $$;
+
+-- Grants para que el agente y datos sean visibles desde Snowflake Intelligence
+GRANT USAGE ON DATABASE SNOWFLAKE_INTELLIGENCE TO ROLE PUBLIC;
+GRANT USAGE ON SCHEMA SNOWFLAKE_INTELLIGENCE.AGENTS TO ROLE PUBLIC;
+GRANT USAGE ON AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.AGENTE_SEGUROS_360 TO ROLE PUBLIC;
+GRANT USAGE ON DATABASE HOL_AI_SUMMIT TO ROLE PUBLIC;
+GRANT USAGE ON SCHEMA HOL_AI_SUMMIT.PUBLIC TO ROLE PUBLIC;
+GRANT SELECT ON ALL TABLES IN SCHEMA HOL_AI_SUMMIT.PUBLIC TO ROLE PUBLIC;
+GRANT SELECT ON SEMANTIC VIEW HOL_AI_SUMMIT.PUBLIC.SV_SEGUROS TO ROLE PUBLIC;
+GRANT USAGE ON CORTEX SEARCH SERVICE HOL_AI_SUMMIT.PUBLIC.DOCS_SEARCH TO ROLE PUBLIC;
 
 -- ---------------------------------------------------------------------
 -- 11. Crear el notebook desde el repo Git
