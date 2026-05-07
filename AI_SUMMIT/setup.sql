@@ -88,7 +88,7 @@ CREATE OR REPLACE AGENT HOL_AI_SUMMIT.PUBLIC.AGENTE_HOL
   COMMENT = 'Agente del HOL AI Summit - responde sobre contratos y llamadas'
   FROM SPECIFICATION $$
 {
-  "models": {"orchestration": "claude-3-5-sonnet"},
+  "models": {"orchestration": "claude-4-sonnet"},
   "instructions": {
     "response": "Responde siempre en espanol, de forma clara y profesional. Cita la fuente (documento o audio) cuando uses informacion especifica.",
     "orchestration": "Si la pregunta es sobre contratos o documentos, usa la herramienta DOCS_SEARCH. Si es sobre llamadas, sentimientos o servicio al cliente, consulta TRANSCRIPCIONES."

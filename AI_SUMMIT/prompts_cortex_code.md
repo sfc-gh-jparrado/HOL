@@ -16,7 +16,7 @@ CREATE OR REPLACE VIEW V_IMAGENES_CLASIFICADAS AS
 SELECT
   RELATIVE_PATH AS archivo,
   AI_CLASSIFY(
-    AI_COMPLETE('claude-3-5-sonnet', 'Describe brevemente esta imagen en una sola frase.', TO_FILE('@IMAGENES', RELATIVE_PATH)),
+    AI_COMPLETE('claude-4-sonnet', 'Describe brevemente esta imagen en una sola frase.', TO_FILE('@IMAGENES', RELATIVE_PATH)),
     ['cedula', 'accidente vehicular', 'factura', 'logo corporativo', 'otro']
   ):labels[0]::VARCHAR AS tipo
 FROM DIRECTORY(@IMAGENES);
@@ -43,7 +43,7 @@ SELECT 'audio', file_name, transcripcion, sentimiento FROM TRANSCRIPCIONES;
 ## Prompt 3 - Conversa con el agente
 
 ```
-Generame un SELECT que llame a AI_COMPLETE con claude-3-5-sonnet y le pase como contexto las filas de V_HOL_360 (todas) preguntandole: que sentimiento expresa el cliente en las llamadas y cuales son los terminos clave de los contratos de arrendamiento? Responde en espanol.
+Generame un SELECT que llame a AI_COMPLETE con claude-4-sonnet y le pase como contexto las filas de V_HOL_360 (todas) preguntandole: que sentimiento expresa el cliente en las llamadas y cuales son los terminos clave de los contratos de arrendamiento? Responde en espanol.
 ```
 
 ---
