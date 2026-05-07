@@ -60,6 +60,35 @@ Crea una aplicación Streamlit in Snowflake llamada DASHBOARD_HOL en el schema H
 
 ---
 
+## Prompt 5 - Crear Semantic View (Cortex Analyst)
+
+```
+Crea una semantic view llamada SV_SEGUROS_DEMO sobre las tablas POLIZAS, CLIENTES y RECLAMACIONES en HOL_AI_SUMMIT.PUBLIC. Incluye dimensiones para tipo_poliza, región, vendedor, segmento de cliente y tipo de siniestro. Define métricas para total de primas, número de pólizas, monto total de reclamaciones aprobadas y tasa de aprobación. Agrega time_dimensions sobre las fechas y relaciones entre las tablas usando el campo cliente/nombre. Incluye verified_queries para: top vendedores por primas, reclamaciones pendientes, y distribución de pólizas por región.
+```
+
+---
+
+## Prompt 6 - Crear Cortex Search Service
+
+```
+Crea un Cortex Search Service llamado SEARCH_UNIFICADO sobre la tabla BASE_CONOCIMIENTO en HOL_AI_SUMMIT.PUBLIC. La columna de búsqueda principal es 'contenido', los atributos son 'tipo_documento' y 'file_name'. Usa el warehouse HOL_WH, target_lag de 1 hora, y el embedding model snowflake-arctic-embed-l-v2.0.
+```
+
+---
+
+## Prompt 7 - Crear Agente (Snowflake Intelligence)
+
+```
+Crea un agente llamado AGENTE_SEGUROS_DEMO en HOL_AI_SUMMIT.PUBLIC que combine:
+1. Una herramienta cortex_analyst_text_to_sql conectada a la semantic view SV_SEGUROS para consultar datos de pólizas, clientes y reclamaciones
+2. Una herramienta cortex_search conectada al servicio DOCS_SEARCH para buscar en contratos y transcripciones de llamadas
+3. Una herramienta data_to_chart para generar gráficos
+
+El agente debe responder en español, es un asistente de una empresa de seguros en Colombia. Las instrucciones de orquestación deben indicar cuándo usar cada herramienta. Incluye 5 sample_questions sobre ventas, contratos, siniestros y sentimiento de llamadas.
+```
+
+---
+
 ## Bonus - Pruebas rápidas adicionales
 
 - *"Crea un dynamic table que mantenga DOCS_PARSED actualizada cada vez que se agregue un archivo nuevo al stage DOCUMENTOS."*
