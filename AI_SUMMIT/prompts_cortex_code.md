@@ -4,6 +4,53 @@
 
 ---
 
+## Prompt 0 — Instalación del Workshop (3 versiones)
+
+Elige el nivel de control que prefieras. Pega en un Worksheet/Workspace nuevo y dispara con `Cmd/Ctrl + I`.
+
+### 🥇 Opción corta (1 línea, requiere que Cortex Code navegue el repo)
+
+```
+Instala el Workshop AI Summit del repo público sfc-gh-jparrado/HOL usando rol ACCOUNTADMIN
+```
+
+### 🥈 Opción media (apunta directo al script, recomendada)
+
+```
+Conecta el repo público https://github.com/sfc-gh-jparrado/HOL.git con una API integration y ejecuta el archivo AI_SUMMIT/bootstrap.sql usando rol ACCOUNTADMIN. Confirma al final que existen la base HOL_AI_SUMMIT, el agente AGENTE_SEGUROS_360 y el notebook NB_HOL_AI_SUMMIT.
+```
+
+### 🥉 Opción larga (SQL embebido, máxima confiabilidad para demo en vivo)
+
+```
+Despliega el Workshop AI Summit ejecutando este script:
+
+USE ROLE ACCOUNTADMIN;
+ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';
+CREATE SNOWFLAKE INTELLIGENCE IF NOT EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT;
+CREATE DATABASE IF NOT EXISTS HOL_AI_SUMMIT;
+USE DATABASE HOL_AI_SUMMIT;
+USE SCHEMA PUBLIC;
+CREATE WAREHOUSE IF NOT EXISTS HOL_WH WAREHOUSE_SIZE=XSMALL AUTO_SUSPEND=60 INITIALLY_SUSPENDED=FALSE;
+USE WAREHOUSE HOL_WH;
+CREATE OR REPLACE API INTEGRATION github_hol_int
+  API_PROVIDER = git_https_api
+  API_ALLOWED_PREFIXES = ('https://github.com/sfc-gh-jparrado')
+  ENABLED = TRUE
+  ALLOWED_AUTHENTICATION_SECRETS = ();
+CREATE OR REPLACE GIT REPOSITORY hol_repo
+  API_INTEGRATION = github_hol_int
+  ORIGIN = 'https://github.com/sfc-gh-jparrado/HOL.git';
+ALTER GIT REPOSITORY hol_repo FETCH;
+EXECUTE IMMEDIATE FROM @hol_repo/branches/main/AI_SUMMIT/bootstrap.sql;
+
+Cuando termine confirma que se crearon: la base HOL_AI_SUMMIT, el agente AGENTE_SEGUROS_360 y el notebook NB_HOL_AI_SUMMIT.
+```
+
+> 💡 **Recomendación para Workshop con personas de negocio:** usa la **Opción larga**. Es 100% determinística — Cortex Code solo lo ejecuta, no lo reinterpreta.
+
+---
+
 ## Prompt 1 - Vista de imágenes clasificadas
 
 ```
