@@ -1,4 +1,5 @@
-# HOL AI Summit - Democratizando capacidades de Inteligencia Artificial
+# AI Summit
+# Snowflake Workshop - Democratizando capacidades de Inteligencia Artificial
 
 Hands-on Lab de **20 minutos** para descubrir cómo Snowflake procesa **imágenes, documentos y audio** con IA nativa, y cómo cualquier persona puede crear **agentes conversacionales** usando solo lenguaje natural con **Cortex Code**.
 
