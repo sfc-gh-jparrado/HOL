@@ -200,8 +200,8 @@ AS (SELECT contenido, tipo_documento, file_name FROM BASE_CONOCIMIENTO);
 -- ---------------------------------------------------------------------
 -- 9. Semantic View para Cortex Analyst (datos estructurados)
 -- ---------------------------------------------------------------------
-CALL SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML('HOL_AI_SUMMIT.PUBLIC.SV_SEGUROS', $$
-name: seguros_inmobiliaria
+CALL SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML('HOL_AI_SUMMIT.PUBLIC', $$
+name: SV_SEGUROS
 description: "Vista semántica de una empresa de seguros e inmobiliaria. Incluye pólizas vendidas, clientes y reclamaciones por siniestros."
 
 tables:
