@@ -211,6 +211,9 @@ tables:
       database: HOL_AI_SUMMIT
       schema: PUBLIC
       table: POLIZAS
+    primary_key:
+      columns:
+        - ID
     dimensions:
       - name: tipo_poliza
         synonyms: ["tipo de seguro", "ramo", "línea de negocio"]
@@ -305,6 +308,11 @@ tables:
       database: HOL_AI_SUMMIT
       schema: PUBLIC
       table: CLIENTES
+    primary_key:
+      columns:
+        - ID
+    unique:
+      - NOMBRE
     dimensions:
       - name: nombre
         synonyms: ["nombre cliente", "asegurado"]
@@ -362,6 +370,9 @@ tables:
       database: HOL_AI_SUMMIT
       schema: PUBLIC
       table: RECLAMACIONES
+    primary_key:
+      columns:
+        - ID
     dimensions:
       - name: cliente_reclamacion
         synonyms: ["reclamante"]
@@ -430,14 +441,16 @@ relationships:
     left_table: polizas
     right_table: clientes
     relationship_columns:
-      - left_column: cliente
-        right_column: nombre
+      - left_column: CLIENTE
+        right_column: NOMBRE
+    relationship_type: many_to_one
   - name: reclamaciones_a_clientes
     left_table: reclamaciones
     right_table: clientes
     relationship_columns:
-      - left_column: cliente
-        right_column: nombre
+      - left_column: CLIENTE
+        right_column: NOMBRE
+    relationship_type: many_to_one
 
 verified_queries:
   - name: ventas_por_region
