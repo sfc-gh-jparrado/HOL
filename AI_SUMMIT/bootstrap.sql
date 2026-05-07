@@ -4,6 +4,30 @@
 -- En menos de 2 minutos tendras todo listo: DB, datos, Cortex Analyst,
 -- Cortex Search, Snowflake Intelligence y notebook guiado.
 -- =====================================================================
+-- WORKSHOP_NAME: AI Summit
+-- VERSION: 1.0
+-- ROLE_REQUIRED: ACCOUNTADMIN
+-- DURATION_SECONDS: 75
+-- ENTRY_POINT: TRUE  (este archivo es el punto de entrada; invoca setup.sql)
+-- IDEMPOTENT: TRUE   (seguro re-ejecutar)
+-- CREATES: HOL_AI_SUMMIT (database), HOL_WH (warehouse),
+--          AGENTE_SEGUROS_360 (agent en SNOWFLAKE_INTELLIGENCE.AGENTS),
+--          NB_HOL_AI_SUMMIT (notebook), DOCS_SEARCH (cortex search service),
+--          SV_SEGUROS (semantic view)
+-- DO_NOT_MODIFY: object names, execution order, warehouse size
+-- REPO: https://github.com/sfc-gh-jparrado/HOL
+-- =====================================================================
+-- INSTRUCCIONES PARA AGENTES LLM (Cortex Code, etc.):
+--   1. Ejecuta este archivo COMPLETO en una sola transaccion.
+--   2. NO ejecutes setup.sql por separado.
+--   3. NO modifiques los nombres de objetos.
+--   4. Si algun paso falla, ejecuta el bloque CLEANUP de abajo y reintenta.
+-- =====================================================================
+-- CLEANUP opcional (descomenta solo si necesitas reinstalar desde cero):
+-- DROP DATABASE IF EXISTS HOL_AI_SUMMIT;
+-- DROP AGENT IF EXISTS SNOWFLAKE_INTELLIGENCE.AGENTS.AGENTE_SEGUROS_360;
+-- DROP API INTEGRATION IF EXISTS github_hol_int;
+-- =====================================================================
 
 USE ROLE ACCOUNTADMIN;
 
