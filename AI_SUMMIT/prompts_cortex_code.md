@@ -1,13 +1,13 @@
-# Guion de Prompts para Cortex Code (HOL AI Summit)
+# Guión de Prompts para Cortex Code (HOL AI Summit)
 
-> **Como usarlo:** Abre **Cortex Code** en Snowsight (atajo `Cmd/Ctrl + I` o icono de chispa en el panel lateral). Asegurate de estar en el contexto `HOL_AI_SUMMIT.PUBLIC` con el warehouse `HOL_WH`. Pega cada prompt y deja que Cortex Code genere el SQL.
+> **Cómo usarlo:** Abre **Cortex Code** en Snowsight (atajo `Cmd/Ctrl + I` o icono de chispa en el panel lateral). Asegúrate de estar en el contexto `HOL_AI_SUMMIT.PUBLIC` con el warehouse `HOL_WH`. Pega cada prompt y deja que Cortex Code genere el SQL.
 
 ---
 
-## Prompt 1 - Vista de imagenes clasificadas
+## Prompt 1 - Vista de imágenes clasificadas
 
 ```
-Crea una vista llamada V_IMAGENES_CLASIFICADAS que recorra todos los archivos del stage @IMAGENES y agregue una columna con la clasificacion del tipo de imagen entre las opciones: cedula, accidente vehicular, factura, logo corporativo, otro. Usa AI_CLASSIFY sobre el resultado de AI_COMPLETE con un modelo multimodal.
+Crea una vista llamada V_IMAGENES_CLASIFICADAS que recorra todos los archivos del stage @IMAGENES y agregue una columna con la clasificación del tipo de imagen entre las opciones: cédula, accidente vehicular, factura, logo corporativo, otro. Usa AI_CLASSIFY sobre el resultado de AI_COMPLETE con un modelo multimodal.
 ```
 
 **SQL esperado (fallback):**
@@ -17,7 +17,7 @@ SELECT
   RELATIVE_PATH AS archivo,
   AI_CLASSIFY(
     AI_COMPLETE('claude-4-sonnet', 'Describe brevemente esta imagen en una sola frase.', TO_FILE('@IMAGENES', RELATIVE_PATH)),
-    ['cedula', 'accidente vehicular', 'factura', 'logo corporativo', 'otro']
+    ['cédula', 'accidente vehicular', 'factura', 'logo corporativo', 'otro']
   ):labels[0]::VARCHAR AS tipo
 FROM DIRECTORY(@IMAGENES);
 ```
@@ -43,7 +43,7 @@ SELECT 'audio', file_name, transcripcion, sentimiento FROM TRANSCRIPCIONES;
 ## Prompt 3 - Conversa con el agente
 
 ```
-Generame un SELECT que llame a AI_COMPLETE con claude-4-sonnet y le pase como contexto las filas de V_HOL_360 (todas) preguntandole: que sentimiento expresa el cliente en las llamadas y cuales son los terminos clave de los contratos de arrendamiento? Responde en espanol.
+Genérame un SELECT que llame a AI_COMPLETE con claude-4-sonnet y le pase como contexto las filas de V_HOL_360 (todas) preguntándole: qué sentimiento expresa el cliente en las llamadas y cuáles son los términos clave de los contratos de arrendamiento? Responde en español.
 ```
 
 ---
@@ -51,16 +51,16 @@ Generame un SELECT que llame a AI_COMPLETE con claude-4-sonnet y le pase como co
 ## Prompt 4 - Streamlit dashboard
 
 ```
-Crea una aplicacion Streamlit in Snowflake llamada DASHBOARD_HOL en el schema HOL_AI_SUMMIT.PUBLIC con:
-- Una metrica con el total de archivos procesados (sumando DOCS_PARSED + TRANSCRIPCIONES + DIRECTORY(@IMAGENES))
-- Un grafico de barras con el sentimiento de las llamadas (tabla TRANSCRIPCIONES)
+Crea una aplicación Streamlit in Snowflake llamada DASHBOARD_HOL en el schema HOL_AI_SUMMIT.PUBLIC con:
+- Una métrica con el total de archivos procesados (sumando DOCS_PARSED + TRANSCRIPCIONES + DIRECTORY(@IMAGENES))
+- Un gráfico de barras con el sentimiento de las llamadas (tabla TRANSCRIPCIONES)
 - Un campo de chat que invoque AI_COMPLETE con la pregunta del usuario y contexto de V_HOL_360
-- Diseno limpio en espanol
+- Diseño limpio en español
 ```
 
 ---
 
-## Bonus - Pruebas rapidas adicionales
+## Bonus - Pruebas rápidas adicionales
 
 - *"Crea un dynamic table que mantenga DOCS_PARSED actualizada cada vez que se agregue un archivo nuevo al stage DOCUMENTOS."*
 - *"Genera un task que ejecute AI_TRANSCRIBE diariamente sobre los nuevos archivos del stage AUDIO."*
