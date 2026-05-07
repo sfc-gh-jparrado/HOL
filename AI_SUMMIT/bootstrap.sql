@@ -36,7 +36,7 @@ CREATE OR REPLACE API INTEGRATION github_hol_int
 -- 5. Conectar al repo público
 CREATE OR REPLACE GIT REPOSITORY hol_repo
   API_INTEGRATION = github_hol_int
-  ORIGIN = 'https://github.com/sfc-gh-jparrado/Workshop.git';
+  ORIGIN = 'https://github.com/sfc-gh-jparrado/HOL.git';
 
 ALTER GIT REPOSITORY hol_repo FETCH;
 
