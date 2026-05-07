@@ -68,7 +68,7 @@ En menos de 1 minuto tendrás:
 | Tipo | Archivos | Descripción |
 |------|----------|-------------|
 | Imágenes | `TELCO.png`, `choque.png`, `cedula.jpg` | Logo, siniestro vehicular, documento de identidad |
-| Documentos | `CONTRATO_ARRENDAMIENTO_01.docx`, `CONTRATO_ARRENDAMIENTO_02.docx` | Contratos de arrendamiento en español |
+| Documentos | `CONTRATO_ARRENDAMIENTO_01.pdf`, `CONTRATO_ARRENDAMIENTO_02.pdf` | Contrato de vivienda (Bogotá) y contrato de local comercial (Cali), enlazados con clientes y pólizas reales del Workshop |
 | Audio | `ofreciendo-producto.mp3`, `problema-servicio.mp3` | Llamadas de servicio al cliente en español |
 
 ## Estimación de costos
