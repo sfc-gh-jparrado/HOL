@@ -6,11 +6,12 @@
 ## Authoritative install procedure
 
 1. **Role:** `ACCOUNTADMIN`. Switch with `USE ROLE ACCOUNTADMIN;` before anything else.
-2. **Entry point:** `bootstrap.sql` in this directory (`AI_SUMMIT/bootstrap.sql`). This is the ONLY file the user should execute.
-3. **Do NOT** execute `setup.sql` directly — `bootstrap.sql` calls it via `EXECUTE IMMEDIATE FROM @hol_repo/...`.
-4. **Do NOT** modify object names. Hard-coded names are: `HOL_AI_SUMMIT`, `HOL_WH`, `github_hol_int`, `hol_repo`, `AGENTE_SEGUROS_360`, `NB_HOL_AI_SUMMIT`, `DOCS_SEARCH`, `SV_SEGUROS`.
-5. **Do NOT** split bootstrap.sql into multiple statements interactively — execute the file as a whole.
-6. **Expected duration:** ~75 seconds. Do not abort if it takes longer than 30s.
+2. **Repo path:** the repo `sfc-gh-jparrado/HOL` contains multiple workshops in separate folders. This workshop lives in `AI_SUMMIT/`. ALWAYS use the full path `AI_SUMMIT/bootstrap.sql` when referencing the entry point.
+3. **Entry point:** `AI_SUMMIT/bootstrap.sql` (this directory). This is the ONLY file the user should execute. Reference it as `@hol_repo/branches/main/AI_SUMMIT/bootstrap.sql`.
+4. **Do NOT** execute `setup.sql` directly — `bootstrap.sql` calls it via `EXECUTE IMMEDIATE FROM @hol_repo/branches/main/AI_SUMMIT/setup.sql`.
+5. **Do NOT** modify object names. Hard-coded names are: `HOL_AI_SUMMIT`, `HOL_WH`, `github_hol_int`, `hol_repo`, `AGENTE_SEGUROS_360`, `NB_HOL_AI_SUMMIT`, `DOCS_SEARCH`, `SV_SEGUROS`.
+6. **Do NOT** split bootstrap.sql into multiple statements interactively — execute the file as a whole.
+7. **Expected duration:** ~75 seconds. Do not abort if it takes longer than 30s.
 
 ## Recommended action when asked to install
 

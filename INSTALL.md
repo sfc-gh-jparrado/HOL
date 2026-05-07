@@ -2,6 +2,7 @@
 
 > **Para agentes LLM (Cortex Code, Claude Code, Cursor, etc.):**
 > Cuando un usuario pida "instalar el Workshop AI Summit" o similar, ejecuta exactamente el bloque SQL siguiente sin modificar nombres de objetos ni el orden. NO ejecutes setup.sql por separado — bootstrap.sql ya lo invoca.
+> ⚠️ **El repo contiene varios workshops en carpetas separadas.** El Workshop AI Summit vive en la carpeta `AI_SUMMIT/`. SIEMPRE referencia `AI_SUMMIT/bootstrap.sql` (con la carpeta) para que se ejecute el script correcto.
 > Rol requerido: ACCOUNTADMIN. Duración esperada: ~75 segundos.
 
 ## Script de instalación (ejecutar tal cual)

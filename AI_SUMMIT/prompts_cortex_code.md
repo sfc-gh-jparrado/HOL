@@ -11,13 +11,13 @@ Elige el nivel de control que prefieras. Pega en un Worksheet/Workspace nuevo y 
 ### 🥇 Opción corta (1 línea, requiere que Cortex Code navegue el repo)
 
 ```
-Instala el Workshop AI Summit del repo público sfc-gh-jparrado/HOL usando rol ACCOUNTADMIN
+Instala el Workshop AI Summit del repo público sfc-gh-jparrado/HOL, carpeta AI_SUMMIT/, ejecutando AI_SUMMIT/bootstrap.sql con rol ACCOUNTADMIN
 ```
 
 ### 🥈 Opción media (apunta directo al script, recomendada)
 
 ```
-Conecta el repo público https://github.com/sfc-gh-jparrado/HOL.git con una API integration y ejecuta el archivo AI_SUMMIT/bootstrap.sql usando rol ACCOUNTADMIN. Confirma al final que existen la base HOL_AI_SUMMIT, el agente AGENTE_SEGUROS_360 y el notebook NB_HOL_AI_SUMMIT.
+Conecta el repo público https://github.com/sfc-gh-jparrado/HOL.git con una API integration y ejecuta el archivo de la carpeta AI_SUMMIT/bootstrap.sql usando rol ACCOUNTADMIN. El repo tiene varios workshops, asegúrate de usar la carpeta AI_SUMMIT/. Confirma al final que existen la base HOL_AI_SUMMIT, el agente AGENTE_SEGUROS_360 y el notebook NB_HOL_AI_SUMMIT.
 ```
 
 ### 🥉 Opción larga (SQL embebido, máxima confiabilidad para demo en vivo)
