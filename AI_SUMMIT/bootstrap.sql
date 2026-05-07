@@ -1,5 +1,5 @@
 -- =====================================================================
--- HOL AI SUMMIT - BOOTSTRAP (UN SOLO PASO)
+-- Workshop AI SUMMIT - BOOTSTRAP (UN SOLO PASO)
 -- Copia este bloque, pegalo en un Worksheet de Snowsight y ejecutalo.
 -- En menos de 2 minutos tendras todo listo: DB, datos, Cortex Analyst,
 -- Cortex Search, Snowflake Intelligence y notebook guiado.
@@ -36,7 +36,7 @@ CREATE OR REPLACE API INTEGRATION github_hol_int
 -- 5. Conectar al repo público
 CREATE OR REPLACE GIT REPOSITORY hol_repo
   API_INTEGRATION = github_hol_int
-  ORIGIN = 'https://github.com/sfc-gh-jparrado/HOL.git';
+  ORIGIN = 'https://github.com/sfc-gh-jparrado/Workshop.git';
 
 ALTER GIT REPOSITORY hol_repo FETCH;
 

@@ -1,4 +1,4 @@
-# Guión de Prompts para Cortex Code (HOL AI Summit)
+# Guión de Prompts para Cortex Code (Workshop AI Summit)
 
 > **Cómo usarlo:** Abre **Cortex Code** en Snowsight (atajo `Cmd/Ctrl + I` o icono de chispa en el panel lateral). Asegúrate de estar en el contexto `HOL_AI_SUMMIT.PUBLIC` con el warehouse `HOL_WH`. Pega cada prompt y deja que Cortex Code genere el SQL.
 
@@ -97,6 +97,6 @@ El agente debe responder en español, es un asistente de una empresa de seguros 
 
 ---
 
-## Mensaje para el asistente del HOL
+## Mensaje para el asistente del Workshop
 
 > Cortex Code te permite construir pipelines de IA, agentes y apps escribiendo en lenguaje natural. **No necesitas saber SQL avanzado**, no necesitas mover datos a otra plataforma, y todo queda gobernado por Snowflake. Esto es lo que diferencia a Snowflake de Databricks, Fabric, BigQuery o Redshift: **una sola plataforma, una experiencia conversacional, resultados productivos en minutos**.

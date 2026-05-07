@@ -52,7 +52,7 @@ En menos de 1 minuto tendrás:
 - Un Cortex Search Service `DOCS_SEARCH` indexando los contratos.
 - Un agente conversacional `AGENTE_HOL` listo para usar.
 
-## Estructura del HOL (20 min)
+## Estructura del Workshop (20 min)
 
 | Min | Bloque | Qué se hace |
 |-----|--------|------------|
@@ -77,7 +77,7 @@ En menos de 1 minuto tendrás:
 - **Tiempo de ejecución:** ~20 minutos.
 - **Storage:** menos de 10 MB.
 
-Una trial nueva trae **400 USD de crédito** durante 30 días, por lo que puedes correr el HOL muchas veces sin preocupaciones.
+Una trial nueva trae **400 USD de crédito** durante 30 días, por lo que puedes correr el Workshop muchas veces sin preocupaciones.
 
 ## Qué diferencia a Snowflake (mensaje clave)
 
@@ -90,7 +90,7 @@ Una trial nueva trae **400 USD de crédito** durante 30 días, por lo que puedes
 | Crear agentes | `CREATE AGENT` + Cortex Code | Frameworks de código + hosting + auth |
 | Gobernanza unificada | Roles, masking, lineage end-to-end | Multiple services, policies dispersas |
 
-**Una sola plataforma, gobernada, sin mover datos, con experiencia conversacional.** Eso es lo que demuestra este HOL.
+**Una sola plataforma, gobernada, sin mover datos, con experiencia conversacional.** Eso es lo que demuestra este Workshop.
 
 ## Troubleshooting
 
@@ -103,7 +103,7 @@ Una trial nueva trae **400 USD de crédito** durante 30 días, por lo que puedes
 
 ## Limpieza
 
-Para borrar todo el HOL después de ejecutarlo:
+Para borrar todo el Workshop después de ejecutarlo:
 
 ```sql
 DROP DATABASE IF EXISTS HOL_AI_SUMMIT;
@@ -113,4 +113,4 @@ DROP WAREHOUSE IF EXISTS HOL_WH;
 
 ## Soporte
 
-Creado por el equipo Sales Engineering Latam. Para feedback, abre un issue en https://github.com/sfc-gh-jparrado/HOL/issues.
+Creado por el equipo Sales Engineering Latam. Para feedback, abre un issue en https://github.com/sfc-gh-jparrado/Workshop/issues.

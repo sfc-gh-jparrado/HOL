@@ -1,7 +1,7 @@
 -- =====================================================================
--- HOL AI SUMMIT - SETUP COMPLETO
+-- Workshop AI SUMMIT - SETUP COMPLETO
 -- Este script es invocado por bootstrap.sql via EXECUTE IMMEDIATE FROM @hol_repo.
--- Crea toda la infraestructura del HOL: stages, datos, tablas sintéticas,
+-- Crea toda la infraestructura del Workshop: stages, datos, tablas sintéticas,
 -- Cortex Search, Semantic View, Agente con Snowflake Intelligence y notebook.
 -- =====================================================================
 
