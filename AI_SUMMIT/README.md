@@ -1,14 +1,14 @@
 # AI Summit
 # Snowflake Workshop - Democratizando capacidades de Inteligencia Artificial
 
-Hands-on Lab de **20 minutos** para descubrir cómo Snowflake procesa **imágenes, documentos y audio** con IA nativa, y cómo cualquier persona puede crear **agentes conversacionales** usando solo lenguaje natural con **Cortex Code**.
+En **20 minutos** vas a descubrir cómo Snowflake procesa **imágenes, documentos y audio** con IA nativa, y cómo cualquier persona de tu empresa podrá crear **agentes conversacionales realmente potentes** usando solo lenguaje natural con **Cortex Code**.
 
-## Qué vas a lograr
+## Lo que te vas a llevar
 
-- Procesar y extraer valor de información no estructurada (imágenes, PDFs, DOCX, audio).
-- Entender cómo funcionan funciones como `AI_COMPLETE`, `AI_PARSE_DOCUMENT`, `AI_EXTRACT`, `AI_TRANSCRIBE`, `AI_SENTIMENT`, `AI_CLASSIFY`.
-- Crear un Cortex Search Service y un agente de IA pre-configurado.
-- Usar **Cortex Code** dentro de Snowsight para generar vistas, agentes y apps Streamlit con prompts en español.
+- Vas a procesar información que hoy está atrapada en documentos, imágenes y audio.
+- Vas a entender qué hacen funciones como `AI_COMPLETE`, `AI_PARSE_DOCUMENT`, `AI_EXTRACT`, `AI_TRANSCRIBE`, `AI_SENTIMENT`, `AI_CLASSIFY` y cómo aplicarlas.
+- Vas a crear tu propio Cortex Search Service y un agente conversacional listo para producción.
+- Y lo más importante: vas a usar **Cortex Code** dentro de Snowsight para generar vistas, agentes y apps Streamlit, **escribiendo solo en español**.
 
 ## Requisitos
 
