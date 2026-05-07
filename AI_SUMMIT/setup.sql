@@ -47,6 +47,13 @@ ALTER STAGE AUDIO REFRESH;
 --     ejecutan en vivo dentro del notebook para el aprendizaje del estudiante.
 --     Aquí solo hidratamos los resultados para acelerar el bootstrap ~50s.)
 -- ---------------------------------------------------------------------
+CREATE OR REPLACE STAGE PRECOMPUTED
+  DIRECTORY = (ENABLE = TRUE)
+  ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');
+
+COPY FILES INTO @PRECOMPUTED
+  FROM @hol_repo/branches/main/AI_SUMMIT/datasets/precomputed/;
+
 CREATE OR REPLACE FILE FORMAT FF_CSV_PRECOMPUTED
   TYPE = CSV
   FIELD_OPTIONALLY_ENCLOSED_BY = '"'
@@ -55,13 +62,13 @@ CREATE OR REPLACE FILE FORMAT FF_CSV_PRECOMPUTED
 
 CREATE OR REPLACE TABLE DOCS_PARSED (file_name VARCHAR, content VARCHAR);
 COPY INTO DOCS_PARSED (file_name, content)
-  FROM @hol_repo/branches/main/AI_SUMMIT/datasets/precomputed/docs_parsed.csv
+  FROM @PRECOMPUTED/docs_parsed.csv
   FILE_FORMAT = FF_CSV_PRECOMPUTED;
 
 -- 4. Tabla de transcripciones de audio (pre-computada con AI_TRANSCRIBE + AI_SENTIMENT)
 CREATE OR REPLACE TABLE TRANSCRIPCIONES (file_name VARCHAR, transcripcion VARCHAR, sentimiento VARCHAR);
 COPY INTO TRANSCRIPCIONES (file_name, transcripcion, sentimiento)
-  FROM @hol_repo/branches/main/AI_SUMMIT/datasets/precomputed/transcripciones.csv
+  FROM @PRECOMPUTED/transcripciones.csv
   FILE_FORMAT = FF_CSV_PRECOMPUTED;
 
 -- ---------------------------------------------------------------------
