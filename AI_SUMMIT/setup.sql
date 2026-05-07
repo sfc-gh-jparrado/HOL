@@ -537,14 +537,7 @@ CREATE OR REPLACE AGENT HOL_AI_SUMMIT.PUBLIC.AGENTE_HOL
       "id_column": "file_name",
       "title_column": "tipo_documento"
     }
-  },
-  "sample_questions": [
-    {"question": "¿Cuál es el total de primas vendidas por región?"},
-    {"question": "¿Qué dice el contrato sobre las obligaciones del arrendatario?"},
-    {"question": "¿Cuál fue el sentimiento del cliente en la última llamada?"},
-    {"question": "Muéstrame un gráfico de reclamaciones por tipo de siniestro"},
-    {"question": "¿Quién es el mejor vendedor del trimestre?"}
-  ]
+  }
 }
 $$;
 
