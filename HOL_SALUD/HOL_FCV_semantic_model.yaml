@@ -1,0 +1,214 @@
+name: SV_FCV
+description: Modelo semántico FCV - pacientes, atenciones, consultas y diagnósticos
+tables:
+  - name: paciente
+    base_table:
+      database: DB_HOL_FCV
+      schema: PUBLIC
+      table: ADMCLIENTE
+    primary_key:
+      columns: [IdCliente]
+    description: Pacientes (clientes) de la FCV
+    dimensions:
+      - name: idcliente
+        expr: IdCliente
+        data_type: NUMBER
+        unique: true
+      - name: genero
+        expr: Genero
+        data_type: VARCHAR
+        synonyms: [género, sexo]
+        sample_values: [Femenino, Masculino, Indeterminado]
+      - name: edad
+        expr: DATEDIFF(year, FecNacimiento, CURRENT_DATE())
+        data_type: NUMBER
+        synonyms: [años]
+      - name: bucket_edad
+        expr: |
+          CASE
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 13 THEN 'pediatrico'
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 19 THEN 'adolescente'
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 66 THEN 'adulto'
+            ELSE 'adulto mayor'
+          END
+        data_type: VARCHAR
+    measures:
+      - name: num_pacientes
+        expr: COUNT(DISTINCT IdCliente)
+        data_type: NUMBER
+        default_aggregation: count_distinct
+        description: Pacientes únicos
+
+  - name: atencion
+    base_table:
+      database: DB_HOL_FCV
+      schema: PUBLIC
+      table: ADMATENCION
+    primary_key:
+      columns: [IdAtencion]
+    description: Atenciones prestadas a los pacientes
+    dimensions:
+      - name: idatencion
+        expr: IdAtencion
+        data_type: NUMBER
+        unique: true
+      - name: idcliente
+        expr: IdCliente
+        data_type: NUMBER
+      - name: tipo
+        expr: NomAtencionTipo
+        data_type: VARCHAR
+        synonyms: [tipo de atención, tipo atencion]
+      - name: anio_ingreso
+        expr: YEAR(FecIngreso)
+        data_type: NUMBER
+        synonyms: [año]
+      - name: mes_ingreso
+        expr: DATE_TRUNC('month', FecIngreso)
+        data_type: TIMESTAMP_NTZ
+    time_dimensions:
+      - name: fec_ingreso
+        expr: FecIngreso
+        data_type: TIMESTAMP_NTZ
+      - name: fec_egreso
+        expr: FecEgreso
+        data_type: TIMESTAMP_NTZ
+    measures:
+      - name: num_atenciones
+        expr: COUNT(IdAtencion)
+        data_type: NUMBER
+        default_aggregation: count
+      - name: dias_estancia_prom
+        expr: AVG(DATEDIFF(day, FecIngreso, FecEgreso))
+        data_type: NUMBER
+        default_aggregation: avg
+        description: Días promedio de estancia hospitalaria
+
+  - name: consulta
+    base_table:
+      database: DB_HOL_FCV
+      schema: PUBLIC
+      table: HCECONSULTA
+    primary_key:
+      columns: [IdConsulta]
+    description: Consultas de la HCE
+    dimensions:
+      - name: idconsulta
+        expr: IdConsulta
+        data_type: NUMBER
+        unique: true
+      - name: idatencion
+        expr: IdAtencion
+        data_type: NUMBER
+      - name: esquema
+        expr: Esquema
+        data_type: VARCHAR
+        synonyms: [tipo de registro]
+    time_dimensions:
+      - name: fecha
+        expr: FechaConsulta
+        data_type: TIMESTAMP_NTZ
+    measures:
+      - name: num_consultas
+        expr: COUNT(IdConsulta)
+        data_type: NUMBER
+        default_aggregation: count
+
+  - name: diagnostico
+    base_table:
+      database: DB_HOL_FCV
+      schema: PUBLIC
+      table: GENDIAGNOSTICO
+    description: Diagnósticos por consulta
+    dimensions:
+      - name: idconsulta
+        expr: IdConsulta
+        data_type: NUMBER
+      - name: nombre
+        expr: NomDiagnostico
+        data_type: VARCHAR
+        synonyms: [diagnóstico]
+      - name: codigo
+        expr: CodCie9
+        data_type: VARCHAR
+        synonyms: [CIE, código diagnóstico]
+      - name: principal
+        expr: IndPrincipal
+        data_type: NUMBER
+        synonyms: [indicador principal]
+    measures:
+      - name: num_diagnosticos
+        expr: COUNT(*)
+        data_type: NUMBER
+        default_aggregation: count
+
+relationships:
+  - name: atencion_paciente
+    left_table: atencion
+    right_table: paciente
+    relationship_columns:
+      - left_column: IdCliente
+        right_column: IdCliente
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: consulta_atencion
+    left_table: consulta
+    right_table: atencion
+    relationship_columns:
+      - left_column: IdAtencion
+        right_column: IdAtencion
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: diagnostico_consulta
+    left_table: diagnostico
+    right_table: consulta
+    relationship_columns:
+      - left_column: IdConsulta
+        right_column: IdConsulta
+    join_type: inner
+    relationship_type: many_to_one
+
+verified_queries:
+  - name: atenciones_por_tipo_2026
+    question: Cuántas atenciones por tipo tuvimos en 2026?
+    sql: |
+      SELECT NomAtencionTipo, COUNT(*) AS atenciones
+      FROM DB_HOL_FCV.PUBLIC.ADMATENCION
+      WHERE YEAR(FecIngreso) = 2026
+      GROUP BY 1 ORDER BY 2 DESC
+
+  - name: top_diagnosticos_principales
+    question: Top 10 diagnósticos principales
+    sql: |
+      SELECT NomDiagnostico, CodCie9, COUNT(*) AS frecuencia
+      FROM DB_HOL_FCV.PUBLIC.GENDIAGNOSTICO
+      WHERE IndPrincipal = 1
+      GROUP BY 1,2 ORDER BY 3 DESC LIMIT 10
+
+  - name: pacientes_por_genero
+    question: Distribución de pacientes por género
+    sql: |
+      SELECT Genero, COUNT(DISTINCT IdCliente) AS pacientes
+      FROM DB_HOL_FCV.PUBLIC.ADMCLIENTE GROUP BY 1
+
+  - name: atenciones_por_mes_y_genero
+    question: Atenciones por mes y género del último año
+    sql: |
+      SELECT DATE_TRUNC('month', a.FecIngreso) AS mes,
+             c.Genero,
+             COUNT(*) AS atenciones
+      FROM DB_HOL_FCV.PUBLIC.ADMATENCION a
+      JOIN DB_HOL_FCV.PUBLIC.ADMCLIENTE c ON c.IdCliente = a.IdCliente
+      WHERE a.FecIngreso >= DATEADD(year, -1, CURRENT_DATE())
+      GROUP BY 1, 2 ORDER BY 1, 2
+
+  - name: dias_estancia_prom_por_tipo
+    question: Días de estancia promedio por tipo de atención
+    sql: |
+      SELECT NomAtencionTipo,
+             AVG(DATEDIFF(day, FecIngreso, FecEgreso)) AS dias_estancia
+      FROM DB_HOL_FCV.PUBLIC.ADMATENCION
+      WHERE FecEgreso IS NOT NULL
+      GROUP BY 1 ORDER BY 2 DESC
