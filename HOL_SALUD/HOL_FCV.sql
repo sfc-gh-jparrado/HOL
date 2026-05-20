@@ -389,7 +389,7 @@ SELECT TO_VARCHAR(AI_EXTRACT(
 SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
   'pixtral-large',
   PROMPT('Extrae los datos de esta cedula colombiana: numero, nombre completo, fecha de nacimiento, lugar de nacimiento, fecha de expedicion. Responde en JSON. {0}',
-         TO_FILE('@STG_ARCHIVOS_FCV','cedula_paciente_001.png'))
+         TO_FILE('@STG_ARCHIVOS_FCV','cedula.jpg'))
 ) AS cedula_datos;
 
 -- 5. AI_COMPLETE sobre receta médica - extraer medicamentos + dosis
