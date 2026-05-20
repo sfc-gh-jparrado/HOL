@@ -273,7 +273,7 @@ USE WAREHOUSE WH_HOL_FCV;
 
 -- 1. Resolver preguntas con LLMs sin APIs
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
-  'claude-3-5-sonnet',
+  'claude-4-sonnet',
   'Resume en 5 puntos las ventajas de usar Snowflake Cortex AI para una institución de salud como la FCV.'
 ) AS respuesta;
 
@@ -282,7 +282,7 @@ SELECT
   IdConsulta,
   LEFT(DesSubjetivo, 100) AS preview,
   SNOWFLAKE.CORTEX.AI_COMPLETE(
-    'claude-3-5-sonnet',
+    'claude-4-sonnet',
     CONCAT('Resume en máximo 30 palabras la siguiente nota clínica: ', DesSubjetivo)
   ) AS resumen_clinico
 FROM HCECONSULTA
