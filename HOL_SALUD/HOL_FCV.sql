@@ -336,6 +336,93 @@ FROM HCECONSULTA
 SAMPLE (3 ROWS);
 
 
+/* ************************************ PARTE 7B ***********************************************
+   Datos no estructurados — PDFs, imágenes y audio procesados con Cortex AI.
+   Bucket: s3://demosjparrado/fcv_hol/archivos/  (10 archivos sintéticos)
+   ******************************************************************************************** */
+USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_FCV; USE SCHEMA PUBLIC; USE WAREHOUSE WH_HOL_FCV;
+
+-- Stage externo dedicado al subprefijo archivos (DIRECTORY ENABLE para list y TO_FILE)
+CREATE OR REPLACE STAGE STG_ARCHIVOS_FCV
+  URL = 's3://demosjparrado/fcv_hol/archivos/'
+  CREDENTIALS = (AWS_KEY_ID='<SOLICITAR_AL_INSTRUCTOR>' AWS_SECRET_KEY='<SOLICITAR_AL_INSTRUCTOR>')
+  DIRECTORY = (ENABLE = TRUE);
+
+LIST @STG_ARCHIVOS_FCV;
+
+-- 1. AI_PARSE_DOCUMENT: extraer texto de un PDF de historia clínica
+SELECT AI_PARSE_DOCUMENT(
+  TO_FILE('@STG_ARCHIVOS_FCV','hc_paciente_001.pdf'),
+  {'mode':'OCR'}
+) AS contenido_pdf;
+
+-- 2. AI_EXTRACT estructurado sobre PDF de HC
+SELECT TO_VARCHAR(AI_EXTRACT(
+  file => TO_FILE('@STG_ARCHIVOS_FCV','hc_paciente_001.pdf'),
+  responseFormat => [
+    ['paciente_nombre','Nombre completo del paciente'],
+    ['edad','Edad del paciente'],
+    ['motivo','Motivo de consulta'],
+    ['ta_mmHg','Tensión arterial registrada'],
+    ['fc_lpm','Frecuencia cardíaca'],
+    ['saturacion_o2','Saturación de oxígeno'],
+    ['diagnostico_principal','Diagnóstico principal'],
+    ['plan','Plan terapéutico']
+  ]
+)) AS hc_estructurada;
+
+-- 3. AI_EXTRACT sobre PDF de laboratorio - tabla con valores y rangos
+SELECT TO_VARCHAR(AI_EXTRACT(
+  file => TO_FILE('@STG_ARCHIVOS_FCV','lab_hemograma_001.pdf'),
+  responseFormat => [
+    ['hemoglobina','Valor de hemoglobina y si está fuera de rango'],
+    ['leucocitos','Valor de leucocitos y estado'],
+    ['plaquetas','Valor de plaquetas'],
+    ['glucosa','Valor de glucosa y estado'],
+    ['troponina','Valor de troponina y estado'],
+    ['valores_anormales','Lista de analitos fuera de rango']
+  ]
+)) AS labs_estructurados;
+
+-- 4. AI_COMPLETE multimodal con pixtral-large sobre cédula de identidad
+SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
+  'pixtral-large',
+  PROMPT('Extrae los datos de esta cedula colombiana: numero, nombre completo, fecha de nacimiento, lugar de nacimiento, fecha de expedicion. Responde en JSON. {0}',
+         TO_FILE('@STG_ARCHIVOS_FCV','cedula_paciente_001.png'))
+) AS cedula_datos;
+
+-- 5. AI_COMPLETE sobre receta médica - extraer medicamentos + dosis
+SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
+  'pixtral-large',
+  PROMPT('Lee esta receta medica y devuelve en JSON la lista de medicamentos con su dosis y frecuencia. {0}',
+         TO_FILE('@STG_ARCHIVOS_FCV','receta_medica_001.png'))
+) AS receta_meds;
+
+-- 6. AI_COMPLETE sobre imagen radiológica
+SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
+  'pixtral-large',
+  PROMPT('Describe brevemente que se observa en esta imagen radiologica de torax y posibles hallazgos. {0}',
+         TO_FILE('@STG_ARCHIVOS_FCV','rx_torax_001.png'))
+) AS hallazgos_rx;
+
+-- 7. AI_TRANSCRIBE: convertir audio de consulta a texto
+SELECT TO_VARCHAR(AI_TRANSCRIBE(
+  TO_FILE('@STG_ARCHIVOS_FCV','consulta_audio_001.mp3')
+)) AS transcripcion;
+
+-- 8. Pipeline combinado: transcripción + análisis de sentimiento + resumen
+WITH transc AS (
+  SELECT TO_VARCHAR(AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_FCV','consulta_audio_001.mp3'))) AS texto
+)
+SELECT
+  texto,
+  TO_VARCHAR(SNOWFLAKE.CORTEX.AI_SENTIMENT(texto, ['urgencia','severidad','complejidad'])) AS sentimiento,
+  SNOWFLAKE.CORTEX.COMPLETE('claude-4-sonnet',
+    CONCAT('Resume en 3 bullets el caso clinico relatado y el plan: ', texto)) AS resumen_caso
+FROM transc;
+
+
 /* ************************************ PARTE 8 ************************************************
    Cortex Search — búsqueda semántica sobre el texto clínico.
    Construimos una vista enriquecida con contexto (atención + diagnósticos) y la indexamos.
