@@ -1,10 +1,10 @@
 /* ********************************************************************************************
-                         HANDS ON LAB — Fundación Cardiovascular de Colombia (FCV)
-                         "From S3 to Intelligence" — basado en Zero2Snowflake
+                   HANDS ON LAB — Fundación Cardiovascular de Colombia (FCV)
+                   "From data to Intelligence" — basado en Zero2Snowflake
 ********************************************************************************************
  Este archivo SQL es la guía del HOL. Copia todo el contenido en un Worksheet de Snowflake.
  Recorre las 12 partes en orden. Comentarios y notas en español.
- Datos sintéticos en s3://demosjparrado/fcv_hol/ (380M registros, 4 tablas, gzip).
+ Datos sintéticos en s3://demosjparrado/fcv_hol/ (4 tablas, gzip)
 ******************************************************************************************** */
 -- AWS_KEY_ID     = '<SOLICITAR_AL_INSTRUCTOR>'
 -- AWS_SECRET_KEY = '<SOLICITAR_AL_INSTRUCTOR>'
@@ -35,11 +35,10 @@ USE SCHEMA    PUBLIC;
 
 /* ************************************ PARTE 2 ************************************************
    Stage externo a AWS S3 + File Format.
-   El bucket s3://demosjparrado/fcv_hol/ contiene 208 archivos .csv.gz, ~7.5 GiB.
-   Las credenciales pertenecen a un IAM user read-only sobre el prefijo fcv_hol/*.
+   El bucket s3://demosjparrado/fcv_hol/ contiene 208 archivos .csv.gz
    ******************************************************************************************** */
 
--- File format CSV gzip (datos generados con MAX_FILE_SIZE 1.5 GB, ~25-60 MB por archivo)
+-- File format CSV gzip 
 CREATE OR REPLACE FILE FORMAT FF_CSV_GZ
   TYPE = CSV
   FIELD_DELIMITER = ';'
