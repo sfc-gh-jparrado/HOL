@@ -548,15 +548,18 @@ GROUP BY 1,2,3;
         "Eres asistente clínico de la FCV. Cuando preguntan métricas usa Cortex Analyst.
          Cuando preguntan por casos clínicos o búsquedas en notas, usa Cortex Search.
          Cita siempre los IdConsulta o las dimensiones usadas. Responde en español."
-   4. Pruebas con rol ACCOUNTADMIN (ve todo el detalle):
+   4. Response instructions (ejemplo):
+        "Genera sugerencias de preguntas para permitirle al usuario continuar profundizando el análisis.
+         Todo el contenido generado,  incluyendo el razonamiento paso a paso, debe  ser en español."
+   5. En Access, agrega el rol "Analista_Clinico"
+   6. Pruebas con rol ACCOUNTADMIN (ve todo el detalle):
         - Cuántas atenciones de Hospitalización Por Urgencias tuvimos en 2026?
         - Top 5 diagnósticos principales del año
         - Muéstrame consultas con sospecha de tromboembolismo pulmonar
         - Qué nota clínica tiene mayor severidad este mes?
         - Dame el nombre de los 10 pacientes con mayor cantidad de días de hospitalización en 2026
-   5. **Demo del masking**:
-        USE ROLE ANALISTA_CLINICO;  -- en una sesión Snowflake
+   7. **Cambia de rol y repite la última pregunta**:
         Vuelve al agente y repite "Dame el nombre de los 10 pacientes con mayor cantidad de días de hospitalización en 2026"
-        El texto vendrá enmascarado: 50 caracteres + "[INFORMACIÓN CLÍNICA RESTRINGIDA...]"
+        La respuesta no incluirá los datos sensibles que están bajo el gobierno definido.
    ******************************************************************************************** */
 
