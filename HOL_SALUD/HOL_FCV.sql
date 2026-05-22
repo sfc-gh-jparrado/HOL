@@ -1,17 +1,19 @@
 /* ********************************************************************************************
-                            HANDS ON LAB — Fundación Cardiovascular de Colombia (FCV)
-                            "From S3 to Intelligence" — basado en Zero2Snowflake
-   ********************************************************************************************
-   Este archivo SQL es la guía del HOL. Copia todo el contenido en un Worksheet de Snowflake.
-   Recorre las 12 partes en orden. Comentarios y notas en español.
-   Datos sintéticos en s3://demosjparrado/fcv_hol/ (380M registros, 4 tablas, gzip).
-   ******************************************************************************************** */
-
+                         HANDS ON LAB — Fundación Cardiovascular de Colombia (FCV)
+                         "From S3 to Intelligence" — basado en Zero2Snowflake
+********************************************************************************************
+ Este archivo SQL es la guía del HOL. Copia todo el contenido en un Worksheet de Snowflake.
+ Recorre las 12 partes en orden. Comentarios y notas en español.
+ Datos sintéticos en s3://demosjparrado/fcv_hol/ (380M registros, 4 tablas, gzip).
+******************************************************************************************** */
+-- AWS_KEY_ID     = '<SOLICITAR_AL_INSTRUCTOR>'
+-- AWS_SECRET_KEY = '<SOLICITAR_AL_INSTRUCTOR>'
 
 /* ************************************ PARTE 1 ************************************************
    Definimos el ambiente: base de datos, warehouse y esquema.
    ******************************************************************************************** */
 USE ROLE ACCOUNTADMIN;
+ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';
 
 CREATE OR REPLACE DATABASE DB_HOL_FCV
   COMMENT = 'Base de datos del HOL Fundación Cardiovascular de Colombia';
@@ -107,11 +109,28 @@ CREATE OR REPLACE TABLE GENDIAGNOSTICO (
   SecPrioridad    NUMBER         COMMENT 'Orden de prioridad del diagnóstico'
 ) COMMENT='Diagnósticos asociados a las consultas';
 
--- COPY INTO desde S3 (carga masiva 380M registros)
-COPY INTO ADMCLIENTE     FROM @STG_FCV/admcliente/     ON_ERROR='CONTINUE';
-COPY INTO ADMATENCION    FROM @STG_FCV/admatencion/    ON_ERROR='CONTINUE';
-COPY INTO HCECONSULTA    FROM @STG_FCV/hceconsulta/    ON_ERROR='CONTINUE';
-COPY INTO GENDIAGNOSTICO FROM @STG_FCV/gendiagnostico/ ON_ERROR='CONTINUE';
+-- COPY INTO desde S3
+
+-- Antes prueba de performance
+COPY INTO GENDIAGNOSTICO FROM @STG_FCV/gendiagnostico/ ;
+
+SELECT 'GENDIAGNOSTICO',  COUNT(*) registros FROM GENDIAGNOSTICO;
+
+TRUNCATE table GENDIAGNOSTICO;
+
+ALTER WAREHOUSE WH_HOL_FCV SET WAREHOUSE_SIZE = 'LARGE';
+
+COPY INTO GENDIAGNOSTICO FROM @STG_FCV/gendiagnostico/ ;
+
+SELECT 'GENDIAGNOSTICO',  COUNT(*) registros FROM GENDIAGNOSTICO;
+
+--
+-- Continuemos con la carga
+COPY INTO ADMCLIENTE     FROM @STG_FCV/admcliente/     ;
+COPY INTO ADMATENCION    FROM @STG_FCV/admatencion/    ;
+COPY INTO HCECONSULTA    FROM @STG_FCV/hceconsulta/    ;
+
+ALTER WAREHOUSE WH_HOL_FCV SET WAREHOUSE_SIZE = 'XSMALL';
 
 -- Conteos
 SELECT 'ADMCLIENTE' tabla, COUNT(*) registros FROM ADMCLIENTE UNION ALL
@@ -124,32 +143,19 @@ SELECT 'GENDIAGNOSTICO',  COUNT(*)            FROM GENDIAGNOSTICO;
    Performance & Warehouse Scaling — comparemos tiempos.
    ******************************************************************************************** */
 
--- Query analítica con WH SMALL (anota el tiempo)
+-- Query analítica con WH XSMALL (anota el tiempo)
 SELECT
   DATE_TRUNC('month', FecIngreso) AS mes,
   NomAtencionTipo,
   COUNT(*) AS atenciones
-FROM ADMATENCION
-WHERE FecIngreso >= '2025-01-01'
-GROUP BY 1, 2
-ORDER BY 1, atenciones DESC;
-
--- Escalemos a XLARGE
-ALTER WAREHOUSE WH_HOL_FCV SET WAREHOUSE_SIZE = 'XLARGE';
-
--- Re-ejecutemos la query (compara el tiempo)
-SELECT
-  DATE_TRUNC('month', FecIngreso) AS mes,
-  NomAtencionTipo,
-  COUNT(*) AS atenciones
-FROM ADMATENCION
+FROM ADMATENCION -- 80 millones de registros
 WHERE FecIngreso >= '2025-01-01'
 GROUP BY 1, 2
 ORDER BY 1, atenciones DESC;
 
 -- Top 10 diagnósticos
 SELECT NomDiagnostico, CodCie9, COUNT(*) total
-FROM GENDIAGNOSTICO
+FROM GENDIAGNOSTICO -- 150 millones de registros
 GROUP BY 1, 2
 ORDER BY total DESC
 LIMIT 10;
@@ -164,12 +170,10 @@ SELECT
     ELSE '66+ adultos mayores'
   END bucket,
   COUNT(*) pacientes
-FROM ADMCLIENTE
+FROM ADMCLIENTE -- 30 millones de registros
 GROUP BY 1, 2
 ORDER BY 1, 2;
 
--- Volvamos a SMALL
-ALTER WAREHOUSE WH_HOL_FCV SET WAREHOUSE_SIZE = 'SMALL';
 
 
 /* ************************************ PARTE 5 ************************************************
@@ -239,25 +243,25 @@ ALTER TABLE ADMCLIENTE  MODIFY COLUMN ApeCliente    SET MASKING POLICY mp_nombre
 ALTER TABLE ADMCLIENTE  MODIFY COLUMN FecNacimiento SET MASKING POLICY mp_fecnac;
 ALTER TABLE HCECONSULTA MODIFY COLUMN DesSubjetivo  SET MASKING POLICY mp_texto_clinico;
 
--- Consulta como ACCOUNTADMIN (ve todo)
-SELECT IdCliente, NomCliente, ApeCliente, FecNacimiento, Genero
-FROM ADMCLIENTE LIMIT 10;
 
-SELECT IdConsulta, FechaConsulta, LEFT(DesSubjetivo, 200) AS DesSubjetivo_Preview
-FROM HCECONSULTA LIMIT 5;
+-- Consulta como ACCOUNTADMIN (ve todo)
+SELECT c.IdCliente, c.NomCliente, c.ApeCliente, c.FecNacimiento, c.Genero,
+       co.IdConsulta, co.FechaConsulta, LEFT(co.DesSubjetivo, 200) AS DesSubjetivo_Preview
+FROM ADMCLIENTE c -- 30 millones
+JOIN ADMATENCION a ON c.IdCliente = a.IdCliente -- 80 millones
+JOIN HCECONSULTA co ON a.IdAtencion = co.IdAtencion --120 millones
+LIMIT 10;
 
 -- Cambiamos de rol
 USE ROLE ANALISTA_CLINICO;
-USE DATABASE DB_HOL_FCV;
-USE SCHEMA PUBLIC;
-USE WAREHOUSE WH_HOL_FCV;
 
 -- Misma query: ahora los datos están enmascarados
-SELECT IdCliente, NomCliente, ApeCliente, FecNacimiento, Genero
-FROM ADMCLIENTE LIMIT 10;
-
-SELECT IdConsulta, FechaConsulta, LEFT(DesSubjetivo, 300) AS DesSubjetivo_Preview
-FROM HCECONSULTA LIMIT 5;
+SELECT c.IdCliente, c.NomCliente, c.ApeCliente, c.FecNacimiento, c.Genero,
+       co.IdConsulta, co.FechaConsulta, LEFT(co.DesSubjetivo, 200) AS DesSubjetivo_Preview
+FROM ADMCLIENTE c -- 30 millones
+JOIN ADMATENCION a ON c.IdCliente = a.IdCliente -- 80 millones
+JOIN HCECONSULTA co ON a.IdAtencion = co.IdAtencion --120 millones
+LIMIT 10;
 
 -- Volvemos al rol admin
 USE ROLE ACCOUNTADMIN;
@@ -266,50 +270,47 @@ USE ROLE ACCOUNTADMIN;
 /* ************************************ PARTE 7 ************************************************
    Cortex AI Functions sobre datos clínicos — sin extraer datos del entorno.
    ******************************************************************************************** */
-USE ROLE ACCOUNTADMIN;
-USE DATABASE DB_HOL_FCV;
-USE SCHEMA PUBLIC;
-USE WAREHOUSE WH_HOL_FCV;
 
 -- 1. Resolver preguntas con LLMs sin APIs
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
-  'claude-4-sonnet',
-  'Resume en 5 puntos las ventajas de usar Snowflake Cortex AI para una institución de salud como la FCV.'
+  'claude-sonnet-4-5',
+  'Resume en 5 puntos las ventajas de usar Snowflake Cortex AI para una institución de salud como la FCV. (entrega el resultado con salto de linea)'
 ) AS respuesta;
 
--- 2. Resumir notas clínicas con AI_COMPLETE
+-- 2. Resumir notas clínicas con COMPLETE
 SELECT
   IdConsulta,
   LEFT(DesSubjetivo, 100) AS preview,
-  SNOWFLAKE.CORTEX.AI_COMPLETE(
-    'claude-4-sonnet',
-    CONCAT('Resume en máximo 30 palabras la siguiente nota clínica: ', DesSubjetivo)
+  SNOWFLAKE.CORTEX.COMPLETE(
+    'openai-gpt-5.1',
+    CONCAT('Resume en máximo 5 palabras la siguiente nota clínica: ', DesSubjetivo)
   ) AS resumen_clinico
 FROM HCECONSULTA
 SAMPLE (10 ROWS);
 
--- 3. Análisis de sentimiento clínico multi-aspecto
+-- 3. Valoración clínica multi-aspecto con LLM
 SELECT
   IdConsulta,
-  SNOWFLAKE.CORTEX.AI_SENTIMENT(
-    DesSubjetivo,
-    ['urgencia','complejidad','severidad','pronóstico']
+  DesSubjetivo,
+  SNOWFLAKE.CORTEX.COMPLETE(
+    'openai-gpt-4.1',
+    CONCAT(
+      'Evalúa el siguiente texto clínico en escala 1-5 para: urgencia, complejidad, severidad y pronóstico. Responde solo en JSON con el formato {urgencia:N,complejidad:N,severidad:N,pronostico:N}. Texto: ',
+      LEFT(DesSubjetivo, 1500)
+    )
   ) AS valoracion
 FROM HCECONSULTA
 SAMPLE (10 ROWS);
 
+
 -- 4. AI_AGG: insight agregado sobre múltiples notas
 SELECT
-  NomAtencionTipo,
   AI_AGG(
     DesSubjetivo,
     'Resume en 3 bullets las patologías más frecuentes y su perfil de paciente'
   ) AS insight
-FROM HCECONSULTA h JOIN ADMATENCION a ON a.IdAtencion = h.IdAtencion
-WHERE h.FechaConsulta >= '2026-01-01'
-SAMPLE (50 ROWS)
-GROUP BY NomAtencionTipo
-LIMIT 5;
+FROM HCECONSULTA SAMPLE (100 ROWS)
+WHERE FechaConsulta >= '2026-01-01';
 
 -- 5. AI_EXTRACT: estructurar información de la nota clínica
 SELECT
@@ -373,54 +374,60 @@ SELECT TO_VARCHAR(AI_EXTRACT(
 )) AS hc_estructurada;
 
 -- 3. AI_EXTRACT sobre PDF de laboratorio - tabla con valores y rangos
-SELECT TO_VARCHAR(AI_EXTRACT(
-  file => TO_FILE('@STG_ARCHIVOS_FCV','lab_hemograma_001.pdf'),
-  responseFormat => [
-    ['hemoglobina','Valor de hemoglobina y si está fuera de rango'],
-    ['leucocitos','Valor de leucocitos y estado'],
-    ['plaquetas','Valor de plaquetas'],
-    ['glucosa','Valor de glucosa y estado'],
-    ['troponina','Valor de troponina y estado'],
-    ['valores_anormales','Lista de analitos fuera de rango']
-  ]
-)) AS labs_estructurados;
+WITH extraccion AS (
+  SELECT AI_EXTRACT(
+    file => TO_FILE('@STG_ARCHIVOS_FCV','lab_hemograma_001.pdf'),
+    responseFormat => [
+      ['hemoglobina','Valor de hemoglobina y si está fuera de rango'],
+      ['leucocitos','Valor de leucocitos y estado'],
+      ['plaquetas','Valor de plaquetas'],
+      ['glucosa','Valor de glucosa y estado'],
+      ['troponina','Valor de troponina y estado'],
+      ['valores_anormales','Lista de analitos fuera de rango']
+    ]
+  ) AS resultado
+)
+SELECT  resultado:response:hemoglobina::STRING AS hemoglobina,
+        resultado:response:leucocitos::STRING AS leucocitos,
+        resultado:response:plaquetas::STRING AS plaquetas,
+        resultado:response:glucosa::STRING AS glucosa,
+        resultado:response:troponina::STRING AS troponina,
+        resultado:response:valores_anormales::STRING AS valores_anormales
+FROM extraccion;
 
 -- 4. AI_COMPLETE multimodal con pixtral-large sobre cédula de identidad
-SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
+SELECT SNOWFLAKE.CORTEX.COMPLETE(
   'pixtral-large',
-  PROMPT('Extrae los datos de esta cedula colombiana: numero, nombre completo, fecha de nacimiento, lugar de nacimiento, fecha de expedicion. Responde en JSON. {0}',
+  PROMPT('Extrae los datos de esta cedula colombiana: numero, nombre completo, fecha de nacimiento, lugar de nacimiento, fecha de expedicion. {0}',
          TO_FILE('@STG_ARCHIVOS_FCV','cedula.jpg'))
 ) AS cedula_datos;
 
 -- 5. AI_COMPLETE sobre receta médica - extraer medicamentos + dosis
-SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
-  'pixtral-large',
+SELECT SNOWFLAKE.CORTEX.COMPLETE(
+  'claude-opus-4-5',
   PROMPT('Lee esta receta medica y devuelve en JSON la lista de medicamentos con su dosis y frecuencia. {0}',
          TO_FILE('@STG_ARCHIVOS_FCV','receta_medica_001.png'))
 ) AS receta_meds;
 
--- 6. AI_COMPLETE sobre imagen radiológica
-SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
-  'pixtral-large',
-  PROMPT('Describe brevemente que se observa en esta imagen radiologica de torax y posibles hallazgos. {0}',
-         TO_FILE('@STG_ARCHIVOS_FCV','rx_torax_001.png'))
-) AS hallazgos_rx;
-
--- 7. AI_TRANSCRIBE: convertir audio de consulta a texto
+-- 6. AI_TRANSCRIBE: transcribir audio de consulta a texto
 SELECT TO_VARCHAR(AI_TRANSCRIBE(
   TO_FILE('@STG_ARCHIVOS_FCV','consulta_audio_001.mp3')
 )) AS transcripcion;
 
--- 8. Pipeline combinado: transcripción + análisis de sentimiento + resumen
-WITH transc AS (
-  SELECT TO_VARCHAR(AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_FCV','consulta_audio_001.mp3'))) AS texto
-)
+-- 7. AI_TRANSCRIBE: transcribir llamada de soporte + análisis de sentimiento
+WITH transcripcion AS (
+    SELECT AI_TRANSCRIBE(
+      TO_FILE('@STG_ARCHIVOS_FCV','problema-servicio.mp3'),
+      {'timestamp_granularity': 'speaker'}
+    ) AS resultado
+) 
 SELECT
-  texto,
-  TO_VARCHAR(SNOWFLAKE.CORTEX.AI_SENTIMENT(texto, ['urgencia','severidad','complejidad'])) AS sentimiento,
-  SNOWFLAKE.CORTEX.COMPLETE('claude-4-sonnet',
-    CONCAT('Resume en 3 bullets el caso clinico relatado y el plan: ', texto)) AS resumen_caso
-FROM transc;
+  resultado,
+  AI_SENTIMENT(resultado:text::STRING, ['servicios','resolución','tiempo_de_espera']) AS sentimiento,
+  SNOWFLAKE.CORTEX.COMPLETE('claude-opus-4-5', PROMPT('Analiza la transcripción y genera recomendaciones al asesor de sevicio: {0}', resultado:text::STRING))
+FROM transcripcion;
+
+
 
 
 /* ************************************ PARTE 8 ************************************************
@@ -428,7 +435,9 @@ FROM transc;
    Construimos una vista enriquecida con contexto (atención + diagnósticos) y la indexamos.
    ******************************************************************************************** */
 
--- Vista enriquecida (limitamos para que la indexación del HOL sea ágil ~5-10 min)
+ALTER WAREHOUSE WH_HOL_FCV SET WAREHOUSE_SIZE = 'MEDIUM';
+
+-- Vista enriquecida (limitamos para que la indexación del HOL sea ágil)
 CREATE OR REPLACE TABLE T_CONSULTAS_ENRIQUECIDAS AS
 SELECT
   h.IdConsulta,
@@ -445,12 +454,14 @@ JOIN ADMATENCION a ON a.IdAtencion = h.IdAtencion
 LEFT JOIN GENDIAGNOSTICO g ON g.IdConsulta = h.IdConsulta
 WHERE h.FechaConsulta >= DATEADD(year, -1, CURRENT_DATE())
 GROUP BY ALL
-LIMIT 500000;
+LIMIT 50000;
 
--- Cortex Search Service
+-- Podemos hacer el cortex search por código o por UI
+
+-- Cortex Search Service vía SQL
 CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_HCE
-  ON Texto
-  ATTRIBUTES Esquema, NomAtencionTipo, FechaConsulta, Diagnosticos, IdConsulta, IdCliente
+  ON Texto -- campo para hacer el search
+  ATTRIBUTES Esquema, NomAtencionTipo, FechaConsulta, Diagnosticos, IdConsulta, IdCliente -- atributos para aplicar filtros
   WAREHOUSE = WH_HOL_FCV
   TARGET_LAG = '1 hour'
   AS
@@ -458,9 +469,9 @@ CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_HCE
          DesMotivoCon, Texto, Diagnosticos
   FROM T_CONSULTAS_ENRIQUECIDAS;
 
+
 -- Verifica el estado
 SHOW CORTEX SEARCH SERVICES LIKE 'CSS_HCE';
-DESCRIBE CORTEX SEARCH SERVICE CSS_HCE;
 
 -- Demo de búsqueda semántica
 SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
@@ -472,75 +483,13 @@ SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
    }'
 ))['results'] AS resultados;
 
--- Otra demo con filtro
-SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
-  'DB_HOL_FCV.PUBLIC.CSS_HCE',
-  '{
-     "query": "postoperatorio de revascularización miocárdica",
-     "columns": ["IdConsulta","FechaConsulta","NomAtencionTipo","Diagnosticos"],
-     "filter": { "@eq": { "NomAtencionTipo": "Hospitalizacion Por Programacion" } },
-     "limit": 5
-   }'
-))['results'] AS resultados;
 
 
 /* ************************************ PARTE 9 ************************************************
    Cortex Analyst — Semantic View sobre las 4 tablas para text-to-SQL.
    ******************************************************************************************** */
 
-CREATE OR REPLACE SEMANTIC VIEW SV_FCV
-  TABLES (
-    paciente AS ADMCLIENTE
-      PRIMARY KEY (IdCliente)
-      COMMENT='Pacientes',
-    atencion AS ADMATENCION
-      PRIMARY KEY (IdAtencion)
-      COMMENT='Atenciones',
-    consulta AS HCECONSULTA
-      PRIMARY KEY (IdConsulta)
-      COMMENT='Consultas HCE',
-    diagnostico AS GENDIAGNOSTICO
-      COMMENT='Diagnósticos por consulta'
-  )
-  RELATIONSHIPS (
-    atencion_paciente   AS atencion(IdCliente)    REFERENCES paciente(IdCliente),
-    consulta_atencion   AS consulta(IdAtencion)   REFERENCES atencion(IdAtencion),
-    diagnostico_consulta AS diagnostico(IdConsulta) REFERENCES consulta(IdConsulta)
-  )
-  DIMENSIONS (
-    paciente.genero        AS Genero        WITH SYNONYMS=('género','sexo')        COMMENT='Género del paciente',
-    paciente.edad          AS DATEDIFF(year, FecNacimiento, CURRENT_DATE())        COMMENT='Edad en años',
-    atencion.tipo          AS NomAtencionTipo WITH SYNONYMS=('tipo de atención')   COMMENT='Tipo de atención',
-    atencion.fec_ingreso   AS FecIngreso                                            COMMENT='Fecha de ingreso',
-    atencion.anio_ingreso  AS YEAR(FecIngreso)                                      COMMENT='Año de ingreso',
-    atencion.mes_ingreso   AS DATE_TRUNC('month', FecIngreso)                       COMMENT='Mes de ingreso',
-    consulta.esquema       AS Esquema                                               COMMENT='Esquema HCE',
-    consulta.fecha         AS FechaConsulta                                         COMMENT='Fecha de la consulta',
-    diagnostico.nombre     AS NomDiagnostico                                        COMMENT='Nombre del diagnóstico',
-    diagnostico.codigo     AS CodCie9                                               COMMENT='Código CIE',
-    diagnostico.principal  AS IndPrincipal                                          COMMENT='1 = principal'
-  )
-  METRICS (
-    paciente.num_pacientes      AS COUNT(DISTINCT paciente.IdCliente)   COMMENT='# Pacientes únicos',
-    atencion.num_atenciones     AS COUNT(atencion.IdAtencion)           COMMENT='# Atenciones',
-    consulta.num_consultas      AS COUNT(consulta.IdConsulta)           COMMENT='# Consultas',
-    diagnostico.num_diagnosticos AS COUNT(*)                            COMMENT='# Diagnósticos',
-    paciente.edad_promedio      AS AVG(DATEDIFF(year, paciente.FecNacimiento, CURRENT_DATE())) COMMENT='Edad promedio',
-    atencion.dias_estancia      AS AVG(DATEDIFF(day, atencion.FecIngreso, atencion.FecEgreso)) COMMENT='Días de estancia promedio'
-  )
-  COMMENT='Modelo semántico FCV — pacientes, atenciones, consultas y diagnósticos';
-
--- Validar la semantic view
-SHOW SEMANTIC VIEWS LIKE 'SV_FCV';
-
--- Una consulta de prueba directa contra el modelo
-SELECT * FROM SEMANTIC_VIEW(
-  SV_FCV
-  DIMENSIONS atencion.anio_ingreso, atencion.tipo
-  METRICS atencion.num_atenciones
-)
-ORDER BY 1, 3 DESC;
-
+-- Vamos a AI Studio
 
 /* ************************************ PARTE 10 ***********************************************
    Dynamic Tables — pipeline incremental para KPIs.
@@ -581,10 +530,8 @@ JOIN HCECONSULTA h ON h.IdConsulta = g.IdConsulta
 WHERE g.IndPrincipal = 1
 GROUP BY 1,2,3;
 
--- Estado y refresh history
-SHOW DYNAMIC TABLES LIKE 'DT_%';
-SELECT * FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY())
-ORDER BY DATA_TIMESTAMP DESC LIMIT 10;
+-- Vamos a ver las tablas dinámicas en el catalogo. 
+-- Una automatización fácil y muy potente sin necesidad de ETLs/ELTs
 
 
 /* ************************************ PARTE 11 ***********************************************
@@ -607,50 +554,10 @@ ORDER BY DATA_TIMESTAMP DESC LIMIT 10;
         - Top 5 diagnósticos principales del año
         - Muéstrame consultas con sospecha de tromboembolismo pulmonar
         - Qué nota clínica tiene mayor severidad este mes?
+        - Dame el nombre de los 10 pacientes con mayor cantidad de días de hospitalización en 2026
    5. **Demo del masking**:
         USE ROLE ANALISTA_CLINICO;  -- en una sesión Snowflake
-        Vuelve al agente y repite "Muéstrame la nota clínica del IdConsulta X"
+        Vuelve al agente y repite "Dame el nombre de los 10 pacientes con mayor cantidad de días de hospitalización en 2026"
         El texto vendrá enmascarado: 50 caracteres + "[INFORMACIÓN CLÍNICA RESTRINGIDA...]"
    ******************************************************************************************** */
 
-
-/* ************************************ PARTE 12 ***********************************************
-   Recursos y siguientes pasos
-   ******************************************************************************************** */
--- Quickstart oficial Zero to Snowflake
--- https://quickstarts.snowflake.com/guide/zero_to_snowflake/index.html
---
--- Cortex Analyst:    https://quickstarts.snowflake.com/guide/getting_started_with_cortex_analyst
--- Cortex Search:     https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview
--- Snowflake Intelligence: https://docs.snowflake.com/user-guide/snowflake-cortex/snowflake-intelligence
--- Dynamic Tables:    https://docs.snowflake.com/en/user-guide/dynamic-tables-about
--- Masking Policies:  https://docs.snowflake.com/en/user-guide/security-column-ddm-intro
--- Streamlit in Snowflake: https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit
--- Snowpark ML:       https://docs.snowflake.com/en/developer-guide/snowflake-ml/snowpark-ml
--- AI_PARSE_DOCUMENT y Document AI: https://docs.snowflake.com/en/user-guide/snowflake-cortex/document-ai/overview
--- Snowflake-Labs (HOLs públicos): https://github.com/Snowflake-Labs
-
-
-/* ************************************ ANEXO **************************************************
-   Enhancements para la siguiente iteración del HOL — clasificados por nivel.
-   --------------------------------------------------------------------------------------------
-   BÁSICO
-     - Snowflake Notebooks: análisis exploratorio Python+SQL interactivo.
-     - Streamlit in Snowflake: dashboard ejecutivo (ocupación, top dx, atenciones por mes).
-     - Sensitive Data Classification (SYSTEM$CLASSIFY): auto-detectar PII en las tablas.
-
-   INTERMEDIO
-     - Tag-based masking: política aplicada a tags PII en lugar de columna a columna.
-     - Snowpipe Streaming: feed en vivo de signos vitales o admisiones de urgencias.
-     - Snowpark Python: feature engineering distribuido (cohorts, comorbilidades).
-     - Account Usage / Cost Intelligence: créditos por warehouse, queries más caras.
-     - Network Policies / PrivateLink: restringir acceso por IP o enlace privado AWS.
-     - Data Sharing: KPIs agregados (sin PHI) compartidos con aseguradoras o entes regulatorios.
-
-   AVANZADO
-     - AI_PARSE_DOCUMENT / Document AI: extraer datos de HCE escaneadas en PDF/imagen.
-     - AI_TRANSCRIBE: notas de voz médico → texto, alimentando HCECONSULTA.
-     - Iceberg Tables + Catalog Integration: interoperabilidad con AWS Glue / Lake Formation.
-     - Snowpark ML / SNOWFLAKE.ML.FORECAST: predecir ocupación hospitalaria semanal.
-     - Cortex Fine-Tuning: ajustar un modelo al lenguaje clínico de la FCV.
-   ******************************************************************************************** */
