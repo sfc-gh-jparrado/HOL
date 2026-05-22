@@ -563,3 +563,40 @@ GROUP BY 1,2,3;
         La respuesta no incluirá los datos sensibles que están bajo el gobierno definido.
    ******************************************************************************************** */
 
+
+/* ************************************ PARTE 11 ***********************************************
+   Con COCO todo es aún más FÁCIL y RÁPIDO!!
+   --------------------------------------------------------------------------------------------
+
+   Ejercicio 1: Creación de un modelo de ML en segundos:
+   
+   PROMPT:
+   Crea un notebook para realizar un modelo de ML que me permita predecir la estancia hospitalaria de un paciente. Realiza analisis EDA, incluye graficos, descripción de los resultados y genera 3 experimientos para elegir el mejor modelo. Crea un feature store y 2 versiones del modelo. 
+   
+   --------------------------------------------------------------------------------------------
+   Ejercicio 2: Creación de App en Streamlit:
+   
+   PROMPT:
+   Crea un Streamlit in Snowflake sobre DB_HOL_FCV.PUBLIC (tablas: ADMCLIENTE 30M, ADMATENCION 80M, HCECONSULTA 120M, GENDIAGNOSTICO 150M). Warehouse: WH_HOL_FCV.
+
+   Dashboard ejecutivo para la Fundación Cardiovascular de Colombia (FCV). Diseño premium dark-theme tipo PowerBI/Tableau: fondo #0E1117, cards con glassmorphism, bordes sutiles, tipografía limpia. Paleta: azul FCV #003366, cyan #00D4FF, magenta #FF4B8C, verde #00C9A7.
+
+   Páginas (st.navigation):
+   1. **Resumen Ejecutivo**: KPIs grandes (atenciones, pacientes únicos, días estancia promedio, top diagnóstico) + line chart atenciones por mes + donut por tipo atención + barra horizontal top 10 diagnósticos. Todo con filtros de rango de fecha y tipo atención.
+   2. **Demografía**: Pirámide poblacional (edad × género), heatmap atenciones por mes × grupo etario, metric cards por género.
+   3. **Diagnósticos**: Treemap top 20 CIE9, trend lines top 5 dx por mes, tabla detallada con sparklines.
+   4. **Operaciones**: Días estancia promedio por tipo atención (box plot), ocupación mensual, ratio ingreso/egreso.
+
+   Requisitos técnicos:
+   - Usa st.connection('snowflake') + @st.cache_data(ttl=600)
+   - Plotly para gráficos (dark template, colores FCV)
+   - Queries con SAMPLE o filtro de fecha para no escanear 380M en cada clic
+   - CSS custom inyectado con st.markdown para cards/KPIs con sombra y hover
+   - Responsive: st.columns con proporciones [1,1,1,1] para KPIs
+   - Cada página máximo 3 queries optimizadas con GROUP BY pre-agregado
+
+   Hazlo visualmente ESPECTACULAR. Que al verlo mi jefe diga: "¿para qué necesito una herramienta licenciada?"
+   --------------------------------------------------------------------------------------------
+
+
+******************************************************************************************** */
