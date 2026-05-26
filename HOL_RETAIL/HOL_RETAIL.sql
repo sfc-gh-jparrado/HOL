@@ -621,13 +621,25 @@ GROUP BY 1,2,3;
    Con CoCo todo es aún más FÁCIL y RÁPIDO!!
 --------------------------------------------------------------------------------------------
 
-   Ejercicio: Creación de un modelo de ML en segundos.
+   Ejercicio: Creación de un modelo de ML en segundos usando las Dynamic Tables
+   creadas en la PARTE 10 como feature store (KPIs pre-agregados, siempre frescos).
 
    PROMPT:
-   Crea un notebook para realizar un modelo de ML que me permita predecir el
-   ticket promedio de un cliente y estimar la demanda mensual por categoría.
-   Realiza análisis EDA, incluye gráficos, descripción de los resultados y
-   genera 3 experimentos para elegir el mejor modelo. Crea un feature store
-   y 2 versiones del modelo.
+   Crea un notebook que utilice DB_HOL_RETAIL.PUBLIC.DT_KPI_VENTAS_MENSUAL
+   (mes, canal, tienda, género, nivel_lealtad, bucket_edad, tickets,
+   clientes_unicos, ventas_total, ticket_promedio) como feature store y
+   DB_HOL_RETAIL.PUBLIC.DT_TOP_PRODUCTOS (mes, NomProducto, Categoria,
+   lineas, unidades_vendidas) para forecasting de demanda.
+
+   Construye dos modelos de ML:
+     1) Predicción del ticket_promedio mensual por canal y tienda (regresión).
+     2) Forecast de unidades_vendidas por categoría a 3 meses (time series con
+        SNOWFLAKE.ML.FORECAST).
+
+   Realiza análisis EDA con gráficos (estacionalidad, top categorías,
+   distribución de ticket por canal y nivel de lealtad), descripción de los
+   resultados y genera 3 experimentos para elegir el mejor modelo.
+   Crea un feature store sobre las dynamic tables y registra 2 versiones del
+   modelo en el Snowflake Model Registry.
 
 ******************************************************************************************** */
