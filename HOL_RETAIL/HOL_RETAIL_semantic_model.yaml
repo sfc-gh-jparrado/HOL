@@ -1,0 +1,256 @@
+name: SV_RETAIL
+description: Modelo semantico SuperPlus Retail - clientes, tickets, lineas y promociones
+tables:
+  - name: cliente
+    base_table:
+      database: DB_HOL_RETAIL
+      schema: PUBLIC
+      table: CLIENTE
+    primary_key:
+      columns: [IdCliente]
+    description: Clientes (compradores) fidelizados de SuperPlus
+    dimensions:
+      - name: idcliente
+        expr: IdCliente
+        data_type: NUMBER
+        unique: true
+      - name: genero
+        expr: Genero
+        data_type: VARCHAR
+        synonyms: [genero, sexo]
+        sample_values: [Femenino, Masculino, Indeterminado]
+      - name: ciudad
+        expr: Ciudad
+        data_type: VARCHAR
+        synonyms: [ciudad, ubicacion]
+      - name: nivel_lealtad
+        expr: NivelLealtad
+        data_type: VARCHAR
+        synonyms: [nivel, tier, programa fidelidad]
+        sample_values: [Bronce, Plata, Oro, Platino, Diamante]
+      - name: edad
+        expr: DATEDIFF(year, FecNacimiento, CURRENT_DATE())
+        data_type: NUMBER
+        synonyms: [anos]
+      - name: bucket_edad
+        expr: |
+          CASE
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 18 THEN 'menor'
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 30 THEN 'joven'
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 45 THEN 'adulto joven'
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 65 THEN 'adulto'
+            ELSE 'adulto mayor'
+          END
+        data_type: VARCHAR
+    measures:
+      - name: num_clientes
+        expr: COUNT(DISTINCT IdCliente)
+        data_type: NUMBER
+        default_aggregation: count_distinct
+        description: Clientes unicos
+
+  - name: ticket
+    base_table:
+      database: DB_HOL_RETAIL
+      schema: PUBLIC
+      table: TICKET
+    primary_key:
+      columns: [IdTicket]
+    description: Tickets / transacciones de compra
+    dimensions:
+      - name: idticket
+        expr: IdTicket
+        data_type: NUMBER
+        unique: true
+      - name: idcliente
+        expr: IdCliente
+        data_type: NUMBER
+      - name: canal
+        expr: CanalVenta
+        data_type: VARCHAR
+        synonyms: [canal, canal de venta]
+        sample_values: [Tienda Fisica, App Movil, Web, Domicilio, Marketplace]
+      - name: estado
+        expr: EstadoTicket
+        data_type: VARCHAR
+        synonyms: [estado, estatus]
+      - name: tienda
+        expr: NomTienda
+        data_type: VARCHAR
+        synonyms: [tienda, sucursal, punto de venta]
+      - name: anio_compra
+        expr: YEAR(FecCompra)
+        data_type: NUMBER
+        synonyms: [ano]
+      - name: mes_compra
+        expr: DATE_TRUNC('month', FecCompra)
+        data_type: TIMESTAMP_NTZ
+    time_dimensions:
+      - name: fec_compra
+        expr: FecCompra
+        data_type: TIMESTAMP_NTZ
+      - name: fec_entrega
+        expr: FecEntrega
+        data_type: TIMESTAMP_NTZ
+    measures:
+      - name: num_tickets
+        expr: COUNT(IdTicket)
+        data_type: NUMBER
+        default_aggregation: count
+      - name: ventas_total
+        expr: SUM(MontoTotal)
+        data_type: NUMBER
+        default_aggregation: sum
+        description: Monto total de ventas
+      - name: ticket_promedio
+        expr: AVG(MontoTotal)
+        data_type: NUMBER
+        default_aggregation: avg
+        description: Ticket promedio en COP
+      - name: dias_entrega_prom
+        expr: AVG(DATEDIFF(day, FecCompra, FecEntrega))
+        data_type: NUMBER
+        default_aggregation: avg
+        description: Dias promedio entre compra y entrega
+
+  - name: linea
+    base_table:
+      database: DB_HOL_RETAIL
+      schema: PUBLIC
+      table: LINEA_TICKET
+    primary_key:
+      columns: [IdLinea]
+    description: Items (SKUs) comprados en cada ticket con resena del cliente
+    dimensions:
+      - name: idlinea
+        expr: IdLinea
+        data_type: NUMBER
+        unique: true
+      - name: idticket
+        expr: IdTicket
+        data_type: NUMBER
+      - name: producto
+        expr: NomProducto
+        data_type: VARCHAR
+        synonyms: [producto, sku, articulo]
+      - name: categoria
+        expr: Categoria
+        data_type: VARCHAR
+        synonyms: [categoria, familia]
+      - name: esquema
+        expr: Esquema
+        data_type: VARCHAR
+        synonyms: [tipo de registro]
+    time_dimensions:
+      - name: fecha_resena
+        expr: FechaResena
+        data_type: TIMESTAMP_NTZ
+    measures:
+      - name: num_lineas
+        expr: COUNT(IdLinea)
+        data_type: NUMBER
+        default_aggregation: count
+      - name: unidades
+        expr: SUM(Cantidad)
+        data_type: NUMBER
+        default_aggregation: sum
+        description: Unidades vendidas
+
+  - name: promo
+    base_table:
+      database: DB_HOL_RETAIL
+      schema: PUBLIC
+      table: PROMO_APLICADA
+    description: Promociones aplicadas a las lineas
+    dimensions:
+      - name: idlinea
+        expr: IdLinea
+        data_type: NUMBER
+      - name: nombre
+        expr: NomPromo
+        data_type: VARCHAR
+        synonyms: [promocion, oferta, descuento]
+      - name: codigo
+        expr: CodPromo
+        data_type: VARCHAR
+        synonyms: [codigo promo, sku promo]
+      - name: principal
+        expr: IndPrincipal
+        data_type: NUMBER
+        synonyms: [indicador principal]
+    measures:
+      - name: num_promos
+        expr: COUNT(*)
+        data_type: NUMBER
+        default_aggregation: count
+
+relationships:
+  - name: ticket_cliente
+    left_table: ticket
+    right_table: cliente
+    relationship_columns:
+      - left_column: IdCliente
+        right_column: IdCliente
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: linea_ticket
+    left_table: linea
+    right_table: ticket
+    relationship_columns:
+      - left_column: IdTicket
+        right_column: IdTicket
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: promo_linea
+    left_table: promo
+    right_table: linea
+    relationship_columns:
+      - left_column: IdLinea
+        right_column: IdLinea
+    join_type: inner
+    relationship_type: many_to_one
+
+verified_queries:
+  - name: tickets_por_canal_2026
+    question: Cuantos tickets por canal de venta tuvimos en 2026?
+    sql: |
+      SELECT CanalVenta, COUNT(*) AS tickets
+      FROM DB_HOL_RETAIL.PUBLIC.TICKET
+      WHERE YEAR(FecCompra) = 2026
+      GROUP BY 1 ORDER BY 2 DESC
+
+  - name: top_promociones
+    question: Top 10 promociones mas aplicadas
+    sql: |
+      SELECT NomPromo, CodPromo, COUNT(*) AS frecuencia
+      FROM DB_HOL_RETAIL.PUBLIC.PROMO_APLICADA
+      WHERE IndPrincipal = 1
+      GROUP BY 1,2 ORDER BY 3 DESC LIMIT 10
+
+  - name: clientes_por_lealtad
+    question: Distribucion de clientes por nivel de lealtad
+    sql: |
+      SELECT NivelLealtad, COUNT(DISTINCT IdCliente) AS clientes
+      FROM DB_HOL_RETAIL.PUBLIC.CLIENTE GROUP BY 1 ORDER BY 2 DESC
+
+  - name: ventas_por_mes_y_canal
+    question: Ventas mensuales por canal y genero del ultimo ano
+    sql: |
+      SELECT DATE_TRUNC('month', t.FecCompra) AS mes,
+             t.CanalVenta,
+             c.Genero,
+             SUM(t.MontoTotal) AS ventas
+      FROM DB_HOL_RETAIL.PUBLIC.TICKET t
+      JOIN DB_HOL_RETAIL.PUBLIC.CLIENTE c ON c.IdCliente = t.IdCliente
+      WHERE t.FecCompra >= DATEADD(year, -1, CURRENT_DATE())
+      GROUP BY 1, 2, 3 ORDER BY 1, 2, 3
+
+  - name: ticket_promedio_por_tienda
+    question: Ticket promedio por tienda
+    sql: |
+      SELECT NomTienda,
+             AVG(MontoTotal) AS ticket_promedio
+      FROM DB_HOL_RETAIL.PUBLIC.TICKET
+      GROUP BY 1 ORDER BY 2 DESC
