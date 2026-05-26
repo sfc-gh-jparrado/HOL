@@ -2,9 +2,9 @@
                    HANDS ON LAB - SuperPlus Retail FMCG
                    "From S3 to Intelligence" - basado en Zero2Snowflake
 ********************************************************************************************
- Este archivo SQL es la guia del HOL. Copia todo el contenido en un Worksheet de Snowflake.
- Recorre las 12 partes en orden. Comentarios y notas en espanol.
- Datos sinteticos en s3://demosjparrado/retail_hol/ (4 tablas, gzip)
+ Este archivo SQL es la guía del HOL. Copia todo el contenido en un Worksheet de Snowflake.
+ Recorre las 12 partes en orden. Comentarios y notas en español.
+ Datos sintéticos en s3://demosjparrado/retail_hol/ (4 tablas, gzip)
 ******************************************************************************************** */
 -- AWS_KEY_ID     = '<SOLICITAR_AL_INSTRUCTOR>'
 -- AWS_SECRET_KEY = '<SOLICITAR_AL_INSTRUCTOR>'
@@ -55,7 +55,7 @@ CREATE OR REPLACE STAGE STG_RETAIL
   URL = 's3://demosjparrado/retail_hol/'
   CREDENTIALS = (AWS_KEY_ID='<SOLICITAR_AL_INSTRUCTOR>' AWS_SECRET_KEY='<SOLICITAR_AL_INSTRUCTOR>')
   FILE_FORMAT = FF_CSV_GZ
-  COMMENT = 'Stage externo HOL Retail - lectura del dataset sintetico';
+  COMMENT = 'Stage externo HOL Retail - lectura del dataset sintético';
 
 -- Listar lo que hay en el stage
 LIST @STG_RETAIL/cliente/;
@@ -71,50 +71,50 @@ LIMIT 5;
 
 /* ************************************ PARTE 3 ************************************************
    DDL de las 4 tablas con comentarios + COPY INTO.
-   Jerarquia: CLIENTE 1:N TICKET 1:N LINEA_TICKET 1:N PROMO_APLICADA
+   Jerarquía: CLIENTE 1:N TICKET 1:N LINEA_TICKET 1:N PROMO_APLICADA
 ******************************************************************************************** */
 
 CREATE OR REPLACE TABLE CLIENTE (
-  IdCliente     NUMBER         COMMENT 'Identificador unico del cliente (comprador) en el ecosistema',
+  IdCliente     NUMBER         COMMENT 'Identificador único del cliente (comprador) en el ecosistema',
   NomCliente    VARCHAR        COMMENT 'Nombre(s) del cliente',
   ApeCliente    VARCHAR        COMMENT 'Apellido(s) del cliente',
   FecNacimiento TIMESTAMP_NTZ  COMMENT 'Fecha de nacimiento del cliente',
-  Genero        VARCHAR        COMMENT 'Genero: Femenino, Masculino o Indeterminado',
-  Email         VARCHAR        COMMENT 'Correo electronico del cliente',
+  Genero        VARCHAR        COMMENT 'Género: Femenino, Masculino o Indeterminado',
+  Email         VARCHAR        COMMENT 'Correo electrónico del cliente',
   Ciudad        VARCHAR        COMMENT 'Ciudad de residencia del cliente',
   NivelLealtad  VARCHAR        COMMENT 'Nivel del programa de fidelidad: Bronce, Plata, Oro, Platino, Diamante'
 ) COMMENT='Clientes (compradores) fidelizados de la cadena SuperPlus';
 
 CREATE OR REPLACE TABLE TICKET (
-  IdTicket       NUMBER         COMMENT 'Identificador unico del ticket / transaccion de compra',
+  IdTicket       NUMBER         COMMENT 'Identificador único del ticket / transacción de compra',
   IdCliente      NUMBER         COMMENT 'FK al cliente (CLIENTE.IdCliente)',
   FecCompra      TIMESTAMP_NTZ  COMMENT 'Fecha y hora en la que el cliente realiza la compra',
   FecEntrega     TIMESTAMP_NTZ  COMMENT 'Fecha de entrega (igual a la compra si fue retiro en tienda)',
-  CanalVenta     VARCHAR        COMMENT 'Canal de venta: Tienda Fisica, App Movil, Web, Domicilio, Marketplace',
+  CanalVenta     VARCHAR        COMMENT 'Canal de venta: Tienda Física, App Móvil, Web, Domicilio, Marketplace',
   EstadoTicket   VARCHAR        COMMENT 'Estado del ticket: Pagado, Entregado, En Camino, Devuelto, Cancelado',
   MontoTotal     NUMBER(12,2)   COMMENT 'Monto total del ticket en COP',
-  NomTienda      VARCHAR        COMMENT 'Nombre de la tienda fisica o centro logistico que atiende el ticket'
+  NomTienda      VARCHAR        COMMENT 'Nombre de la tienda física o centro logístico que atiende el ticket'
 ) COMMENT='Tickets / transacciones de compra de los clientes';
 
 CREATE OR REPLACE TABLE LINEA_TICKET (
-  IdLinea       NUMBER                  COMMENT 'Identificador unico del item del ticket (linea / SKU comprado)',
+  IdLinea       NUMBER                  COMMENT 'Identificador único del ítem del ticket (línea / SKU comprado)',
   IdTicket      NUMBER                  COMMENT 'FK al ticket (TICKET.IdTicket)',
-  NomProducto   VARCHAR                 COMMENT 'Nombre del producto comprado en la linea',
-  Categoria     VARCHAR                 COMMENT 'Categoria del producto: Lacteos, Panaderia, Despensa, Bebidas, Aseo, Higiene, Carnes, Frutas y Verduras',
-  Cantidad      NUMBER                  COMMENT 'Cantidad de unidades compradas en la linea',
-  DesResena     VARCHAR(16777216)       COMMENT 'Resena del cliente sobre el producto (texto libre - opinion / experiencia de uso)',
-  FechaResena   TIMESTAMP_NTZ           COMMENT 'Fecha y hora en la que el cliente publico la resena',
-  Esquema       VARCHAR                 COMMENT 'Categoria del registro: OPINION, RECOMENDACION o DESCRIPCION'
-) COMMENT='Items (lineas SKU) del ticket de compra con resena del cliente';
+  NomProducto   VARCHAR                 COMMENT 'Nombre del producto comprado en la línea',
+  Categoria     VARCHAR                 COMMENT 'Categoría del producto: Lácteos, Panadería, Despensa, Bebidas, Aseo, Higiene, Carnes, Frutas y Verduras',
+  Cantidad      NUMBER                  COMMENT 'Cantidad de unidades compradas en la línea',
+  DesResena     VARCHAR(16777216)       COMMENT 'Reseña del cliente sobre el producto (texto libre - opinión / experiencia de uso)',
+  FechaResena   TIMESTAMP_NTZ           COMMENT 'Fecha y hora en la que el cliente publicó la reseña',
+  Esquema       VARCHAR                 COMMENT 'Categoría del registro: OPINION, RECOMENDACION o DESCRIPCION'
+) COMMENT='Ítems (líneas SKU) del ticket de compra con reseña del cliente';
 
 CREATE OR REPLACE TABLE PROMO_APLICADA (
-  IdLinea         NUMBER         COMMENT 'FK a la linea del ticket (LINEA_TICKET.IdLinea)',
-  IdPromo         NUMBER         COMMENT 'Identificador de la promocion aplicada',
-  NomPromo        VARCHAR        COMMENT 'Nombre comercial de la promocion (descriptivo)',
-  CodPromo        VARCHAR        COMMENT 'Codigo interno de la promocion',
-  IndPrincipal    NUMBER(1,0)    COMMENT '1 = promocion principal de la linea, 0 = secundaria',
-  SecPrioridad    NUMBER         COMMENT 'Orden de prioridad de aplicacion de la promocion'
-) COMMENT='Promociones aplicadas a las lineas del ticket';
+  IdLinea         NUMBER         COMMENT 'FK a la línea del ticket (LINEA_TICKET.IdLinea)',
+  IdPromo         NUMBER         COMMENT 'Identificador de la promoción aplicada',
+  NomPromo        VARCHAR        COMMENT 'Nombre comercial de la promoción (descriptivo)',
+  CodPromo        VARCHAR        COMMENT 'Código interno de la promoción',
+  IndPrincipal    NUMBER(1,0)    COMMENT '1 = promoción principal de la línea, 0 = secundaria',
+  SecPrioridad    NUMBER         COMMENT 'Orden de prioridad de aplicación de la promoción'
+) COMMENT='Promociones aplicadas a las líneas del ticket';
 
 -- COPY INTO desde S3
 
@@ -149,7 +149,7 @@ SELECT 'PROMO_APLICADA',        COUNT(*)            FROM PROMO_APLICADA;
    Performance & Warehouse Scaling - comparemos tiempos.
 ******************************************************************************************** */
 
--- Query analitica con WH XSMALL (anota el tiempo)
+-- Query analítica con WH XSMALL (anota el tiempo)
 SELECT
   DATE_TRUNC('month', FecCompra) AS mes,
   CanalVenta,
@@ -160,7 +160,7 @@ WHERE FecCompra >= '2025-01-01'
 GROUP BY 1, 2
 ORDER BY 1, ventas DESC;
 
--- Top 10 productos mas vendidos
+-- Top 10 productos más vendidos
 SELECT NomProducto, Categoria, COUNT(*) total_lineas, SUM(Cantidad) unidades
 FROM LINEA_TICKET -- 120 millones de registros
 GROUP BY 1, 2
@@ -174,14 +174,14 @@ GROUP BY 1, 2
 ORDER BY total DESC
 LIMIT 10;
 
--- Distribucion por genero, ciudad y bucket etario
+-- Distribución por género, ciudad y bucket etario
 SELECT
   Genero,
   Ciudad,
   CASE
     WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 18  THEN '00-17 menores'
-    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 30  THEN '18-29 jovenes'
-    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 45  THEN '30-44 adultos jovenes'
+    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 30  THEN '18-29 jóvenes'
+    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 45  THEN '30-44 adultos jóvenes'
     WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 65  THEN '45-64 adultos'
     ELSE '65+ adultos mayores'
   END bucket,
@@ -193,19 +193,19 @@ ORDER BY 1, 2, 3;
 
 
 /* ************************************ PARTE 5 ************************************************
-   Time Travel y Zero-Copy Cloning - recuperacion instantanea sin duplicar almacenamiento.
+   Time Travel y Zero-Copy Cloning - recuperación instantánea sin duplicar almacenamiento.
 ******************************************************************************************** */
 
 -- Clonemos una tabla
 CREATE OR REPLACE TABLE CLIENTE_DEV CLONE CLIENTE;
 
--- Clonemos toda la base de datos (dev environment instantaneo)
+-- Clonemos toda la base de datos (dev environment instantáneo)
 CREATE OR REPLACE DATABASE DB_HOL_RETAIL_DEV CLONE DB_HOL_RETAIL;
 
--- Error intencional: borremos produccion
+-- Error intencional: borremos producción
 DROP DATABASE DB_HOL_RETAIL;
 
--- Restauracion con UNDROP (no necesitamos llamar al DBA)
+-- Restauración con UNDROP (no necesitamos llamar al DBA)
 UNDROP DATABASE DB_HOL_RETAIL;
 
 -- Verifica que sigue todo
@@ -215,7 +215,7 @@ SELECT COUNT(*) FROM CLIENTE;
 
 
 /* ************************************ PARTE 6 ************************************************
-   Masking dinamico condicional por rol - clave para Snowflake Intelligence.
+   Masking dinámico condicional por rol - clave para Snowflake Intelligence.
    ACCOUNTADMIN ve todo. ANALISTA_COMERCIAL ve datos enmascarados.
 ******************************************************************************************** */
 USE ROLE ACCOUNTADMIN;
@@ -232,35 +232,35 @@ GRANT USAGE  ON WAREHOUSE WH_HOL_RETAIL                     TO ROLE ANALISTA_COM
 -- Asigna el rol a tu usuario (REEMPLAZA POR TU USUARIO)
 GRANT ROLE ANALISTA_COMERCIAL TO USER JPARRADO;
 
--- Politica para nombres y apellidos
+-- Política para nombres y apellidos
 CREATE OR REPLACE MASKING POLICY mp_nombre AS (val STRING) RETURNS STRING ->
   CASE
     WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val
     ELSE '****'
   END;
 
--- Politica para email (preserva dominio, oculta usuario)
+-- Política para email (preserva dominio, oculta usuario)
 CREATE OR REPLACE MASKING POLICY mp_email AS (val STRING) RETURNS STRING ->
   CASE
     WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val
     ELSE CONCAT('****@', SPLIT_PART(val, '@', 2))
   END;
 
--- Politica para fecha de nacimiento (solo ano visible al rol restringido)
+-- Política para fecha de nacimiento (solo año visible al rol restringido)
 CREATE OR REPLACE MASKING POLICY mp_fecnac AS (val TIMESTAMP_NTZ) RETURNS TIMESTAMP_NTZ ->
   CASE
     WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val
     ELSE DATE_TRUNC('year', val)::TIMESTAMP_NTZ
   END;
 
--- Politica para texto de resena (preserva un breve preview, oculta el resto)
+-- Política para texto de reseña (preserva un breve preview, oculta el resto)
 CREATE OR REPLACE MASKING POLICY mp_texto_resena AS (val STRING) RETURNS STRING ->
   CASE
     WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val
-    ELSE LEFT(val, 50) || ' ... [INFORMACION COMERCIAL RESTRINGIDA POR POLITICA DE PRIVACIDAD]'
+    ELSE LEFT(val, 50) || ' ... [INFORMACIÓN COMERCIAL RESTRINGIDA POR POLÍTICA DE PRIVACIDAD]'
   END;
 
--- Asociacion a las columnas
+-- Asociación a las columnas
 ALTER TABLE CLIENTE      MODIFY COLUMN NomCliente    SET MASKING POLICY mp_nombre;
 ALTER TABLE CLIENTE      MODIFY COLUMN ApeCliente    SET MASKING POLICY mp_nombre;
 ALTER TABLE CLIENTE      MODIFY COLUMN FecNacimiento SET MASKING POLICY mp_fecnac;
@@ -279,7 +279,7 @@ LIMIT 10;
 -- Cambiamos de rol
 USE ROLE ANALISTA_COMERCIAL;
 
--- Misma query: ahora los datos estan enmascarados
+-- Misma query: ahora los datos están enmascarados
 SELECT c.IdCliente, c.NomCliente, c.ApeCliente, c.FecNacimiento, c.Email, c.Genero, c.NivelLealtad,
        l.IdLinea, l.NomProducto, LEFT(l.DesResena, 200) AS DesResena_Preview
 FROM CLIENTE c
@@ -298,22 +298,22 @@ USE ROLE ACCOUNTADMIN;
 -- 1. Resolver preguntas con LLMs sin APIs
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
   'claude-sonnet-4-5',
-  'Resume en 5 puntos las ventajas de usar Snowflake Cortex AI para una cadena de retail FMCG como SuperPlus. (entrega el resultado con salto de linea)'
+  'Resume en 5 puntos las ventajas de usar Snowflake Cortex AI para una cadena de retail FMCG como SuperPlus. (entrega el resultado con salto de línea)'
 ) AS respuesta;
 
--- 2. Resumir resenas con COMPLETE
+-- 2. Resumir reseñas con COMPLETE
 SELECT
   IdLinea,
   NomProducto,
   LEFT(DesResena, 100) AS preview,
   SNOWFLAKE.CORTEX.COMPLETE(
     'openai-gpt-5.1',
-    CONCAT('Resume en maximo 5 palabras la siguiente resena de cliente: ', DesResena)
+    CONCAT('Resume en máximo 5 palabras la siguiente reseña de cliente: ', DesResena)
   ) AS resumen_resena
 FROM LINEA_TICKET
 SAMPLE (10 ROWS);
 
--- 3. Valoracion comercial multi-aspecto con LLM
+-- 3. Valoración comercial multi-aspecto con LLM
 SELECT
   IdLinea,
   NomProducto,
@@ -321,7 +321,7 @@ SELECT
   SNOWFLAKE.CORTEX.COMPLETE(
     'openai-gpt-4.1',
     CONCAT(
-      'Evalua la siguiente resena en escala 1-5 para: satisfaccion, calidad_percibida, intencion_recompra y servicio. Responde solo en JSON con el formato {satisfaccion:N,calidad_percibida:N,intencion_recompra:N,servicio:N}. Texto: ',
+      'Evalúa la siguiente reseña en escala 1-5 para: satisfaccion, calidad_percibida, intencion_recompra y servicio. Responde solo en JSON con el formato {satisfaccion:N,calidad_percibida:N,intencion_recompra:N,servicio:N}. Texto: ',
       LEFT(DesResena, 1500)
     )
   ) AS valoracion
@@ -329,27 +329,27 @@ FROM LINEA_TICKET
 SAMPLE (10 ROWS);
 
 
--- 4. AI_AGG: insight agregado sobre multiples resenas
+-- 4. AI_AGG: insight agregado sobre múltiples reseñas
 SELECT
   AI_AGG(
     DesResena,
-    'Resume en 3 bullets los temas mas frecuentes que mencionan los clientes: que les gusta, que critican y oportunidades de mejora'
+    'Resume en 3 bullets los temas más frecuentes que mencionan los clientes: qué les gusta, qué critican y oportunidades de mejora'
   ) AS insight
 FROM LINEA_TICKET SAMPLE (100 ROWS)
 WHERE FechaResena >= '2026-01-01';
 
--- 5. AI_EXTRACT: estructurar informacion de la resena
+-- 5. AI_EXTRACT: estructurar información de la reseña
 SELECT
   IdLinea,
   AI_EXTRACT(
     text => DesResena,
     responseFormat => [
-      ['canal_compra',         'En que canal realizo la compra el cliente?'],
-      ['promocion_aplicada',   'Menciona alguna promocion o descuento?'],
-      ['nivel_satisfaccion',   'Cual es el nivel de satisfaccion percibido (alto, medio, bajo)?'],
-      ['recomendaria',         'El cliente recomendaria el producto?'],
-      ['quejas',               'Que quejas o problemas menciona el cliente?'],
-      ['atributos_producto',   'Que atributos del producto destaca el cliente?']
+      ['canal_compra',         '¿En qué canal realizó la compra el cliente?'],
+      ['promocion_aplicada',   '¿Menciona alguna promoción o descuento?'],
+      ['nivel_satisfaccion',   '¿Cuál es el nivel de satisfacción percibido (alto, medio, bajo)?'],
+      ['recomendaria',         '¿El cliente recomendaría el producto?'],
+      ['quejas',               '¿Qué quejas o problemas menciona el cliente?'],
+      ['atributos_producto',   '¿Qué atributos del producto destaca el cliente?']
     ]
   ) AS estructurado
 FROM LINEA_TICKET
@@ -364,8 +364,8 @@ SAMPLE (3 ROWS);
 
 
 /* ************************************ PARTE 7B ***********************************************
-   Datos no estructurados - PDFs, imagenes y audio procesados con Cortex AI.
-   Bucket: s3://demosjparrado/retail_hol/archivos/  (10 archivos sinteticos)
+   Datos no estructurados - PDFs, imágenes y audio procesados con Cortex AI.
+   Bucket: s3://demosjparrado/retail_hol/archivos/  (archivos sintéticos)
 ******************************************************************************************** */
 USE ROLE ACCOUNTADMIN;
 USE DATABASE DB_HOL_RETAIL; USE SCHEMA PUBLIC; USE WAREHOUSE WH_HOL_RETAIL;
@@ -388,12 +388,12 @@ SELECT AI_PARSE_DOCUMENT(
 SELECT TO_VARCHAR(AI_EXTRACT(
   file => TO_FILE('@STG_ARCHIVOS_RETAIL','factura_001.pdf'),
   responseFormat => [
-    ['numero_factura',  'Numero de la factura'],
+    ['numero_factura',  'Número de la factura'],
     ['fecha',           'Fecha de la factura'],
     ['cliente_nombre',  'Nombre completo del cliente'],
     ['tienda',          'Nombre o sucursal de la tienda'],
     ['total_pagado',    'Monto total pagado'],
-    ['metodo_pago',     'Metodo de pago utilizado'],
+    ['metodo_pago',     'Método de pago utilizado'],
     ['productos',       'Lista de productos comprados'],
     ['promociones',     'Promociones o descuentos aplicados']
   ]
@@ -404,12 +404,12 @@ WITH extraccion AS (
   SELECT AI_EXTRACT(
     file => TO_FILE('@STG_ARCHIVOS_RETAIL','recibo_pos_001.pdf'),
     responseFormat => [
-      ['transaccion_id', 'ID de la transaccion'],
-      ['cajero',         'Nombre o codigo del cajero'],
+      ['transaccion_id', 'ID de la transacción'],
+      ['cajero',         'Nombre o código del cajero'],
       ['subtotal',       'Subtotal antes de impuestos'],
       ['iva',            'Valor del IVA'],
       ['total',          'Valor total'],
-      ['items_count',    'Cantidad total de items'],
+      ['items_count',    'Cantidad total de ítems'],
       ['descuento',      'Descuento aplicado']
     ]
   ) AS resultado
@@ -427,23 +427,23 @@ FROM extraccion;
 -- 4. AI_COMPLETE multimodal con pixtral-large sobre etiqueta de producto
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
   'pixtral-large',
-  PROMPT('Extrae la informacion nutricional y de marca de esta etiqueta de producto: marca, nombre del producto, peso/volumen, calorias por porcion, fecha de vencimiento. {0}',
+  PROMPT('Extrae la información nutricional y de marca de esta etiqueta de producto: marca, nombre del producto, peso/volumen, calorías por porción, fecha de vencimiento. {0}',
          TO_FILE('@STG_ARCHIVOS_RETAIL','etiqueta_producto_001.png'))
 ) AS etiqueta_datos;
 
--- 5. AI_COMPLETE sobre cupon - extraer codigo + descuento
+-- 5. AI_COMPLETE sobre cupón - extraer código + descuento
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
   'claude-opus-4-5',
-  PROMPT('Lee este cupon de descuento y devuelve en JSON: codigo_cupon, porcentaje_descuento, fecha_vigencia, condiciones, productos_aplicables. {0}',
+  PROMPT('Lee este cupón de descuento y devuelve en JSON: codigo_cupon, porcentaje_descuento, fecha_vigencia, condiciones, productos_aplicables. {0}',
          TO_FILE('@STG_ARCHIVOS_RETAIL','cupon_descuento_001.png'))
-) AS cupon_meds;
+) AS cupon_datos;
 
 -- 6. AI_TRANSCRIBE: transcribir audio de servicio al cliente
 SELECT TO_VARCHAR(AI_TRANSCRIBE(
   TO_FILE('@STG_ARCHIVOS_RETAIL','consulta_servicio_001.mp3')
 )) AS transcripcion;
 
--- 7. AI_TRANSCRIBE: transcribir reclamo + analisis de sentimiento
+-- 7. AI_TRANSCRIBE: transcribir reclamo + análisis de sentimiento
 WITH transcripcion AS (
     SELECT AI_TRANSCRIBE(
       TO_FILE('@STG_ARCHIVOS_RETAIL','reclamo_audio_001.mp3'),
@@ -453,20 +453,20 @@ WITH transcripcion AS (
 SELECT
   resultado,
   AI_SENTIMENT(resultado:text::STRING, ['producto','servicio','tiempo_de_espera','politica_devolucion']) AS sentimiento,
-  SNOWFLAKE.CORTEX.COMPLETE('claude-opus-4-5', PROMPT('Analiza la transcripcion del reclamo y genera 3 recomendaciones priorizadas para servicio al cliente: {0}', resultado:text::STRING))
+  SNOWFLAKE.CORTEX.COMPLETE('claude-opus-4-5', PROMPT('Analiza la transcripción del reclamo y genera 3 recomendaciones priorizadas para servicio al cliente: {0}', resultado:text::STRING))
 FROM transcripcion;
 
 
 
 
 /* ************************************ PARTE 8 ************************************************
-   Cortex Search - busqueda semantica sobre las resenas.
+   Cortex Search - búsqueda semántica sobre las reseñas.
    Construimos una vista enriquecida con contexto (ticket + promos) y la indexamos.
 ******************************************************************************************** */
 
 ALTER WAREHOUSE WH_HOL_RETAIL SET WAREHOUSE_SIZE = 'MEDIUM';
 
--- Vista enriquecida (limitamos para que la indexacion del HOL sea agil)
+-- Vista enriquecida (limitamos para que la indexación del HOL sea ágil)
 CREATE OR REPLACE TABLE T_RESENAS_ENRIQUECIDAS AS
 SELECT
   l.IdLinea,
@@ -487,11 +487,11 @@ WHERE l.FechaResena >= DATEADD(year, -1, CURRENT_DATE())
 GROUP BY ALL
 LIMIT 50000;
 
--- Podemos hacer el cortex search por codigo o por UI
+-- Podemos crear el Cortex Search por código o por la UI
 
--- Cortex Search Service via SQL
+-- Cortex Search Service vía SQL
 CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_RESENAS
-  ON Texto -- campo para hacer el search
+  ON Texto -- campo para hacer la búsqueda
   ATTRIBUTES Esquema, CanalVenta, NomTienda, NomProducto, Categoria, FechaResena, Promociones, IdLinea, IdCliente
   WAREHOUSE = WH_HOL_RETAIL
   TARGET_LAG = '1 hour'
@@ -504,11 +504,11 @@ CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_RESENAS
 -- Verifica el estado
 SHOW CORTEX SEARCH SERVICES LIKE 'CSS_RESENAS';
 
--- Demo de busqueda semantica
+-- Demo de búsqueda semántica
 SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
   'DB_HOL_RETAIL.PUBLIC.CSS_RESENAS',
   '{
-     "query": "clientes con queja de cadena de frio o producto vencido",
+     "query": "clientes con queja de cadena de frío o producto vencido",
      "columns": ["IdLinea","FechaResena","NomProducto","Categoria","CanalVenta","NomTienda","Texto"],
      "limit": 5
    }'
@@ -565,56 +565,56 @@ FROM LINEA_TICKET l
 JOIN TICKET t ON t.IdTicket = l.IdTicket
 GROUP BY 1,2,3;
 
--- Vamos a ver las tablas dinamicas en el catalogo.
--- Una automatizacion facil y muy potente sin necesidad de ETLs/ELTs
+-- Vamos a ver las tablas dinámicas en el catálogo.
+-- Una automatización fácil y muy potente sin necesidad de ETLs/ELTs
 
 
 /* ************************************ PARTE 11 ***********************************************
    Snowflake Intelligence - Agente con Cortex Search + Cortex Analyst.
 --------------------------------------------------------------------------------------------
-   Pasos en la UI (no se hacen via SQL, sigue las instrucciones):
+   Pasos en la UI (no se hacen vía SQL, sigue las instrucciones):
 
    1. AI & ML  ->  Snowflake Intelligence  ->  + Crear agente
       Nombre: AGT_RETAIL
       DB/Schema: DB_HOL_RETAIL.PUBLIC
    2. Tools  ->  Add tool
-        - Cortex Search  -> CSS_RESENAS  (busca en resenas de clientes)
-        - Cortex Analyst -> SV_RETAIL    (responde con metricas / SQL)
+        - Cortex Search  -> CSS_RESENAS  (busca en reseñas de clientes)
+        - Cortex Analyst -> SV_RETAIL    (responde con métricas / SQL)
    3. Orchestrator instructions (ejemplo):
-        "Eres asistente comercial de SuperPlus. Cuando preguntan metricas de ventas,
-         tickets, clientes o productos usa Cortex Analyst.
-         Cuando preguntan por experiencia del cliente, opiniones o busquedas en
-         resenas, usa Cortex Search.
-         Cita siempre los IdLinea, NomProducto o las dimensiones usadas. Responde en espanol."
+        "Eres asistente comercial de SuperPlus. Cuando preguntan métricas de ventas,
+         tickets, clientes o productos, usa Cortex Analyst.
+         Cuando preguntan por experiencia del cliente, opiniones o búsquedas en
+         reseñas, usa Cortex Search.
+         Cita siempre los IdLinea, NomProducto o las dimensiones usadas. Responde en español."
    4. Response instructions (ejemplo):
         "Genera sugerencias de preguntas para permitirle al usuario continuar
-         profundizando el analisis. Todo el contenido generado, incluyendo el
-         razonamiento paso a paso, debe ser en espanol."
+         profundizando el análisis. Todo el contenido generado, incluyendo el
+         razonamiento paso a paso, debe ser en español."
    5. En Access, agrega el rol "ANALISTA_COMERCIAL"
    6. Pruebas con rol ACCOUNTADMIN (ve todo el detalle):
-        - Cuantos tickets por canal de venta tuvimos en 2026?
-        - Top 5 promociones aplicadas del ano
-        - Muestrame resenas con queja de cadena de frio o producto vencido
-        - Que producto tiene mejor sentimiento de cliente este mes?
+        - ¿Cuántos tickets por canal de venta tuvimos en 2026?
+        - Top 5 promociones aplicadas del año
+        - Muéstrame reseñas con queja de cadena de frío o producto vencido
+        - ¿Qué producto tiene mejor sentimiento de cliente este mes?
         - Dame el nombre de los 10 clientes con mayor monto comprado en 2026
-   7. **Cambia de rol y repite la ultima pregunta**:
-        Vuelve al agente y repite "Dame el nombre de los 10 clientes con mayor monto comprado en 2026"
-        La respuesta no incluira los datos sensibles que estan bajo el gobierno definido.
+   7. **Cambia de rol y repite la última pregunta**:
+        Vuelve al agente y repite "Dame el nombre de los 10 clientes con mayor monto comprado en 2026".
+        La respuesta no incluirá los datos sensibles que están bajo el gobierno definido.
 
 ******************************************************************************************** */
 
 
 /* ************************************ PARTE 12 ***********************************************
-   Con COCO todo es aun mas FACIL y RAPIDO!!
+   Con CoCo todo es aún más FÁCIL y RÁPIDO!!
 --------------------------------------------------------------------------------------------
 
-   Ejercicio: Creacion de un modelo de ML en segundos:
+   Ejercicio: Creación de un modelo de ML en segundos.
 
    PROMPT:
    Crea un notebook para realizar un modelo de ML que me permita predecir el
-   ticket promedio de un cliente y estimar la demanda mensual por categoria.
-   Realiza analisis EDA, incluye graficos, descripcion de los resultados y
-   genera 3 experimientos para elegir el mejor modelo. Crea un feature store
+   ticket promedio de un cliente y estimar la demanda mensual por categoría.
+   Realiza análisis EDA, incluye gráficos, descripción de los resultados y
+   genera 3 experimentos para elegir el mejor modelo. Crea un feature store
    y 2 versiones del modelo.
 
 ******************************************************************************************** */

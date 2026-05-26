@@ -1,5 +1,5 @@
 name: SV_RETAIL
-description: Modelo semantico SuperPlus Retail - clientes, tickets, lineas y promociones
+description: Modelo semántico SuperPlus Retail - clientes, tickets, líneas y promociones
 tables:
   - name: cliente
     base_table:
@@ -17,12 +17,12 @@ tables:
       - name: genero
         expr: Genero
         data_type: VARCHAR
-        synonyms: [genero, sexo]
+        synonyms: [género, sexo]
         sample_values: [Femenino, Masculino, Indeterminado]
       - name: ciudad
         expr: Ciudad
         data_type: VARCHAR
-        synonyms: [ciudad, ubicacion]
+        synonyms: [ciudad, ubicación]
       - name: nivel_lealtad
         expr: NivelLealtad
         data_type: VARCHAR
@@ -31,7 +31,7 @@ tables:
       - name: edad
         expr: DATEDIFF(year, FecNacimiento, CURRENT_DATE())
         data_type: NUMBER
-        synonyms: [anos]
+        synonyms: [años]
       - name: bucket_edad
         expr: |
           CASE
@@ -47,7 +47,7 @@ tables:
         expr: COUNT(DISTINCT IdCliente)
         data_type: NUMBER
         default_aggregation: count_distinct
-        description: Clientes unicos
+        description: Clientes únicos
 
   - name: ticket
     base_table:
@@ -69,7 +69,7 @@ tables:
         expr: CanalVenta
         data_type: VARCHAR
         synonyms: [canal, canal de venta]
-        sample_values: [Tienda Fisica, App Movil, Web, Domicilio, Marketplace]
+        sample_values: [Tienda Física, App Móvil, Web, Domicilio, Marketplace]
       - name: estado
         expr: EstadoTicket
         data_type: VARCHAR
@@ -81,7 +81,7 @@ tables:
       - name: anio_compra
         expr: YEAR(FecCompra)
         data_type: NUMBER
-        synonyms: [ano]
+        synonyms: [año]
       - name: mes_compra
         expr: DATE_TRUNC('month', FecCompra)
         data_type: TIMESTAMP_NTZ
@@ -111,7 +111,7 @@ tables:
         expr: AVG(DATEDIFF(day, FecCompra, FecEntrega))
         data_type: NUMBER
         default_aggregation: avg
-        description: Dias promedio entre compra y entrega
+        description: Días promedio entre compra y entrega
 
   - name: linea
     base_table:
@@ -120,7 +120,7 @@ tables:
       table: LINEA_TICKET
     primary_key:
       columns: [IdLinea]
-    description: Items (SKUs) comprados en cada ticket con resena del cliente
+    description: Ítems (SKUs) comprados en cada ticket con reseña del cliente
     dimensions:
       - name: idlinea
         expr: IdLinea
@@ -132,11 +132,11 @@ tables:
       - name: producto
         expr: NomProducto
         data_type: VARCHAR
-        synonyms: [producto, sku, articulo]
+        synonyms: [producto, sku, artículo]
       - name: categoria
         expr: Categoria
         data_type: VARCHAR
-        synonyms: [categoria, familia]
+        synonyms: [categoría, familia]
       - name: esquema
         expr: Esquema
         data_type: VARCHAR
@@ -161,7 +161,7 @@ tables:
       database: DB_HOL_RETAIL
       schema: PUBLIC
       table: PROMO_APLICADA
-    description: Promociones aplicadas a las lineas
+    description: Promociones aplicadas a las líneas
     dimensions:
       - name: idlinea
         expr: IdLinea
@@ -169,11 +169,11 @@ tables:
       - name: nombre
         expr: NomPromo
         data_type: VARCHAR
-        synonyms: [promocion, oferta, descuento]
+        synonyms: [promoción, oferta, descuento]
       - name: codigo
         expr: CodPromo
         data_type: VARCHAR
-        synonyms: [codigo promo, sku promo]
+        synonyms: [código promo, sku promo]
       - name: principal
         expr: IndPrincipal
         data_type: NUMBER
@@ -214,7 +214,7 @@ relationships:
 
 verified_queries:
   - name: tickets_por_canal_2026
-    question: Cuantos tickets por canal de venta tuvimos en 2026?
+    question: ¿Cuántos tickets por canal de venta tuvimos en 2026?
     sql: |
       SELECT CanalVenta, COUNT(*) AS tickets
       FROM DB_HOL_RETAIL.PUBLIC.TICKET
@@ -222,7 +222,7 @@ verified_queries:
       GROUP BY 1 ORDER BY 2 DESC
 
   - name: top_promociones
-    question: Top 10 promociones mas aplicadas
+    question: Top 10 promociones más aplicadas
     sql: |
       SELECT NomPromo, CodPromo, COUNT(*) AS frecuencia
       FROM DB_HOL_RETAIL.PUBLIC.PROMO_APLICADA
@@ -230,13 +230,13 @@ verified_queries:
       GROUP BY 1,2 ORDER BY 3 DESC LIMIT 10
 
   - name: clientes_por_lealtad
-    question: Distribucion de clientes por nivel de lealtad
+    question: Distribución de clientes por nivel de lealtad
     sql: |
       SELECT NivelLealtad, COUNT(DISTINCT IdCliente) AS clientes
       FROM DB_HOL_RETAIL.PUBLIC.CLIENTE GROUP BY 1 ORDER BY 2 DESC
 
   - name: ventas_por_mes_y_canal
-    question: Ventas mensuales por canal y genero del ultimo ano
+    question: Ventas mensuales por canal y género del último año
     sql: |
       SELECT DATE_TRUNC('month', t.FecCompra) AS mes,
              t.CanalVenta,
