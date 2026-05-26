@@ -447,7 +447,16 @@ SELECT TO_VARCHAR(AI_TRANSCRIBE(
   TO_FILE('@STG_ARCHIVOS_RETAIL','consulta_servicio_001.mp3')
 )) AS transcripcion;
 
--- 7. AI_TRANSCRIBE: transcribir reclamo + análisis de sentimiento
+-- 7. AI_COMPLETE multimodal: análisis de góndola / visual merchandising
+--    Pasamos una foto de tienda a un modelo de visión y pedimos un análisis
+--    estructurado con recomendaciones para mejorar la exhibición.
+SELECT SNOWFLAKE.CORTEX.COMPLETE(
+  'pixtral-large',
+  PROMPT('Eres un experto en visual merchandising y trade marketing para retail FMCG. Analiza esta foto de una góndola / exhibición de tienda y devuelve un JSON con: 1) estado_general (ordenado/desordenado), 2) categorias_detectadas, 3) problemas_visuales (lista: producto fuera de lugar, sobre-stock, faltantes, falta de etiquetado, mezcla de categorías, etc.), 4) impacto_estimado_ventas (alto/medio/bajo con justificación), 5) recomendaciones_priorizadas (3 acciones concretas para mejorar la visualización y la experiencia del comprador). Responde solo en JSON y en español. {0}',
+         TO_FILE('@STG_ARCHIVOS_RETAIL','producto_foto_001.jpg'))
+) AS analisis_gondola;
+
+-- 8. AI_TRANSCRIBE: transcribir reclamo + análisis de sentimiento
 WITH transcripcion AS (
     SELECT AI_TRANSCRIBE(
       TO_FILE('@STG_ARCHIVOS_RETAIL','reclamo_audio_001.mp3'),
