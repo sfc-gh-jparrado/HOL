@@ -311,7 +311,7 @@ SELECT
     CONCAT('Resume en máximo 5 palabras la siguiente reseña de cliente: ', DesResena)
   ) AS resumen_resena
 FROM LINEA_TICKET
-SAMPLE (10 ROWS);
+LIMIT 10;
 
 -- 3. Valoración comercial multi-aspecto con LLM
 SELECT
@@ -326,7 +326,7 @@ SELECT
     )
   ) AS valoracion
 FROM LINEA_TICKET
-SAMPLE (10 ROWS);
+LIMIT 10;
 
 
 -- 4. AI_AGG: insight agregado sobre múltiples reseñas
@@ -335,8 +335,12 @@ SELECT
     DesResena,
     'Resume en 3 bullets los temas más frecuentes que mencionan los clientes: qué les gusta, qué critican y oportunidades de mejora'
   ) AS insight
-FROM LINEA_TICKET SAMPLE (100 ROWS)
-WHERE FechaResena >= '2026-01-01';
+FROM (
+  SELECT DesResena
+  FROM LINEA_TICKET
+  WHERE FechaResena >= '2026-01-01'
+  LIMIT 100
+);
 
 -- 5. AI_EXTRACT: estructurar información de la reseña
 SELECT
@@ -353,14 +357,14 @@ SELECT
     ]
   ) AS estructurado
 FROM LINEA_TICKET
-SAMPLE (5 ROWS);
+LIMIT 5;
 
 -- 6. AI_TRANSLATE
 SELECT
   IdLinea,
   SNOWFLAKE.CORTEX.AI_TRANSLATE(LEFT(DesResena, 400), 'es', 'en') AS translation
 FROM LINEA_TICKET
-SAMPLE (3 ROWS);
+LIMIT 3;
 
 
 /* ************************************ PARTE 7B ***********************************************
