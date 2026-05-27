@@ -521,7 +521,7 @@ SHOW CORTEX SEARCH SERVICES LIKE 'CSS_RESENAS';
 SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
   'DB_HOL_RETAIL.PUBLIC.CSS_RESENAS',
   '{
-     "query": "clientes con queja de cadena de frío o producto vencido",
+     "query": "quejas mala experiencia",
      "columns": ["IdLinea","FechaResena","NomProducto","Categoria","CanalVenta","NomTienda","Texto"],
      "limit": 5
    }'
