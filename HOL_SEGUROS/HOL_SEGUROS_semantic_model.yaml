@@ -1,0 +1,275 @@
+name: SV_SEGUROS
+description: Modelo semántico SeguroPlus - asegurados, pólizas, siniestros y coberturas (multi-ramo)
+tables:
+  - name: asegurado
+    base_table:
+      database: DB_HOL_SEGUROS
+      schema: PUBLIC
+      table: ASEGURADO
+    primary_key:
+      columns: [IdAsegurado]
+    description: Asegurados (clientes / tomadores) de SeguroPlus
+    dimensions:
+      - name: idasegurado
+        expr: IdAsegurado
+        data_type: NUMBER
+        unique: true
+      - name: genero
+        expr: Genero
+        data_type: VARCHAR
+        synonyms: [género, sexo]
+        sample_values: [Femenino, Masculino, Indeterminado]
+      - name: ciudad
+        expr: Ciudad
+        data_type: VARCHAR
+        synonyms: [ciudad, ubicación]
+      - name: ocupacion
+        expr: OcupacionRiesgo
+        data_type: VARCHAR
+        synonyms: [ocupación, oficio, riesgo laboral]
+      - name: edad
+        expr: DATEDIFF(year, FecNacimiento, CURRENT_DATE())
+        data_type: NUMBER
+        synonyms: [años]
+      - name: bucket_edad
+        expr: |
+          CASE
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 30 THEN 'joven'
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 45 THEN 'adulto joven'
+            WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 65 THEN 'adulto'
+            ELSE 'adulto mayor'
+          END
+        data_type: VARCHAR
+    measures:
+      - name: num_asegurados
+        expr: COUNT(DISTINCT IdAsegurado)
+        data_type: NUMBER
+        default_aggregation: count_distinct
+        description: Asegurados únicos
+
+  - name: poliza
+    base_table:
+      database: DB_HOL_SEGUROS
+      schema: PUBLIC
+      table: POLIZA
+    primary_key:
+      columns: [IdPoliza]
+    description: Pólizas / contratos de seguro emitidos
+    dimensions:
+      - name: idpoliza
+        expr: IdPoliza
+        data_type: NUMBER
+        unique: true
+      - name: idasegurado
+        expr: IdAsegurado
+        data_type: NUMBER
+      - name: ramo
+        expr: Ramo
+        data_type: VARCHAR
+        synonyms: [ramo, línea de negocio]
+        sample_values: [Vida Individual, Vida Grupo, Auto Todo Riesgo, SOAT, Hogar, Salud Voluntaria, Accidentes Personales, Responsabilidad Civil]
+      - name: tipo_plan
+        expr: TipoPlan
+        data_type: VARCHAR
+        synonyms: [plan, paquete]
+        sample_values: [Basico, Estandar, Plus, Premium, Elite]
+      - name: canal
+        expr: Canal
+        data_type: VARCHAR
+        synonyms: [canal de venta]
+        sample_values: [Broker, Digital, Sucursal, Call Center, Bancaseguros]
+      - name: estado
+        expr: EstadoPoliza
+        data_type: VARCHAR
+        synonyms: [estado de la póliza]
+      - name: anio_emision
+        expr: YEAR(FecEmision)
+        data_type: NUMBER
+        synonyms: [año emisión]
+    time_dimensions:
+      - name: fec_emision
+        expr: FecEmision
+        data_type: TIMESTAMP_NTZ
+      - name: fec_vigencia_ini
+        expr: FecVigenciaIni
+        data_type: TIMESTAMP_NTZ
+      - name: fec_vigencia_fin
+        expr: FecVigenciaFin
+        data_type: TIMESTAMP_NTZ
+    measures:
+      - name: num_polizas
+        expr: COUNT(IdPoliza)
+        data_type: NUMBER
+        default_aggregation: count
+      - name: prima_total
+        expr: SUM(ValorPrima)
+        data_type: NUMBER
+        default_aggregation: sum
+        description: Prima total emitida
+      - name: prima_promedio
+        expr: AVG(ValorPrima)
+        data_type: NUMBER
+        default_aggregation: avg
+        description: Prima promedio en COP
+
+  - name: siniestro
+    base_table:
+      database: DB_HOL_SEGUROS
+      schema: PUBLIC
+      table: SINIESTRO
+    primary_key:
+      columns: [IdSiniestro]
+    description: Siniestros reportados sobre las pólizas
+    dimensions:
+      - name: idsiniestro
+        expr: IdSiniestro
+        data_type: NUMBER
+        unique: true
+      - name: idpoliza
+        expr: IdPoliza
+        data_type: NUMBER
+      - name: tipo_siniestro
+        expr: TipoSiniestro
+        data_type: VARCHAR
+        synonyms: [tipo de siniestro, evento]
+      - name: estado_siniestro
+        expr: EstadoSiniestro
+        data_type: VARCHAR
+        synonyms: [estado del siniestro]
+      - name: esquema
+        expr: Esquema
+        data_type: VARCHAR
+        synonyms: [tipo de registro]
+        sample_values: [REPORTE, PERITAJE, CIERRE]
+    time_dimensions:
+      - name: fec_ocurrencia
+        expr: FecOcurrencia
+        data_type: TIMESTAMP_NTZ
+      - name: fec_reporte
+        expr: FecReporte
+        data_type: TIMESTAMP_NTZ
+    measures:
+      - name: num_siniestros
+        expr: COUNT(IdSiniestro)
+        data_type: NUMBER
+        default_aggregation: count
+      - name: monto_estimado_total
+        expr: SUM(MontoEstimado)
+        data_type: NUMBER
+        default_aggregation: sum
+        description: Monto total estimado de siniestros
+      - name: monto_estimado_prom
+        expr: AVG(MontoEstimado)
+        data_type: NUMBER
+        default_aggregation: avg
+      - name: dias_reporte_prom
+        expr: AVG(DATEDIFF(day, FecOcurrencia, FecReporte))
+        data_type: NUMBER
+        default_aggregation: avg
+        description: Días promedio entre ocurrencia y reporte
+
+  - name: cobertura
+    base_table:
+      database: DB_HOL_SEGUROS
+      schema: PUBLIC
+      table: COBERTURA_USADA
+    description: Coberturas activadas en cada siniestro
+    dimensions:
+      - name: idsiniestro
+        expr: IdSiniestro
+        data_type: NUMBER
+      - name: nombre
+        expr: NomCobertura
+        data_type: VARCHAR
+        synonyms: [cobertura activada, garantía]
+      - name: codigo
+        expr: CodCobertura
+        data_type: VARCHAR
+        synonyms: [código cobertura]
+      - name: principal
+        expr: IndPrincipal
+        data_type: NUMBER
+        synonyms: [indicador principal]
+    measures:
+      - name: num_coberturas
+        expr: COUNT(*)
+        data_type: NUMBER
+        default_aggregation: count
+      - name: monto_pagado_total
+        expr: SUM(MontoPagado)
+        data_type: NUMBER
+        default_aggregation: sum
+        description: Monto pagado total bajo coberturas
+
+relationships:
+  - name: poliza_asegurado
+    left_table: poliza
+    right_table: asegurado
+    relationship_columns:
+      - left_column: IdAsegurado
+        right_column: IdAsegurado
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: siniestro_poliza
+    left_table: siniestro
+    right_table: poliza
+    relationship_columns:
+      - left_column: IdPoliza
+        right_column: IdPoliza
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: cobertura_siniestro
+    left_table: cobertura
+    right_table: siniestro
+    relationship_columns:
+      - left_column: IdSiniestro
+        right_column: IdSiniestro
+    join_type: inner
+    relationship_type: many_to_one
+
+verified_queries:
+  - name: siniestros_por_ramo_2026
+    question: ¿Cuántos siniestros por ramo tuvimos en 2026?
+    sql: |
+      SELECT p.Ramo, COUNT(s.IdSiniestro) AS siniestros
+      FROM DB_HOL_SEGUROS.PUBLIC.SINIESTRO s
+      JOIN DB_HOL_SEGUROS.PUBLIC.POLIZA p ON p.IdPoliza = s.IdPoliza
+      WHERE YEAR(s.FecOcurrencia) = 2026
+      GROUP BY 1 ORDER BY 2 DESC
+
+  - name: top_tipos_siniestro
+    question: Top 10 tipos de siniestro con mayor monto promedio
+    sql: |
+      SELECT TipoSiniestro, AVG(MontoEstimado) AS monto_prom, COUNT(*) AS frecuencia
+      FROM DB_HOL_SEGUROS.PUBLIC.SINIESTRO
+      GROUP BY 1 ORDER BY 2 DESC LIMIT 10
+
+  - name: ratio_siniestralidad_por_ramo
+    question: Ratio de siniestralidad por ramo (siniestros / primas)
+    sql: |
+      SELECT p.Ramo,
+             SUM(s.MontoEstimado) AS monto_siniestros,
+             SUM(p.ValorPrima)    AS prima_total,
+             ROUND(SUM(s.MontoEstimado) / NULLIF(SUM(p.ValorPrima),0), 4) AS ratio
+      FROM DB_HOL_SEGUROS.PUBLIC.POLIZA p
+      LEFT JOIN DB_HOL_SEGUROS.PUBLIC.SINIESTRO s ON s.IdPoliza = p.IdPoliza
+      GROUP BY 1 ORDER BY ratio DESC
+
+  - name: prima_por_canal_y_plan
+    question: Prima emitida por canal y plan del último año
+    sql: |
+      SELECT Canal, TipoPlan, SUM(ValorPrima) AS prima
+      FROM DB_HOL_SEGUROS.PUBLIC.POLIZA
+      WHERE FecEmision >= DATEADD(year, -1, CURRENT_DATE())
+      GROUP BY 1, 2 ORDER BY 1, prima DESC
+
+  - name: top_coberturas_pagadas
+    question: Top 10 coberturas con mayor monto pagado
+    sql: |
+      SELECT NomCobertura, CodCobertura,
+             SUM(MontoPagado) AS pagado, COUNT(*) AS uso
+      FROM DB_HOL_SEGUROS.PUBLIC.COBERTURA_USADA
+      WHERE IndPrincipal = 1
+      GROUP BY 1, 2 ORDER BY pagado DESC LIMIT 10
