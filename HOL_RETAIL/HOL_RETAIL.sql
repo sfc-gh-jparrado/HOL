@@ -368,13 +368,17 @@ CREATE OR REPLACE STAGE STG_ARCHIVOS_RETAIL
 
 LIST @STG_ARCHIVOS_RETAIL;
 
--- 1. AI_PARSE_DOCUMENT: extraer texto de una factura PDF
+-- ----------------------------------------------------------------------------
+-- A) DOCUMENTOS (PDF) — texto + extracción estructurada
+-- ----------------------------------------------------------------------------
+
+-- 1. AI_PARSE_DOCUMENT: OCR simple sobre la factura PDF (texto plano)
 SELECT AI_PARSE_DOCUMENT(
   TO_FILE('@STG_ARCHIVOS_RETAIL','factura_001.pdf'),
   {'mode':'OCR'}
 ) AS contenido_pdf;
 
--- 2. AI_EXTRACT sobre PDF de recibo POS - tabla con valores
+-- 2. AI_EXTRACT: extracción estructurada de campos del recibo POS
 WITH extraccion AS (
   SELECT AI_EXTRACT(
     file => TO_FILE('@STG_ARCHIVOS_RETAIL','recibo_pos_001.pdf'),
@@ -399,28 +403,47 @@ SELECT
   resultado:response:descuento::STRING      AS descuento
 FROM extraccion;
 
--- 3. AI_COMPLETE multimodal con pixtral-large sobre etiqueta de producto
+
+-- ----------------------------------------------------------------------------
+-- B) IMÁGENES — multimodal (visión)
+-- ----------------------------------------------------------------------------
+
+-- 3. AI_COMPLETE multimodal con pixtral-large: lectura simple de etiqueta de producto
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
   'pixtral-large',
   PROMPT('Extrae la información nutricional y de marca de esta etiqueta de producto: marca, nombre del producto, peso/volumen, calorías por porción, fecha de vencimiento. {0}',
          TO_FILE('@STG_ARCHIVOS_RETAIL','etiqueta_producto_001.png'))
 ) AS etiqueta_datos;
 
--- 4. AI_COMPLETE sobre cupón - extraer código + descuento
+-- 4. AI_COMPLETE con claude-opus: lectura de cupón con extracción estructurada en JSON
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
   'claude-opus-4-5',
   PROMPT('Lee este cupón de descuento y devuelve en JSON: codigo_cupon, porcentaje_descuento, fecha_vigencia, condiciones, productos_aplicables. {0}',
          TO_FILE('@STG_ARCHIVOS_RETAIL','cupon_descuento_001.png'))
 ) AS cupon_datos;
 
--- 5. AI_TRANSCRIBE: transcribir llamada de venta consultiva / cross-sell
+-- 5. AI_COMPLETE multimodal: análisis de góndola / visual merchandising
+--    Caso de uso avanzado: pasamos una foto de la tienda a un modelo de visión
+--    y pedimos un diagnóstico estructurado con recomendaciones priorizadas.
+SELECT SNOWFLAKE.CORTEX.COMPLETE(
+  'pixtral-large',
+  PROMPT('Eres un experto en visual merchandising y trade marketing para retail FMCG. Analiza esta foto de una góndola / exhibición de tienda y devuelve un JSON con: 1) estado_general (ordenado/desordenado), 2) categorias_detectadas, 3) problemas_visuales (lista: producto fuera de lugar, sobre-stock, faltantes, falta de etiquetado, mezcla de categorías, etc.), 4) impacto_estimado_ventas (alto/medio/bajo con justificación), 5) recomendaciones_priorizadas (3 acciones concretas para mejorar la visualización y la experiencia del comprador). Responde solo en JSON y en español. {0}',
+         TO_FILE('@STG_ARCHIVOS_RETAIL','producto_foto_001.jpg'))
+) AS analisis_gondola;
+
+
+-- ----------------------------------------------------------------------------
+-- C) AUDIO — transcripción + extracción + sentimiento
+-- ----------------------------------------------------------------------------
+
+-- 6. AI_TRANSCRIBE: transcripción simple de una llamada de venta consultiva
 --    Audio: asesor ofreciendo un producto / servicio complementario a un cliente
 SELECT TO_VARCHAR(AI_TRANSCRIBE(
   TO_FILE('@STG_ARCHIVOS_RETAIL','ofreciendo-producto.mp3')
 )) AS transcripcion;
 
--- 5B. AI_TRANSCRIBE + AI_EXTRACT estructurado sobre la llamada de oferta:
---     extraer cliente, producto ofrecido, beneficios, precio, decisión y siguiente paso
+-- 7. AI_TRANSCRIBE + AI_EXTRACT: transcribir y extraer estructura de la llamada
+--    (cliente, asesor, producto, beneficios, precio, decisión, siguiente paso)
 WITH llamada AS (
   SELECT AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_RETAIL','ofreciendo-producto.mp3')):text::STRING AS texto
 )
@@ -437,17 +460,8 @@ SELECT
   ]) AS oferta_estructurada
 FROM llamada;
 
--- 6. AI_COMPLETE multimodal: análisis de góndola / visual merchandising
---    Pasamos una foto de tienda a un modelo de visión y pedimos un análisis
---    estructurado con recomendaciones para mejorar la exhibición.
-SELECT SNOWFLAKE.CORTEX.COMPLETE(
-  'pixtral-large',
-  PROMPT('Eres un experto en visual merchandising y trade marketing para retail FMCG. Analiza esta foto de una góndola / exhibición de tienda y devuelve un JSON con: 1) estado_general (ordenado/desordenado), 2) categorias_detectadas, 3) problemas_visuales (lista: producto fuera de lugar, sobre-stock, faltantes, falta de etiquetado, mezcla de categorías, etc.), 4) impacto_estimado_ventas (alto/medio/bajo con justificación), 5) recomendaciones_priorizadas (3 acciones concretas para mejorar la visualización y la experiencia del comprador). Responde solo en JSON y en español. {0}',
-         TO_FILE('@STG_ARCHIVOS_RETAIL','producto_foto_001.jpg'))
-) AS analisis_gondola;
-
--- 7. AI_TRANSCRIBE: transcribir queja al servicio al cliente +
---    AI_SENTIMENT por aspecto + recomendaciones priorizadas para el equipo de soporte
+-- 8. AI_TRANSCRIBE + AI_SENTIMENT + COMPLETE: queja de servicio al cliente,
+--    sentimiento por aspecto y recomendaciones priorizadas (caso end-to-end)
 WITH transcripcion AS (
     SELECT AI_TRANSCRIBE(
       TO_FILE('@STG_ARCHIVOS_RETAIL','problema-servicio.mp3'),
