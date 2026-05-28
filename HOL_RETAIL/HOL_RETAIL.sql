@@ -149,17 +149,6 @@ SELECT 'PROMO_APLICADA',        COUNT(*)            FROM PROMO_APLICADA;
    Performance & Warehouse Scaling - comparemos tiempos.
 ******************************************************************************************** */
 
--- Query analítica con WH XSMALL (anota el tiempo)
-SELECT
-  DATE_TRUNC('month', FecCompra) AS mes,
-  CanalVenta,
-  COUNT(*) AS tickets,
-  SUM(MontoTotal) AS ventas
-FROM TICKET -- 80 millones de registros
-WHERE FecCompra >= '2025-01-01'
-GROUP BY 1, 2
-ORDER BY 1, ventas DESC;
-
 -- Top 10 productos más vendidos
 SELECT NomProducto, Categoria, COUNT(*) total_lineas, SUM(Cantidad) unidades
 FROM LINEA_TICKET -- 120 millones de registros
@@ -167,28 +156,25 @@ GROUP BY 1, 2
 ORDER BY unidades DESC
 LIMIT 10;
 
--- Top 10 promociones aplicadas
-SELECT NomPromo, CodPromo, COUNT(*) total
-FROM PROMO_APLICADA -- 150 millones de registros
-GROUP BY 1, 2
-ORDER BY total DESC
-LIMIT 10;
-
--- Distribución por género, ciudad y bucket etario
+-- Análisis cruzado de las 4 tablas: top combinaciones
+-- nivel de lealtad x canal x categoría x promoción principal en los últimos 6 meses
 SELECT
-  Genero,
-  Ciudad,
-  CASE
-    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 18  THEN '00-17 menores'
-    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 30  THEN '18-29 jóvenes'
-    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 45  THEN '30-44 adultos jóvenes'
-    WHEN DATEDIFF(year, FecNacimiento, CURRENT_DATE()) < 65  THEN '45-64 adultos'
-    ELSE '65+ adultos mayores'
-  END bucket,
-  COUNT(*) clientes
-FROM CLIENTE -- 30 millones de registros
-GROUP BY 1, 2, 3
-ORDER BY 1, 2, 3;
+  c.NivelLealtad,
+  t.CanalVenta,
+  l.Categoria,
+  p.NomPromo,
+  COUNT(DISTINCT t.IdTicket) AS tickets,
+  SUM(l.Cantidad)            AS unidades,
+  SUM(t.MontoTotal)          AS ventas
+FROM CLIENTE c                 -- 30 millones
+JOIN TICKET t          ON t.IdCliente = c.IdCliente   -- 80 millones
+JOIN LINEA_TICKET l    ON l.IdTicket  = t.IdTicket    -- 120 millones
+JOIN PROMO_APLICADA p  ON p.IdLinea   = l.IdLinea     -- 150 millones
+WHERE t.FecCompra >= DATEADD(month, -6, CURRENT_DATE())
+  AND p.IndPrincipal = 1
+GROUP BY 1, 2, 3, 4
+ORDER BY ventas DESC
+LIMIT 10;
 
 
 
