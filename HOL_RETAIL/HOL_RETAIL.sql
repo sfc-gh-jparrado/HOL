@@ -442,12 +442,32 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE(
          TO_FILE('@STG_ARCHIVOS_RETAIL','cupon_descuento_001.png'))
 ) AS cupon_datos;
 
--- 6. AI_TRANSCRIBE: transcribir audio de servicio al cliente
+-- 6. AI_TRANSCRIBE: transcribir llamada de venta consultiva / cross-sell
+--    Audio: asesor ofreciendo un producto / servicio complementario a un cliente
 SELECT TO_VARCHAR(AI_TRANSCRIBE(
-  TO_FILE('@STG_ARCHIVOS_RETAIL','consulta_servicio_001.mp3')
+  TO_FILE('@STG_ARCHIVOS_RETAIL','ofreciendo-producto.mp3')
 )) AS transcripcion;
 
--- 7. AI_COMPLETE multimodal: análisis de góndola / visual merchandising
+-- 6B. AI_TRANSCRIBE + AI_EXTRACT estructurado sobre la llamada de oferta:
+--     extraer cliente, producto ofrecido, beneficios, precio, decisión y siguiente paso
+WITH llamada AS (
+  SELECT AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_RETAIL','ofreciendo-producto.mp3')):text::STRING AS texto
+)
+SELECT
+  texto,
+  AI_EXTRACT(text => texto, responseFormat => [
+    ['cliente',         '¿Nombre del cliente atendido?'],
+    ['asesor',          '¿Nombre del asesor que llama?'],
+    ['producto_oferta', '¿Qué producto o servicio se le ofrece?'],
+    ['beneficios',      '¿Qué beneficios o coberturas se mencionan?'],
+    ['precio',          '¿Qué precio o tarifa se menciona?'],
+    ['decision_cliente','¿Cuál fue la decisión del cliente?'],
+    ['siguiente_paso',  '¿Cuál es el siguiente paso acordado?']
+  ]) AS oferta_estructurada
+FROM llamada;
+
+-- 7. AI_TRANSCRIBE: transcribir reclamo / queja al servicio al cliente +
+--    AI_SENTIMENT por aspecto + recomendaciones priorizadas para el equipo de soporte
 --    Pasamos una foto de tienda a un modelo de visión y pedimos un análisis
 --    estructurado con recomendaciones para mejorar la exhibición.
 SELECT SNOWFLAKE.CORTEX.COMPLETE(
@@ -459,14 +479,14 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE(
 -- 8. AI_TRANSCRIBE: transcribir reclamo + análisis de sentimiento
 WITH transcripcion AS (
     SELECT AI_TRANSCRIBE(
-      TO_FILE('@STG_ARCHIVOS_RETAIL','reclamo_audio_001.mp3'),
+      TO_FILE('@STG_ARCHIVOS_RETAIL','problema-servicio.mp3'),
       {'timestamp_granularity': 'speaker'}
     ) AS resultado
 )
 SELECT
   resultado,
-  AI_SENTIMENT(resultado:text::STRING, ['producto','servicio','tiempo_de_espera','politica_devolucion']) AS sentimiento,
-  SNOWFLAKE.CORTEX.COMPLETE('claude-opus-4-5', PROMPT('Analiza la transcripción del reclamo y genera 3 recomendaciones priorizadas para servicio al cliente: {0}', resultado:text::STRING))
+  AI_SENTIMENT(resultado:text::STRING, ['servicio','tiempo_de_respuesta','facturacion','retencion_cliente']) AS sentimiento,
+  SNOWFLAKE.CORTEX.COMPLETE('claude-opus-4-5', PROMPT('Analiza la transcripción del reclamo y genera 3 recomendaciones priorizadas para servicio al cliente. Responde en español. {0}', resultado:text::STRING))
 FROM transcripcion;
 
 
