@@ -514,9 +514,60 @@ WHERE l.FechaResena >= DATEADD(year, -1, CURRENT_DATE())
 GROUP BY ALL
 LIMIT 50000;
 
--- Podemos crear el Cortex Search por código o por la UI
+-- Podemos crear el Cortex Search por código o por la UI.
+--
+-- ============================================================================
+-- OPCIÓN A) Crear el servicio CSS_RESENAS desde la UI (Snowsight)
+-- ============================================================================
+-- Estos pasos producen un servicio EQUIVALENTE al CREATE de la OPCIÓN B.
+--
+--  1. Snowsight → menú lateral → AI & ML → Cortex Search.
+--  2. Botón "+ Create" (esquina superior derecha) → "Cortex Search Service".
+--  3. Wizard "Create Cortex Search Service":
+--
+--     Step 1 — Select source data:
+--       - Database:    DB_HOL_RETAIL
+--       - Schema:      PUBLIC
+--       - Table/View:  T_RESENAS_ENRIQUECIDAS
+--       - Click "Next".
+--
+--     Step 2 — Select search column:
+--       - Search column: Texto                (única columna que se indexa para búsqueda semántica)
+--       - Embedding model: snowflake-arctic-embed-m-v1.5  (default; mismo que usa el SQL)
+--       - Click "Next".
+--
+--     Step 3 — Select attribute columns (filtros):
+--       Marcar EXACTAMENTE estas 9 columnas:
+--           Esquema, CanalVenta, NomTienda, NomProducto, Categoria,
+--           FechaResena, Promociones, IdLinea, IdCliente
+--       - Click "Next".
+--
+--     Step 4 — Select columns to include in results:
+--       Dejar las 10 columnas por defecto (todas las de la tabla):
+--           IdLinea, IdCliente, FechaResena, Esquema, CanalVenta, NomTienda,
+--           NomProducto, Categoria, Texto, Promociones
+--       - Click "Next".
+--
+--     Step 5 — Configure service:
+--       - Service name:   CSS_RESENAS
+--       - Database:       DB_HOL_RETAIL
+--       - Schema:         PUBLIC
+--       - Warehouse:      WH_HOL_RETAIL
+--       - Target lag:     1 hour
+--       - Click "Create".
+--
+--  4. Snowsight muestra el detalle del servicio. Esperar 5-10 min hasta que
+--     "Indexing state" pase a ACTIVE y "Source data num rows" muestre 50000.
+--
+--  5. En el mismo detalle, pestaña "Search Playground":
+--       Query:  quejas mala experiencia
+--       → Devuelve los mismos resultados que el SEARCH_PREVIEW del final de
+--         esta parte (mismo embedding, mismos atributos, misma data).
+--
+-- ============================================================================
+-- OPCIÓN B) Crear el servicio CSS_RESENAS vía SQL (equivalente a la UI)
+-- ============================================================================
 
--- Cortex Search Service vía SQL
 CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_RESENAS
   ON Texto -- campo para hacer la búsqueda
   ATTRIBUTES Esquema, CanalVenta, NomTienda, NomProducto, Categoria, FechaResena, Promociones, IdLinea, IdCliente
