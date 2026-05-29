@@ -202,6 +202,7 @@ SELECT COUNT(*) FROM CLIENTE;
 
 -- ----------------------------------------------------------------------------
 -- Time Travel: rollback de un UPDATE "por error" usando AT(OFFSET => -60*10)
+-- o BEFORE(STATEMENT => '<query_id>')
 -- ----------------------------------------------------------------------------
 
 -- Snapshot original: distribución de niveles de lealtad de clientes en Bogota
@@ -211,22 +212,28 @@ FROM CLIENTE WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2;
 -- UPDATE masivo "por error": ascendemos a Diamante a TODOS los clientes de Bogota
 UPDATE CLIENTE SET NivelLealtad='Diamante' WHERE Ciudad='Bogota';
 
+-- Capturamos el QUERY_ID del UPDATE recién ejecutado para el rollback
+SET update_query_id = LAST_QUERY_ID();
+
 -- Confirmamos el daño
 SELECT 'despues_update' AS estado, NivelLealtad, COUNT(*) AS clientes
 FROM CLIENTE WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2 DESC;
 
--- Time Travel: consultar la tabla 10 minutos atrás (sin restaurar todavía)
-SELECT 'time_travel_10min' AS estado, NivelLealtad, COUNT(*) AS clientes
-FROM CLIENTE AT(OFFSET => -60*10)
+-- Time Travel: consultar la tabla justo ANTES del UPDATE (sin restaurar todavía)
+SELECT 'time_travel_before' AS estado, NivelLealtad, COUNT(*) AS clientes
+FROM CLIENTE BEFORE(STATEMENT => $update_query_id)
 WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2 DESC;
 
--- Restauración instantánea: reemplazar la tabla con el snapshot de hace 10 minutos
+-- Restauración instantánea: reemplazar la tabla con el snapshot anterior al UPDATE
 CREATE OR REPLACE TABLE CLIENTE AS
-SELECT * FROM CLIENTE AT(OFFSET => -60*10);
+SELECT * FROM CLIENTE BEFORE(STATEMENT => $update_query_id);
 
 -- Verificamos que la distribución original quedó restaurada
 SELECT 'restaurado' AS estado, NivelLealtad, COUNT(*) AS clientes
 FROM CLIENTE WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2 DESC;
+
+-- Alternativa equivalente con OFFSET (en este caso 10 minutos atrás):
+--   CREATE OR REPLACE TABLE CLIENTE AS SELECT * FROM CLIENTE AT(OFFSET => -60*10);
 
 
 /* ************************************ PARTE 6 ************************************************
