@@ -200,6 +200,35 @@ USE SCHEMA PUBLIC;
 SELECT COUNT(*) FROM CLIENTE;
 
 
+-- ----------------------------------------------------------------------------
+-- Time Travel: rollback de un UPDATE "por error" usando AT(OFFSET => -60*10)
+-- ----------------------------------------------------------------------------
+
+-- Snapshot original: distribución de niveles de lealtad de clientes en Bogota
+SELECT 'antes_update' AS estado, NivelLealtad, COUNT(*) AS clientes
+FROM CLIENTE WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2;
+
+-- UPDATE masivo "por error": ascendemos a Diamante a TODOS los clientes de Bogota
+UPDATE CLIENTE SET NivelLealtad='Diamante' WHERE Ciudad='Bogota';
+
+-- Confirmamos el daño
+SELECT 'despues_update' AS estado, NivelLealtad, COUNT(*) AS clientes
+FROM CLIENTE WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2 DESC;
+
+-- Time Travel: consultar la tabla 10 minutos atrás (sin restaurar todavía)
+SELECT 'time_travel_10min' AS estado, NivelLealtad, COUNT(*) AS clientes
+FROM CLIENTE AT(OFFSET => -60*10)
+WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2 DESC;
+
+-- Restauración instantánea: reemplazar la tabla con el snapshot de hace 10 minutos
+CREATE OR REPLACE TABLE CLIENTE AS
+SELECT * FROM CLIENTE AT(OFFSET => -60*10);
+
+-- Verificamos que la distribución original quedó restaurada
+SELECT 'restaurado' AS estado, NivelLealtad, COUNT(*) AS clientes
+FROM CLIENTE WHERE Ciudad='Bogota' GROUP BY 1, 2 ORDER BY 2 DESC;
+
+
 /* ************************************ PARTE 6 ************************************************
    Masking dinámico condicional por rol - clave para Snowflake Intelligence.
    ACCOUNTADMIN ve todo. ANALISTA_COMERCIAL ve datos enmascarados.
