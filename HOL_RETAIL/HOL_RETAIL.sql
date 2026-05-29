@@ -454,37 +454,34 @@ SELECT TO_VARCHAR(AI_TRANSCRIBE(
   TO_FILE('@STG_ARCHIVOS_RETAIL','ofreciendo-producto.mp3')
 )) AS transcripcion;
 
--- 7. AI_TRANSCRIBE + AI_EXTRACT: transcribir y extraer estructura de la llamada
---    (cliente, asesor, producto, beneficios, precio, decisión, siguiente paso)
-WITH llamada AS (
-  SELECT AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_RETAIL','ofreciendo-producto.mp3')):text::STRING AS texto
+-- 7. CASO END-TO-END sobre 2 audios reales del call center (oferta y queja):
+--    AI_TRANSCRIBE  → texto
+--    AI_SENTIMENT   → sentimiento por aspecto
+--    AI_EXTRACT     → cliente, agente, motivo, monto, decisión
+--    AI_COMPLETE    → coach de Customer Experience (clasificación, prioridad,
+--                     siguiente_accion y riesgo_churn 0-100) en JSON
+WITH llamadas AS (
+  SELECT 'oferta'         AS tipo_llamada,
+         AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_RETAIL','ofreciendo-producto.mp3')):text::STRING AS texto
+  UNION ALL
+  SELECT 'queja_servicio',
+         AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_RETAIL','problema-servicio.mp3')):text::STRING
 )
 SELECT
-  texto,
+  tipo_llamada,
+  LEFT(texto, 120) AS preview,
+  AI_SENTIMENT(texto, ['producto','servicio','precio','retencion_cliente']) AS sentimiento_aspectos,
   AI_EXTRACT(text => texto, responseFormat => [
-    ['cliente',         '¿Nombre del cliente atendido?'],
-    ['asesor',          '¿Nombre del asesor que llama?'],
-    ['producto_oferta', '¿Qué producto o servicio se le ofrece?'],
-    ['beneficios',      '¿Qué beneficios o coberturas se mencionan?'],
-    ['precio',          '¿Qué precio o tarifa se menciona?'],
-    ['decision_cliente','¿Cuál fue la decisión del cliente?'],
-    ['siguiente_paso',  '¿Cuál es el siguiente paso acordado?']
-  ]) AS oferta_estructurada
-FROM llamada;
-
--- 8. AI_TRANSCRIBE + AI_SENTIMENT + COMPLETE: queja de servicio al cliente,
---    sentimiento por aspecto y recomendaciones priorizadas (caso end-to-end)
-WITH transcripcion AS (
-    SELECT AI_TRANSCRIBE(
-      TO_FILE('@STG_ARCHIVOS_RETAIL','problema-servicio.mp3'),
-      {'timestamp_granularity': 'speaker'}
-    ) AS resultado
-)
-SELECT
-  resultado,
-  AI_SENTIMENT(resultado:text::STRING, ['servicio','tiempo_de_respuesta','facturacion','retencion_cliente']) AS sentimiento,
-  SNOWFLAKE.CORTEX.COMPLETE('claude-opus-4-5', PROMPT('Analiza la transcripción del reclamo y genera 3 recomendaciones priorizadas para servicio al cliente. Responde en español. {0}', resultado:text::STRING))
-FROM transcripcion;
+    ['cliente',          '¿Nombre del cliente?'],
+    ['agente',           '¿Nombre del agente / asesor?'],
+    ['motivo',           '¿Cuál es el motivo principal de la llamada?'],
+    ['monto_o_precio',   '¿Se menciona algún monto, tarifa o precio?'],
+    ['decision_cliente', '¿Cuál es la decisión, requerimiento o siguiente paso pedido por el cliente?']
+  ]) AS extraccion,
+  SNOWFLAKE.CORTEX.COMPLETE('claude-opus-4-5',
+    PROMPT('Eres un coach de Customer Experience para una cadena de retail FMCG. Lee esta llamada y devuelve un JSON con: clasificacion (oferta_proactiva | reclamo | consulta), prioridad (alta | media | baja), siguiente_accion (1 sola frase concreta), riesgo_churn (0-100). Responde solo en JSON y en español. Texto: {0}', texto)) AS coach_cx
+FROM llamadas
+ORDER BY tipo_llamada;
 
 
 
