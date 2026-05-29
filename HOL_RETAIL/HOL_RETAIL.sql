@@ -478,7 +478,80 @@ ORDER BY tipo_llamada;
 
 
 
-/* ************************************ PARTE 8 ************************************************
+/* ************************************ PARTE 8 ***********************************************
+   Dynamic Tables - pipeline incremental para KPIs.
+******************************************************************************************** */
+
+CREATE OR REPLACE DYNAMIC TABLE DT_KPI_VENTAS_MENSUAL
+  TARGET_LAG = '1 hour'
+  WAREHOUSE  = WH_HOL_RETAIL
+  AS
+SELECT
+  DATE_TRUNC('month', t.FecCompra)                                          AS mes,
+  t.CanalVenta                                                              AS canal,
+  t.NomTienda                                                               AS tienda,
+  c.Genero                                                                  AS genero,
+  c.NivelLealtad                                                            AS nivel_lealtad,
+  CASE
+    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 18 THEN 'menor'
+    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 30 THEN 'joven'
+    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 45 THEN 'adulto joven'
+    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 65 THEN 'adulto'
+    ELSE 'adulto mayor'
+  END                                                                       AS bucket_edad,
+  COUNT(*)                                                                  AS tickets,
+  COUNT(DISTINCT t.IdCliente)                                               AS clientes_unicos,
+  SUM(t.MontoTotal)                                                         AS ventas_total,
+  AVG(t.MontoTotal)                                                         AS ticket_promedio
+FROM TICKET t
+JOIN CLIENTE c ON c.IdCliente = t.IdCliente
+GROUP BY 1,2,3,4,5,6;
+
+CREATE OR REPLACE DYNAMIC TABLE DT_TOP_PRODUCTOS
+  TARGET_LAG = '1 hour'
+  WAREHOUSE  = WH_HOL_RETAIL
+  AS
+SELECT
+  DATE_TRUNC('month', t.FecCompra)  AS mes,
+  l.NomProducto,
+  l.Categoria,
+  COUNT(*)         AS lineas,
+  SUM(l.Cantidad)  AS unidades_vendidas
+FROM LINEA_TICKET l
+JOIN TICKET t ON t.IdTicket = l.IdTicket
+GROUP BY 1,2,3;
+
+-- Vamos a ver las tablas dinámicas en el catálogo.
+-- Una automatización fácil y muy potente sin necesidad de ETLs/ELTs
+
+
+/* ************************************ PARTE 9 ***********************************************
+   Con CoCo todo es aún más FÁCIL y RÁPIDO!!
+--------------------------------------------------------------------------------------------
+
+   Ejercicio: Creación de un modelo de ML en segundos usando las Dynamic Tables
+   creadas en la PARTE 8 como feature store (KPIs pre-agregados, siempre frescos).
+
+   PROMPT:
+   Crea un notebook que utilice DB_HOL_RETAIL.PUBLIC.DT_KPI_VENTAS_MENSUAL
+   (mes, canal, tienda, género, nivel_lealtad, bucket_edad, tickets,
+   clientes_unicos, ventas_total, ticket_promedio) como feature store y
+   DB_HOL_RETAIL.PUBLIC.DT_TOP_PRODUCTOS (mes, NomProducto, Categoria,
+   lineas, unidades_vendidas) para forecasting de demanda.
+
+   Construye dos modelos de ML:
+     1) Predicción del ticket_promedio mensual por canal y tienda (regresión).
+     2) Forecast de unidades_vendidas por categoría a 3 meses (time series con
+        SNOWFLAKE.ML.FORECAST).
+
+   Realiza análisis EDA con gráficos (estacionalidad, top categorías,
+   distribución de ticket por canal y nivel de lealtad), descripción de los
+   resultados y genera 3 experimentos para elegir el mejor modelo.
+   Crea un feature store sobre las dynamic tables y registra 2 versiones del
+   modelo en el Snowflake Model Registry.
+
+******************************************************************************************** */
+/* ************************************ PARTE 10 ************************************************
    Cortex Search - búsqueda semántica sobre las reseñas.
    Construimos una vista enriquecida con contexto (ticket + promos) y la indexamos.
 ******************************************************************************************** */
@@ -586,7 +659,7 @@ SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
 
 
 
-/* ************************************ PARTE 9 ************************************************
+/* ************************************ PARTE 11 ************************************************
    Cortex Analyst - Semantic View sobre las 4 tablas para text-to-SQL.
 --------------------------------------------------------------------------------------------
    Pasos en la UI (Snowsight) para crear SV_RETAIL y probarlo con Cortex Analyst.
@@ -734,54 +807,7 @@ SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
 
 ******************************************************************************************** */
 
-/* ************************************ PARTE 10 ***********************************************
-   Dynamic Tables - pipeline incremental para KPIs.
-******************************************************************************************** */
-
-CREATE OR REPLACE DYNAMIC TABLE DT_KPI_VENTAS_MENSUAL
-  TARGET_LAG = '1 hour'
-  WAREHOUSE  = WH_HOL_RETAIL
-  AS
-SELECT
-  DATE_TRUNC('month', t.FecCompra)                                          AS mes,
-  t.CanalVenta                                                              AS canal,
-  t.NomTienda                                                               AS tienda,
-  c.Genero                                                                  AS genero,
-  c.NivelLealtad                                                            AS nivel_lealtad,
-  CASE
-    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 18 THEN 'menor'
-    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 30 THEN 'joven'
-    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 45 THEN 'adulto joven'
-    WHEN DATEDIFF(year, c.FecNacimiento, CURRENT_DATE()) < 65 THEN 'adulto'
-    ELSE 'adulto mayor'
-  END                                                                       AS bucket_edad,
-  COUNT(*)                                                                  AS tickets,
-  COUNT(DISTINCT t.IdCliente)                                               AS clientes_unicos,
-  SUM(t.MontoTotal)                                                         AS ventas_total,
-  AVG(t.MontoTotal)                                                         AS ticket_promedio
-FROM TICKET t
-JOIN CLIENTE c ON c.IdCliente = t.IdCliente
-GROUP BY 1,2,3,4,5,6;
-
-CREATE OR REPLACE DYNAMIC TABLE DT_TOP_PRODUCTOS
-  TARGET_LAG = '1 hour'
-  WAREHOUSE  = WH_HOL_RETAIL
-  AS
-SELECT
-  DATE_TRUNC('month', t.FecCompra)  AS mes,
-  l.NomProducto,
-  l.Categoria,
-  COUNT(*)         AS lineas,
-  SUM(l.Cantidad)  AS unidades_vendidas
-FROM LINEA_TICKET l
-JOIN TICKET t ON t.IdTicket = l.IdTicket
-GROUP BY 1,2,3;
-
--- Vamos a ver las tablas dinámicas en el catálogo.
--- Una automatización fácil y muy potente sin necesidad de ETLs/ELTs
-
-
-/* ************************************ PARTE 11 ***********************************************
+/* ************************************ PARTE 12 ***********************************************
    Snowflake Intelligence - Agente con Cortex Search + Cortex Analyst.
 --------------------------------------------------------------------------------------------
    Pasos en la UI (no se hacen vía SQL, sigue las instrucciones):
@@ -816,29 +842,3 @@ GROUP BY 1,2,3;
 ******************************************************************************************** */
 
 
-/* ************************************ PARTE 12 ***********************************************
-   Con CoCo todo es aún más FÁCIL y RÁPIDO!!
---------------------------------------------------------------------------------------------
-
-   Ejercicio: Creación de un modelo de ML en segundos usando las Dynamic Tables
-   creadas en la PARTE 10 como feature store (KPIs pre-agregados, siempre frescos).
-
-   PROMPT:
-   Crea un notebook que utilice DB_HOL_RETAIL.PUBLIC.DT_KPI_VENTAS_MENSUAL
-   (mes, canal, tienda, género, nivel_lealtad, bucket_edad, tickets,
-   clientes_unicos, ventas_total, ticket_promedio) como feature store y
-   DB_HOL_RETAIL.PUBLIC.DT_TOP_PRODUCTOS (mes, NomProducto, Categoria,
-   lineas, unidades_vendidas) para forecasting de demanda.
-
-   Construye dos modelos de ML:
-     1) Predicción del ticket_promedio mensual por canal y tienda (regresión).
-     2) Forecast de unidades_vendidas por categoría a 3 meses (time series con
-        SNOWFLAKE.ML.FORECAST).
-
-   Realiza análisis EDA con gráficos (estacionalidad, top categorías,
-   distribución de ticket por canal y nivel de lealtad), descripción de los
-   resultados y genera 3 experimentos para elegir el mejor modelo.
-   Crea un feature store sobre las dynamic tables y registra 2 versiones del
-   modelo en el Snowflake Model Registry.
-
-******************************************************************************************** */
