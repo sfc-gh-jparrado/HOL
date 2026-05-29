@@ -316,7 +316,7 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE(
   'Resume en 5 puntos las ventajas de usar Snowflake Cortex AI para una cadena de retail FMCG como SuperPlus. (entrega el resultado con salto de línea)'
 ) AS respuesta;
 
--- 2. Resumir reseñas con COMPLETE
+-- 2. Resumir reseñas + valoración comercial multi-aspecto en una sola pasada
 SELECT
   IdLinea,
   NomProducto,
@@ -324,15 +324,7 @@ SELECT
   SNOWFLAKE.CORTEX.COMPLETE(
     'openai-gpt-5.1',
     CONCAT('Resume en máximo 5 palabras la siguiente reseña de cliente: ', DesResena)
-  ) AS resumen_resena
-FROM LINEA_TICKET
-LIMIT 10;
-
--- 3. Valoración comercial multi-aspecto con LLM
-SELECT
-  IdLinea,
-  NomProducto,
-  DesResena,
+  ) AS resumen_resena,
   SNOWFLAKE.CORTEX.COMPLETE(
     'openai-gpt-4.1',
     CONCAT(
@@ -344,7 +336,7 @@ FROM LINEA_TICKET
 LIMIT 10;
 
 
--- 4. AI_AGG: insight agregado sobre múltiples reseñas
+-- 3. AI_AGG: insight agregado sobre múltiples reseñas
 SELECT
   AI_AGG(
     DesResena,
@@ -357,7 +349,7 @@ FROM (
   LIMIT 100
 );
 
--- 5. AI_TRANSLATE
+-- 4. AI_TRANSLATE
 SELECT
   IdLinea,
   SNOWFLAKE.CORTEX.AI_TRANSLATE(LEFT(DesResena, 400), 'es', 'en') AS translation
