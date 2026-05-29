@@ -588,9 +588,151 @@ SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
 
 /* ************************************ PARTE 9 ************************************************
    Cortex Analyst - Semantic View sobre las 4 tablas para text-to-SQL.
-******************************************************************************************** */
+--------------------------------------------------------------------------------------------
+   Pasos en la UI (Snowsight) para crear SV_RETAIL y probarlo con Cortex Analyst.
+   El resultado es equivalente al archivo HOL_RETAIL_semantic_model.yaml del repo.
 
--- Vamos a AI Studio
+   --------------------------------------------------------------------------
+   OPCIÓN A) Crear el Semantic View desde el visual builder de Snowsight
+   --------------------------------------------------------------------------
+
+   1. Snowsight → menú lateral → AI & ML → Studio → Cortex Analyst.
+   2. Botón "+ Create" → "Semantic View" → "Create from scratch".
+   3. Wizard "Create Semantic View":
+
+      Step 1 — Basic info:
+        - Name:        SV_RETAIL
+        - Database:    DB_HOL_RETAIL
+        - Schema:      PUBLIC
+        - Description: Modelo semántico SuperPlus Retail - clientes, tickets,
+                       líneas y promociones
+        - Click "Next".
+
+      Step 2 — Logical tables:
+        Agregar las 4 tablas con sus PK:
+          a) Logical name "cliente"  →  base table DB_HOL_RETAIL.PUBLIC.CLIENTE
+                                         primary key: IDCLIENTE
+          b) Logical name "ticket"   →  base table DB_HOL_RETAIL.PUBLIC.TICKET
+                                         primary key: IDTICKET
+          c) Logical name "linea"    →  base table DB_HOL_RETAIL.PUBLIC.LINEA_TICKET
+                                         primary key: IDLINEA
+          d) Logical name "promo"    →  base table DB_HOL_RETAIL.PUBLIC.PROMO_APLICADA
+                                         (sin PK; tabla de hechos)
+        - Click "Next".
+
+      Step 3 — Relationships (joins N:1):
+          ticket_cliente:  ticket.IDCLIENTE  →  cliente.IDCLIENTE   (many-to-one, inner)
+          linea_ticket:    linea.IDTICKET    →  ticket.IDTICKET     (many-to-one, inner)
+          promo_linea:     promo.IDLINEA     →  linea.IDLINEA       (many-to-one, inner)
+        - Click "Next".
+
+      Step 4 — Dimensions, time dimensions y measures (para cada tabla):
+
+        cliente:
+          dimensions   →  GENERO (synonyms: género, sexo)
+                          CIUDAD
+                          NIVELLEALTAD (synonyms: nivel, tier, programa fidelidad)
+                          edad         (expr: DATEDIFF(year, FECNACIMIENTO, CURRENT_DATE()))
+                          bucket_edad  (expr: CASE menor / joven / adulto joven / adulto / adulto mayor)
+          measures     →  num_clientes  (expr: COUNT(DISTINCT IDCLIENTE))
+
+        ticket:
+          dimensions      →  CANALVENTA, ESTADOTICKET, NOMTIENDA,
+                             anio_compra (YEAR(FECCOMPRA)),
+                             mes_compra  (DATE_TRUNC('month', FECCOMPRA))
+          time_dimensions →  FECCOMPRA, FECENTREGA
+          measures        →  num_tickets       (COUNT(IDTICKET))
+                             ventas_total      (SUM(MONTOTOTAL))
+                             ticket_promedio   (AVG(MONTOTOTAL))
+                             dias_entrega_prom (AVG(DATEDIFF(day, FECCOMPRA, FECENTREGA)))
+
+        linea:
+          dimensions      →  NOMPRODUCTO (synonyms: producto, sku, artículo)
+                             CATEGORIA   (synonyms: categoría, familia)
+                             ESQUEMA     (synonyms: tipo de registro)
+          time_dimensions →  FECHARESENA
+          measures        →  num_lineas (COUNT(IDLINEA))
+                             unidades   (SUM(CANTIDAD))
+
+        promo:
+          dimensions →  NOMPROMO (synonyms: promoción, oferta, descuento)
+                        CODPROMO (synonyms: código promo)
+                        INDPRINCIPAL
+          measures   →  num_promos (COUNT(*))
+        - Click "Next".
+
+      Step 5 — Verified queries (5 ejemplos):
+          a) tickets_por_canal_2026
+             "¿Cuántos tickets por canal de venta tuvimos en 2026?"
+             SELECT CanalVenta, COUNT(*) AS tickets
+             FROM DB_HOL_RETAIL.PUBLIC.TICKET
+             WHERE YEAR(FecCompra)=2026
+             GROUP BY 1 ORDER BY 2 DESC
+
+          b) top_promociones
+             "Top 10 promociones más aplicadas"
+             SELECT NomPromo, CodPromo, COUNT(*) AS frecuencia
+             FROM DB_HOL_RETAIL.PUBLIC.PROMO_APLICADA
+             WHERE IndPrincipal=1
+             GROUP BY 1,2 ORDER BY 3 DESC LIMIT 10
+
+          c) clientes_por_lealtad
+             "Distribución de clientes por nivel de lealtad"
+             SELECT NivelLealtad, COUNT(DISTINCT IdCliente) AS clientes
+             FROM DB_HOL_RETAIL.PUBLIC.CLIENTE GROUP BY 1 ORDER BY 2 DESC
+
+          d) ventas_por_mes_y_canal
+             "Ventas mensuales por canal y género del último año"
+             SELECT DATE_TRUNC('month', t.FecCompra) AS mes,
+                    t.CanalVenta, c.Genero,
+                    SUM(t.MontoTotal) AS ventas
+             FROM DB_HOL_RETAIL.PUBLIC.TICKET t
+             JOIN DB_HOL_RETAIL.PUBLIC.CLIENTE c ON c.IdCliente=t.IdCliente
+             WHERE t.FecCompra >= DATEADD(year,-1,CURRENT_DATE())
+             GROUP BY 1,2,3 ORDER BY 1,2,3
+
+          e) ticket_promedio_por_tienda
+             "Ticket promedio por tienda"
+             SELECT NomTienda, AVG(MontoTotal) AS ticket_promedio
+             FROM DB_HOL_RETAIL.PUBLIC.TICKET
+             GROUP BY 1 ORDER BY 2 DESC
+        - Click "Save and validate".
+
+      Step 6 — Save:
+        - Snowsight valida cada métrica y verified query.
+        - Click "Create" para persistir el SEMANTIC VIEW DB_HOL_RETAIL.PUBLIC.SV_RETAIL.
+
+   --------------------------------------------------------------------------
+   OPCIÓN B) Cargar el YAML del repo (HOL_RETAIL_semantic_model.yaml)
+   --------------------------------------------------------------------------
+
+   1. Subir el archivo HOL_RETAIL_semantic_model.yaml a un stage interno:
+         CREATE OR REPLACE STAGE DB_HOL_RETAIL.PUBLIC.STG_SV
+           DIRECTORY=(ENABLE=TRUE) ENCRYPTION=(TYPE='SNOWFLAKE_SSE');
+         -- Snowsight → Data → Databases → DB_HOL_RETAIL → PUBLIC → STG_SV
+         -- Botón "+ Files" → seleccionar HOL_RETAIL_semantic_model.yaml.
+   2. Snowsight → AI & ML → Studio → Cortex Analyst → "+ Create" →
+      "Use existing YAML" → seleccionar @STG_SV/HOL_RETAIL_semantic_model.yaml.
+   3. Click "Save". El sistema valida y crea el modelo semántico listo para
+      consumir desde Cortex Analyst (chat) y desde Snowflake Intelligence.
+
+   --------------------------------------------------------------------------
+   PROBAR EN EL CHAT DE CORTEX ANALYST (UI)
+   --------------------------------------------------------------------------
+
+   1. Snowsight → AI & ML → Studio → Cortex Analyst → seleccionar SV_RETAIL.
+   2. En el panel "Chat" preguntar (en español):
+        - ¿Cuántos tickets por canal de venta tuvimos en 2026?
+        - Top 10 promociones más aplicadas
+        - Distribución de clientes por nivel de lealtad
+        - Ventas mensuales por canal y género del último año
+        - Ticket promedio por tienda
+   3. Para cada pregunta, Cortex Analyst genera el SQL, lo ejecuta sobre
+      WH_HOL_RETAIL y muestra resultado + visualización.
+   4. Cambiar a USE ROLE ANALISTA_COMERCIAL y repetir: las respuestas
+      ahora respetan automáticamente las masking policies de la PARTE 6.
+
+******************************************************************************************** */
 
 /* ************************************ PARTE 10 ***********************************************
    Dynamic Tables - pipeline incremental para KPIs.
