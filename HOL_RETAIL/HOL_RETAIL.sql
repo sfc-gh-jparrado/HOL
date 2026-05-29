@@ -357,24 +357,7 @@ FROM (
   LIMIT 100
 );
 
--- 5. AI_EXTRACT: estructurar información de la reseña
-SELECT
-  IdLinea,
-  AI_EXTRACT(
-    text => DesResena,
-    responseFormat => [
-      ['canal_compra',         '¿En qué canal realizó la compra el cliente?'],
-      ['promocion_aplicada',   '¿Menciona alguna promoción o descuento?'],
-      ['nivel_satisfaccion',   '¿Cuál es el nivel de satisfacción percibido (alto, medio, bajo)?'],
-      ['recomendaria',         '¿El cliente recomendaría el producto?'],
-      ['quejas',               '¿Qué quejas o problemas menciona el cliente?'],
-      ['atributos_producto',   '¿Qué atributos del producto destaca el cliente?']
-    ]
-  ) AS estructurado
-FROM LINEA_TICKET
-LIMIT 5;
-
--- 6. AI_TRANSLATE
+-- 5. AI_TRANSLATE
 SELECT
   IdLinea,
   SNOWFLAKE.CORTEX.AI_TRANSLATE(LEFT(DesResena, 400), 'es', 'en') AS translation
