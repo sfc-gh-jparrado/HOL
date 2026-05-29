@@ -509,9 +509,23 @@ LIMIT 50000;
 -- Podemos crear el Cortex Search por código o por la UI.
 --
 -- ============================================================================
--- OPCIÓN A) Crear el servicio CSS_RESENAS desde la UI (Snowsight)
+-- OPCIÓN A) Crear el servicio CSS_RESENAS vía SQL
 -- ============================================================================
--- Estos pasos producen un servicio EQUIVALENTE al CREATE de la OPCIÓN B.
+
+CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_RESENAS
+  ON Texto -- campo para hacer la búsqueda
+  ATTRIBUTES Esquema, CanalVenta, NomTienda, NomProducto, Categoria, FechaResena, Promociones, IdLinea, IdCliente
+  WAREHOUSE = WH_HOL_RETAIL
+  TARGET_LAG = '1 hour'
+  AS
+  SELECT IdLinea, IdCliente, FechaResena, Esquema, CanalVenta, NomTienda,
+         NomProducto, Categoria, Texto, Promociones
+  FROM T_RESENAS_ENRIQUECIDAS;
+
+-- ============================================================================
+-- OPCIÓN B) Crear el servicio CSS_RESENAS desde la UI (Snowsight)
+-- ============================================================================
+-- Estos pasos producen un servicio EQUIVALENTE al CREATE de la OPCIÓN A.
 --
 --  1. Snowsight → menú lateral → AI & ML → Cortex Search.
 --  2. Botón "+ Create" (esquina superior derecha) → "Cortex Search Service".
@@ -555,20 +569,6 @@ LIMIT 50000;
 --       Query:  quejas mala experiencia
 --       → Devuelve los mismos resultados que el SEARCH_PREVIEW del final de
 --         esta parte (mismo embedding, mismos atributos, misma data).
---
--- ============================================================================
--- OPCIÓN B) Crear el servicio CSS_RESENAS vía SQL (equivalente a la UI)
--- ============================================================================
-
-CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_RESENAS
-  ON Texto -- campo para hacer la búsqueda
-  ATTRIBUTES Esquema, CanalVenta, NomTienda, NomProducto, Categoria, FechaResena, Promociones, IdLinea, IdCliente
-  WAREHOUSE = WH_HOL_RETAIL
-  TARGET_LAG = '1 hour'
-  AS
-  SELECT IdLinea, IdCliente, FechaResena, Esquema, CanalVenta, NomTienda,
-         NomProducto, Categoria, Texto, Promociones
-  FROM T_RESENAS_ENRIQUECIDAS;
 
 
 -- Verifica el estado
