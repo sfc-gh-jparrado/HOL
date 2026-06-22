@@ -1,0 +1,4 @@
+scripts/.sim_trm
+scripts/.pg_sim_state.json
+**/__pycache__/
+*.pyc
