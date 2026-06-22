@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 1 · Ingesta y Snowpipe · Workshop SET-ICAP</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sf-blue:#29B5E8; --sf-mid:#11567F; --sf-dark:#0a3a5c; --sf-orange:#FF9F36;
+  --body:#5B5B5B; --bg:#F5F8FA; --card:#FFFFFF; --border:#E1E8ED;
+  --green:#2E7D32; --radius:12px; --radius-lg:16px; --space:16px;
+  --font-h:'Montserrat',sans-serif; --font-b:'Lato',sans-serif; --content-max:980px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-b);color:var(--body);background:var(--bg);line-height:1.6}
+.layout{display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:300px;background:#fff;border-right:1px solid var(--border);position:fixed;height:100vh;overflow-y:auto;padding:24px 0}
+.sidebar .logo{padding:0 24px 16px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sidebar .logo img{width:160px}
+.sidebar .logo .sub{font-family:var(--font-h);font-weight:700;color:var(--sf-mid);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;margin-top:8px}
+.nav a{display:flex;justify-content:space-between;align-items:center;padding:10px 24px;color:var(--body);text-decoration:none;font-size:.9rem;border-left:3px solid transparent;transition:.15s}
+.nav a:hover{background:var(--bg);border-left-color:var(--sf-blue)}
+.nav a.active{background:#E8F6FD;border-left-color:var(--sf-blue);color:var(--sf-mid);font-weight:700}
+.nav a.done::before{content:"\2713 ";color:var(--green);font-weight:700;margin-right:4px}
+.nav-time{font-size:.72rem;color:#9AB;background:var(--bg);padding:1px 8px;border-radius:10px}
+.progress-wrap{padding:12px 24px}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--sf-blue);width:0;transition:.3s}
+.progress-txt{font-size:.75rem;margin-top:6px;color:var(--body)}
+/* Main */
+.main{margin-left:300px;flex:1;padding:0 0 80px}
+.hero{background:linear-gradient(135deg,var(--sf-mid) 0%,var(--sf-dark) 100%);color:#fff;padding:56px 48px}
+.hero h1{font-family:var(--font-h);font-weight:800;font-size:2.4rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.hero .tagline{font-size:1.15rem;opacity:.92;margin-bottom:20px}
+.hero .meta{display:flex;gap:28px;flex-wrap:wrap;font-size:.9rem}
+.hero .meta div{display:flex;align-items:center;gap:6px}
+.hero .meta .v{font-family:var(--font-h);font-weight:700;color:var(--sf-blue);font-size:1.3rem}
+.content{max-width:var(--content-max);margin:0 auto;padding:32px 48px}
+.warning{background:#FFF7EC;border-left:4px solid var(--sf-orange);border-radius:var(--radius);padding:16px 20px;margin:24px auto;max-width:var(--content-max);display:flex;gap:12px}
+.warning .icon{font-size:1.4rem}
+.warning strong{font-family:var(--font-h);color:#B26A00}
+.overview{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;margin-bottom:24px}
+.overview h2{font-family:var(--font-h);color:var(--sf-mid);font-size:1.3rem;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.tag{background:#E8F6FD;color:var(--sf-mid);padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:700}
+.step{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:20px;overflow:hidden}
+.step-header{display:flex;align-items:center;gap:14px;padding:20px 24px;cursor:pointer;user-select:none}
+.step-num{width:38px;height:38px;border-radius:50%;background:var(--sf-blue);color:#fff;font-family:var(--font-h);font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-header h3{font-family:var(--font-h);color:var(--sf-mid);font-size:1.15rem;flex:1}
+.step-header .t{font-size:.78rem;color:#9AB;background:var(--bg);padding:2px 10px;border-radius:10px}
+.step-header .chk{width:24px;height:24px;border:2px solid var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.step-header .chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.step-body{padding:0 24px 24px;display:none}
+.step-body.open{display:block}
+.step-body p{margin:12px 0}
+.step-body ul{margin:12px 0 12px 22px}
+.step-body li{margin:5px 0}
+.codebox{position:relative;margin:16px 0}
+.codebox pre{background:#0d2436;color:#E8F0F5;border-radius:var(--radius);padding:18px 18px;overflow-x:auto;font-family:'SF Mono',Menlo,monospace;font-size:.83rem;line-height:1.5}
+.codebox .lang{position:absolute;top:8px;right:88px;font-size:.68rem;color:#7da;text-transform:uppercase;letter-spacing:.5px}
+.btn-copy{position:absolute;top:8px;right:10px;background:var(--sf-blue);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-b)}
+.btn-copy:hover{background:#1f9fd0}
+.note{background:#E8F6FD;border-left:4px solid var(--sf-blue);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:.9rem}
+.note.new{background:#FFF7EC;border-left-color:var(--sf-orange)}
+.note strong{font-family:var(--font-h);color:var(--sf-mid)}
+.note.new strong{color:#B26A00}
+table.dm{width:100%;border-collapse:collapse;margin:14px 0;font-size:.85rem}
+table.dm th{background:var(--sf-mid);color:#fff;padding:8px 10px;text-align:left;font-family:var(--font-h);font-weight:700}
+table.dm td{padding:7px 10px;border-bottom:1px solid var(--border)}
+table.dm tr:nth-child(even){background:var(--bg)}
+.footer{text-align:center;padding:32px;color:#9AB;font-size:.82rem;border-top:1px solid var(--border);margin-top:40px}
+.community{margin-top:32px;text-align:center;background:linear-gradient(135deg,var(--sf-mid) 0%,var(--sf-dark) 100%);border-radius:var(--radius-lg);padding:32px;color:#fff}
+.community h3{font-family:var(--font-h);font-size:1.4rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--sf-blue);margin-bottom:10px}
+.community a{display:inline-block;background:var(--sf-blue);color:#fff;padding:10px 26px;border-radius:30px;font-weight:700;text-decoration:none;margin-top:12px}
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.hero,.content{padding-left:20px;padding-right:20px}}
+
+.backlink{display:inline-block;margin:18px 0 0 24px;color:var(--sf-blue);text-decoration:none;font-weight:700;font-size:.85rem}
+.labtag{display:inline-block;background:var(--sf-blue);color:#fff;padding:3px 12px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:10px}
+</style></head><body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-blue.svg" alt="Snowflake">
+      <div class="sub">Workshop SET-ICAP · Lab 1</div>
+    </div>
+    <a class="backlink" href="set_icap_workshop_index.html">&larr; Volver al índice</a>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="pf"></div></div>
+      <div class="progress-txt"><span id="pdone">0</span>/4 pasos completados</div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <main class="main">
+    <section class="hero">
+      <span class="labtag">LAB 1 DE 3</span>
+      <h1>Ingesta y Snowpipe</h1>
+      <div class="tagline">Carga histórica desde S3 e ingesta en tiempo real</div>
+      <div class="meta"><div><span class="v">4</span> pasos</div><div><span class="v">32 min</span></div></div>
+    </section>
+    <div class="warning"><span class="icon">&#9888;&#65039;</span><div><strong>Datos de prueba</strong>
+      <p>Datos sintéticos demostrativos. No representan operaciones reales de SET-ICAP.</p></div></div>
+    
+    <div class="content"><div id="steps"></div>
+      <div style="text-align:center;margin-top:32px"><a class="tag" style="text-decoration:none;padding:10px 22px" href="set_icap_workshop_index.html">Índice</a> <a class="tag" style="text-decoration:none;padding:10px 22px" href="set_icap_workshop_lab2_ai_analytics.html">Lab 2 &rarr;</a></div>
+    </div>
+    <div class="footer">© 2026 Snowflake Inc. All Rights Reserved. · Workshop SET-ICAP · Lab 1</div>
+  </main>
+</div>
+<script>
+const ALL_STEPS = [
+  {n:1,t:"2 min",title:"Configuración del ambiente",body:`
+    <p>Creamos la base de datos, el warehouse y habilitamos Cortex cross-region para usar los modelos de IA generativa.</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>USE ROLE ACCOUNTADMIN;
+ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';
+
+CREATE OR REPLACE DATABASE DB_HOL_SETICAP
+  COMMENT = 'HOL SET-ICAP - Mercado de divisas SET-FX (datos sintéticos)';
+
+CREATE OR REPLACE WAREHOUSE WH_HOL_SETICAP WITH
+  WAREHOUSE_SIZE='SMALL' AUTO_SUSPEND=60 AUTO_RESUME=TRUE
+  MIN_CLUSTER_COUNT=1 MAX_CLUSTER_COUNT=2 SCALING_POLICY='STANDARD';
+
+USE WAREHOUSE WH_HOL_SETICAP;
+USE DATABASE  DB_HOL_SETICAP;
+USE SCHEMA    PUBLIC;</pre></div>`},
+  {n:2,t:"5 min",title:"Stage externo a S3 + File Format",body:`
+    <p>Conectamos Snowflake al bucket de S3 que contiene los datos del HOL en formato CSV gzip delimitado por <code>;</code>.</p>
+    <div class="note"><strong>Credenciales:</strong> reemplaza <code>&lt;SOLICITAR_AL_INSTRUCTOR&gt;</code> por las llaves read-only que entrega el instructor.</div>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>CREATE OR REPLACE FILE FORMAT FF_CSV_GZ
+  TYPE=CSV FIELD_DELIMITER=';' FIELD_OPTIONALLY_ENCLOSED_BY='"'
+  COMPRESSION=GZIP NULL_IF=('NULL','') EMPTY_FIELD_AS_NULL=TRUE
+  TRIM_SPACE=TRUE SKIP_HEADER=1;
+
+CREATE OR REPLACE STAGE STG_SETICAP
+  URL='s3://demosjparrado/set_icap_hol/'
+  CREDENTIALS=(AWS_KEY_ID='&lt;SOLICITAR_AL_INSTRUCTOR&gt;' AWS_SECRET_KEY='&lt;SOLICITAR_AL_INSTRUCTOR&gt;')
+  FILE_FORMAT=FF_CSV_GZ;
+
+LIST @STG_SETICAP/hist/operation_set_fx/;
+
+SELECT $1 AS id, $2 AS fecha, $5 AS mercado, $13 AS monto_usd, $16 AS precio, $19 AS plazo
+FROM @STG_SETICAP/hist/operation_set_fx/ (FILE_FORMAT =&gt; FF_CSV_GZ) LIMIT 5;</pre></div>`},
+  {n:3,t:"10 min",title:"DDL + carga del histórico (COPY INTO)",body:`
+    <p>Creamos las 11 tablas del modelo y cargamos un año de operaciones. El modelo reproduce el esquema real del sistema SET-FX.</p>
+    <table class="dm"><tr><th>Tabla</th><th>Filas</th><th>Contenido</th></tr>
+    <tr><td>currency, mercado, paridad_moneda, sub_mercado, ciiu</td><td>8-15</td><td>Catálogos</td></tr>
+    <tr><td>entidad</td><td>50</td><td>IMCs (bancos, comisionistas)</td></tr>
+    <tr><td>sucursal / usuario</td><td>123 / 316</td><td>Mesas de dinero y traders</td></tr>
+    <tr><td>comitente</td><td>800</td><td>Clientes finales (offshore/domésticos)</td></tr>
+    <tr><td>operation_set_fx</td><td>118,389</td><td>Operaciones FX (1 año)</td></tr>
+    <tr><td>operation_set_fx_contraparte</td><td>236,778</td><td>Contrapartes por operación</td></tr></table>
+    <p>El DDL completo y los <code>COPY INTO</code> están en <code>HOL_SET_ICAP.sql</code> (Parte 3). Ejemplo de la tabla principal y la carga:</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- (DDL de las 11 tablas en el script .sql)
+
+-- Catálogos y maestros
+COPY INTO CURRENCY  FROM @STG_SETICAP/hist/currency/;
+COPY INTO ENTIDAD   FROM @STG_SETICAP/hist/entidad/;
+-- ... resto de catálogos/maestros ...
+
+-- Tablas grandes: subimos el warehouse para acelerar
+ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE='LARGE';
+COPY INTO OPERATION_SET_FX             FROM @STG_SETICAP/hist/operation_set_fx/;
+COPY INTO OPERATION_SET_FX_CONTRAPARTE FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;
+ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE='SMALL';
+
+-- Vista de negocio con nombres de entidades
+CREATE OR REPLACE VIEW V_OPERACIONES AS
+SELECT o.ID,o.FECHA,o.HORA,m.MERCADO_NOMBRE,o.PLAZO_CURVA,o.MONTO_USD,
+       o.MONTO_MONEDA_DOS AS MONTO_COP,o.PRECIO,
+       ec.ENTIDAD_SIGLA AS COMPRADOR, ev.ENTIDAD_SIGLA AS VENDEDOR, o.TEXTO_TERM
+FROM OPERATION_SET_FX o
+JOIN MERCADO m  ON o.MERCADO=m.MERCADO_ID
+JOIN ENTIDAD ec ON o.ENTIDAD_COMPRADORA=ec.ENTIDAD_ID
+JOIN ENTIDAD ev ON o.ENTIDAD_VENDEDORA=ev.ENTIDAD_ID
+WHERE o.ANULADA=FALSE;</pre></div>`},
+  {n:4,t:"15 min",title:"⭐ Snowpipe: ingesta en tiempo real",body:`
+    <div class="note new"><strong>Lo nuevo en este HOL.</strong> Un proceso externo deposita operaciones FX nuevas en <code>s3://.../stream/</code> cada 5 minutos y Snowflake las captura automáticamente con <strong>Snowpipe</strong>, simulando el flujo real de SET-FX.</div>
+    <p>En cuenta trial usamos <code>AUTO_INGEST=FALSE</code> + un <code>TASK</code> que refresca el pipe cada 5 minutos.</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- Tabla destino del stream (misma estructura que el histórico)
+CREATE OR REPLACE TABLE OPERATION_FX_STREAM LIKE OPERATION_SET_FX;
+
+-- Snowpipe que carga lo que llegue a stream/
+CREATE OR REPLACE PIPE PIPE_FX_STREAM
+  AUTO_INGEST = FALSE
+AS COPY INTO OPERATION_FX_STREAM
+   FROM @STG_SETICAP/stream/ FILE_FORMAT=FF_CSV_GZ;
+
+ALTER PIPE PIPE_FX_STREAM REFRESH;            -- primera carga manual
+SELECT SYSTEM$PIPE_STATUS('PIPE_FX_STREAM');  -- estado del pipe
+
+-- Task que refresca el pipe cada 5 minutos
+CREATE OR REPLACE TASK TASK_REFRESH_PIPE
+  WAREHOUSE=WH_HOL_SETICAP SCHEDULE='5 MINUTE'
+AS ALTER PIPE PIPE_FX_STREAM REFRESH;
+ALTER TASK TASK_REFRESH_PIPE RESUME;
+
+-- Verificar ingestión (tras 5-10 min con el generador corriendo)
+SELECT COUNT(*) AS ops, ROUND(AVG(PRECIO),2) AS trm FROM OPERATION_FX_STREAM;
+SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
+  TABLE_NAME=&gt;'OPERATION_FX_STREAM',
+  START_TIME=&gt;DATEADD(HOUR,-2,CURRENT_TIMESTAMP()))) ORDER BY LAST_LOAD_TIME DESC;</pre></div>
+    <p>En una terminal, el instructor inicia el generador de streaming:</p>
+    <div class="codebox"><span class="lang">bash</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>export AWS_PROFILE=contributor-484577546576
+~/miniforge3/bin/python scripts/gen_set_icap_stream.py --loop --interval 300</pre></div>
+    <div class="note"><strong>Variante producción:</strong> <code>AUTO_INGEST=TRUE</code> + notificación de evento S3 → SQS para ingesta event-driven en segundos (ver comentario en el .sql).</div>`},
+  {n:5,t:"5 min",title:"Time Travel y Zero-Copy Cloning",body:`
+    <p>Recupera datos y crea ambientes de desarrollo instantáneos sin duplicar almacenamiento.</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- Clonado instantáneo de toda la base (ambiente dev sin copiar datos)
+CREATE OR REPLACE DATABASE DB_HOL_SETICAP_DEV CLONE DB_HOL_SETICAP;
+
+-- Borrado accidental y recuperación inmediata
+DROP TABLE OPERATION_SET_FX;
+UNDROP TABLE OPERATION_SET_FX;
+SELECT COUNT(*) AS sigue_disponible FROM OPERATION_SET_FX;</pre></div>`},
+  {n:6,t:"10 min",title:"Enmascaramiento dinámico de datos",body:`
+    <p>Un analista de mercado no debe ver la identidad de las contrapartes (información sensible bajo supervisión de la SFC). Aplicamos Dynamic Data Masking.</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>CREATE ROLE IF NOT EXISTS ANALISTA_MERCADO;
+GRANT USAGE ON DATABASE DB_HOL_SETICAP TO ROLE ANALISTA_MERCADO;
+GRANT USAGE ON SCHEMA DB_HOL_SETICAP.PUBLIC TO ROLE ANALISTA_MERCADO;
+GRANT SELECT ON ALL TABLES IN SCHEMA DB_HOL_SETICAP.PUBLIC TO ROLE ANALISTA_MERCADO;
+GRANT USAGE ON WAREHOUSE WH_HOL_SETICAP TO ROLE ANALISTA_MERCADO;
+
+CREATE OR REPLACE MASKING POLICY MP_ENTIDAD AS (val NUMBER) RETURNS NUMBER -&gt;
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SYSADMIN') THEN val ELSE 999999 END;
+
+ALTER TABLE OPERATION_SET_FX MODIFY COLUMN ENTIDAD_COMPRADORA SET MASKING POLICY MP_ENTIDAD;
+ALTER TABLE OPERATION_SET_FX MODIFY COLUMN ENTIDAD_VENDEDORA  SET MASKING POLICY MP_ENTIDAD;
+
+-- Compara: ACCOUNTADMIN ve la entidad real, ANALISTA_MERCADO ve 999999
+USE ROLE ANALISTA_MERCADO;
+SELECT ID, ENTIDAD_COMPRADORA, ENTIDAD_VENDEDORA FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX LIMIT 5;
+USE ROLE ACCOUNTADMIN;</pre></div>`},
+  {n:7,t:"12 min",title:"Cortex AI: análisis de mercado con IA",body:`
+    <p>Usamos <code>AI_COMPLETE</code>, <code>AI_SENTIMENT</code> y <code>SUMMARIZE</code> para analizar el mercado FX con IA generativa.</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- Clasificar el tipo de operación según contexto de mercado
+SELECT ID, PRECIO, MONTO_USD, PLAZO_CURVA,
+  AI_COMPLETE('claude-sonnet-4-5',
+    'Eres analista del mercado cambiario colombiano. Clasifica en UNA palabra ' ||
+    '[Cobertura, Especulacion, Liquidez, Regulatorio]. USD/COP a ' || PRECIO::VARCHAR ||
+    ', monto ' || ROUND(MONTO_USD/1000,0)::VARCHAR || 'K USD, plazo ' ||
+    COALESCE(PLAZO_CURVA,'T+1') || '. Responde solo la categoría.') AS tipo_operacion
+FROM OPERATION_SET_FX WHERE ANULADA=FALSE LIMIT 15;
+
+-- Sentimiento de las notas de los traders (AI_SENTIMENT retorna OBJECT)
+SELECT ID, TEXTO_TERM,
+  CASE AI_SENTIMENT(TEXTO_TERM):categories[0]:sentiment::VARCHAR
+    WHEN 'positive' THEN 'Alcista' WHEN 'negative' THEN 'Bajista' ELSE 'Neutral'
+  END AS sentimiento_mercado
+FROM OPERATION_SET_FX WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM&lt;&gt;'' LIMIT 25;</pre></div>
+    <div class="note"><strong>Nota:</strong> <code>AI_SENTIMENT</code> retorna un OBJECT; se accede con <code>:categories[0]:sentiment::VARCHAR</code> (no comparar con un número).</div>`},
+  {n:8,t:"10 min",title:"Dynamic Tables: analítica que se refresca sola",body:`
+    <p>Las Dynamic Tables combinan el histórico con el stream para métricas de mercado siempre actualizadas (VWAP, rankings).</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- VWAP diario (precio promedio ponderado por volumen) del USD/COP
+CREATE OR REPLACE DYNAMIC TABLE DT_VWAP_DIARIO
+  TARGET_LAG='5 minutes' WAREHOUSE=WH_HOL_SETICAP
+AS
+  WITH base AS (
+    SELECT DISTINCT ID, FECHA, PRECIO, MONTO_USD
+    FROM OPERATION_SET_FX WHERE ANULADA=FALSE AND MERCADO=76)
+  SELECT FECHA,
+    ROUND(SUM(PRECIO*MONTO_USD)/NULLIF(SUM(MONTO_USD),0),2) AS VWAP,
+    ROUND(SUM(MONTO_USD)/1e6,2) AS VOLUMEN_MUSD,
+    COUNT(*) AS NUM_OPERACIONES,
+    ROUND(MAX(PRECIO)-MIN(PRECIO),2) AS RANGO
+  FROM base GROUP BY FECHA;
+
+SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA DESC LIMIT 15;</pre></div>
+    <div class="note"><strong>Anti fan-out:</strong> el CTE con <code>DISTINCT</code> evita duplicar montos al unir con la tabla de contrapartes.</div>`},
+  {n:9,t:"15 min",title:"Streamlit: tablero del mercado SET-FX",body:`
+    <p>En Snowsight → Projects → Streamlit → <em>+ Streamlit App</em> (warehouse WH_HOL_SETICAP, database DB_HOL_SETICAP, schema PUBLIC). Pega el código:</p>
+    <div class="codebox"><span class="lang">python</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>import streamlit as st, altair as alt
+from snowflake.snowpark.context import get_active_session
+session = get_active_session()
+st.title("SET-FX · Tablero del Mercado de Divisas")
+
+@st.cache_data(ttl=300)
+def q(sql): return session.sql(sql).to_pandas()
+
+vwap = q("SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA")
+rank = q("SELECT * FROM DT_RANKING_ENTIDADES LIMIT 10")
+c1,c2,c3 = st.columns(3)
+c1.metric("TRM más reciente (VWAP)", f"{vwap['VWAP'].iloc[-1]:,.2f}")
+c2.metric("Volumen último día (M USD)", f"{vwap['VOLUMEN_MUSD'].iloc[-1]:,.1f}")
+c3.metric("Operaciones (stream)", q("SELECT COUNT(*) N FROM OPERATION_FX_STREAM")['N'].iloc[0])
+
+st.altair_chart(alt.Chart(vwap).mark_line(point=True).encode(
+  x="FECHA:T", y=alt.Y("VWAP:Q", scale=alt.Scale(zero=False))
+).properties(height=320), use_container_width=True)
+st.altair_chart(alt.Chart(rank).mark_bar().encode(
+  x="VOLUMEN_COMPRA_MUSD:Q", y=alt.Y("ENTIDAD_SIGLA:N", sort="-x")
+).properties(height=320), use_container_width=True)</pre></div>`},
+  {n:10,t:"8 min",title:"Semantic View para Cortex Analyst",body:`
+    <p>En Snowsight → AI & ML → Cortex Analyst → Create → Semantic View. Selecciona las tablas y define métricas/dimensiones (o importa <code>HOL_SET_ICAP_semantic_model.yaml</code>).</p>
+    <ul>
+      <li><strong>Tablas:</strong> OPERATION_SET_FX, ENTIDAD, MERCADO, PARIDAD_MONEDA</li>
+      <li><strong>Relaciones:</strong> MERCADO → MERCADO_ID, ENTIDAD_COMPRADORA → ENTIDAD_ID, PARIDAD_ID → PARIDAD_ID</li>
+      <li><strong>Métricas:</strong> volumen_usd = SUM(MONTO_USD), num_operaciones = COUNT(ID), vwap = SUM(PRECIO*MONTO_USD)/SUM(MONTO_USD), trm_promedio = AVG(PRECIO)</li>
+      <li><strong>Dimensiones:</strong> FECHA, PLAZO_CURVA, MERCADO_NOMBRE, ENTIDAD_SIGLA</li>
+    </ul>`},
+  {n:11,t:"15 min",title:"Snowflake Intelligence: agente conversacional",body:`
+    <p>En Snowsight → AI & ML → Agents → Create agent. Conecta la Semantic View y configura el agente experto del mercado FX.</p>
+    <ul>
+      <li><strong>Nombre:</strong> AGT_SETICAP</li>
+      <li><strong>Herramienta:</strong> Cortex Analyst → Semantic View <code>SV_SET_FX</code></li>
+      <li><strong>Instrucciones:</strong> "Eres un analista experto del mercado cambiario colombiano SET-FX de SET-ICAP. Respondes en español con cifras claras (TRM, volumen en millones de USD)."</li>
+    </ul>
+    <p><strong>Preguntas demo:</strong></p>
+    <ul>
+      <li>¿Cuál fue el VWAP del USD/COP la última semana?</li>
+      <li>¿Qué entidad negoció el mayor volumen el último mes?</li>
+      <li>¿Cuántas operaciones forward se hicieron a plazo 3M?</li>
+      <li>Compara el volumen de bancos vs comisionistas.</li>
+    </ul>`},
+  {n:12,t:"3 min",title:"Limpieza",body:`
+    <p>Suspende el task, detén el generador de streaming (Ctrl-C) y elimina los objetos del HOL.</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>ALTER TASK IF EXISTS TASK_REFRESH_PIPE SUSPEND;
+DROP DATABASE IF EXISTS DB_HOL_SETICAP_DEV;
+DROP DATABASE IF EXISTS DB_HOL_SETICAP;
+DROP WAREHOUSE IF EXISTS WH_HOL_SETICAP;
+DROP ROLE IF EXISTS ANALISTA_MERCADO;</pre></div>
+    <div class="note"><strong>¡Felicitaciones!</strong> Completaste el HOL de SET-ICAP: ingesta en tiempo real con Snowpipe, Cortex AI, Dynamic Tables y Snowflake Intelligence sobre el mercado de divisas SET-FX.</div>`},
+];
+const LAB_STEPS = [1, 2, 3, 4];
+const STEPS = ALL_STEPS.filter(s=>LAB_STEPS.includes(s.n));
+const KEY="seticap_ws_lab1";
+let done = JSON.parse(localStorage.getItem(KEY)||"[]");
+function render(){
+  const nav=document.getElementById('nav'), steps=document.getElementById('steps');
+  nav.innerHTML=''; steps.innerHTML='';
+  STEPS.forEach(s=>{
+    const a=document.createElement('a'); a.href='#step-'+s.n; a.dataset.step=s.n;
+    a.className=done.includes(s.n)?'done':'';
+    a.innerHTML=`<span>${s.n}. ${s.title}</span><span class="nav-time">${s.t}</span>`;
+    nav.appendChild(a);
+    const d=document.createElement('div'); d.className='step'; d.id='step-'+s.n;
+    d.innerHTML=`<div class="step-header" onclick="toggleStep(${s.n})">
+      <div class="step-num">${s.n}</div><h3>${s.title}</h3><span class="t">${s.t}</span>
+      <div class="chk ${done.includes(s.n)?'on':''}" onclick="event.stopPropagation();markStepComplete(${s.n})">${done.includes(s.n)?'\u2713':''}</div>
+      </div><div class="step-body" id="body-${s.n}">${s.body}</div>`;
+    steps.appendChild(d);
+  });
+  updateProgress();
+}
+function toggleStep(n){document.getElementById('body-'+n).classList.toggle('open');}
+function markStepComplete(n){if(done.includes(n))done=done.filter(x=>x!==n);else done.push(n);
+  localStorage.setItem(KEY,JSON.stringify(done));render();}
+function updateProgress(){const pct=Math.round(done.length/STEPS.length*100);
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('pdone').textContent=done.length;}
+function copyCode(btn){const pre=btn.parentElement.querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{btn.textContent='\u2713 Copiado';setTimeout(()=>btn.textContent='Copiar',1500);});}
+render();
+if(STEPS.length) document.getElementById('body-'+STEPS[0].n).classList.add('open');
+</script></body></html>

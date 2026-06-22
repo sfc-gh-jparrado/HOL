@@ -1,0 +1,6 @@
+# Datos generados localmente (se regeneran con los scripts)
+scripts/out/
+scripts/out_stream/
+scripts/.stream_state.json
+**/__pycache__/
+*.pyc
