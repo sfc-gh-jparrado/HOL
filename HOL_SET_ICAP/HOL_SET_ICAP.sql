@@ -566,6 +566,42 @@ st.altair_chart(
     ).properties(height=320), use_container_width=True)
 */
 
+/* --- OPCIÓN B: genera un dashboard visualmente potente con Cortex Code (CoCo) ---
+   En lugar del código base de arriba, abre Cortex Code en tu cuenta y pega este
+   prompt. CoCo genera el app.py completo conectado a los objetos del HOL.
+
+   ----------------------------- PROMPT PARA CORTEX CODE -----------------------------
+   Crea una app de Streamlit-in-Snowflake visualmente potente para el mercado de
+   divisas SET-FX de SET-ICAP (Colombia). Úsala con get_active_session() y SIN
+   dependencias de red externas (solo altair/plotly nativos).
+
+   Base de datos: DB_HOL_SETICAP, schema PUBLIC. Objetos disponibles:
+   - DT_VWAP_DIARIO (FECHA, VWAP, VOLUMEN_MUSD, NUM_OPERACIONES, PRECIO_MIN, PRECIO_MAX, RANGO)
+   - DT_RANKING_ENTIDADES (ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE, NUM_OPERACIONES, VOLUMEN_COMPRA_MUSD)
+   - OPERATION_SET_FX (ID, FECHA, HORA, ANULADA, MERCADO, MONTO_USD, MONTO_MONEDA_DOS, PRECIO, PLAZO_CURVA, ENTIDAD_COMPRADORA, ENTIDAD_VENDEDORA, TEXTO_TERM)
+   - OPERATION_FX_STREAM (mismas columnas, operaciones en vivo vía Snowpipe)
+   - ENTIDAD (ENTIDAD_ID, ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE)
+   - MERCADO (MERCADO_ID, MERCADO_NOMBRE)
+
+   Requisitos visuales (estilo fintech profesional, branding Snowflake #29B5E8 / #11567F):
+   1. Encabezado con título "SET-FX - Mercado de Divisas" y selector de rango de fechas.
+   2. Fila de KPI cards: TRM más reciente (VWAP), variación % vs día anterior,
+      volumen del día (M USD), núm operaciones, % anuladas. Con flechas de tendencia y color.
+   3. Gráfico principal: evolución de la TRM (VWAP diario) tipo línea con banda min-max
+      (área sombreada PRECIO_MIN-PRECIO_MAX) y tooltip rico.
+   4. Barras horizontales: Top 10 entidades por volumen comprado, coloreadas por ENTIDAD_CLASE.
+   5. Profundidad de mercado: comparativo compra vs venta por entidad (barras divergentes).
+   6. Mapa de calor de actividad por hora del día vs día de la semana (núm operaciones).
+   7. Donut: distribución de volumen por PLAZO_CURVA (T+1, 3M, etc.).
+   8. Panel "En vivo" que lee OPERATION_FX_STREAM: últimas operaciones en una tabla con
+      auto-refresh (st.fragment o autorefresh cada 30s) y un contador del total.
+   9. Layout responsive con st.columns, st.container(border=True), métricas grandes,
+      tema oscuro elegante y tipografía clara. Usa @st.cache_data(ttl=300) en las consultas.
+
+   Genera el app.py completo, listo para pegar en Snowsight -> Streamlit. No uses
+   librerías que requieran instalación externa más allá de las disponibles en SiS.
+   ----------------------------------------------------------------------------------- */
+
 
 /* ************************************ PARTE 10 ***********************************************
    Semantic View para Cortex Analyst (creación asistida en Snowsight UI).
