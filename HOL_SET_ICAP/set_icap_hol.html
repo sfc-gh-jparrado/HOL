@@ -209,36 +209,45 @@ JOIN MERCADO m  ON o.MERCADO=m.MERCADO_ID
 JOIN ENTIDAD ec ON o.ENTIDAD_COMPRADORA=ec.ENTIDAD_ID
 JOIN ENTIDAD ev ON o.ENTIDAD_VENDEDORA=ev.ENTIDAD_ID
 WHERE o.ANULADA=FALSE;</pre></div>`},
-  {n:4,t:"15 min",title:"⭐ Snowpipe: ingesta en tiempo real",body:`
-    <div class="note new"><strong>Lo nuevo en este HOL.</strong> Un proceso externo deposita operaciones FX nuevas en <code>s3://.../stream/</code> cada 5 minutos y Snowflake las captura automáticamente con <strong>Snowpipe</strong>, simulando el flujo real de SET-FX.</div>
-    <p>En cuenta trial usamos <code>AUTO_INGEST=FALSE</code> + un <code>TASK</code> que refresca el pipe cada 5 minutos.</p>
-    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- Tabla destino del stream (misma estructura que el histórico)
+  {n:4,t:"15 min",title:"⭐ Snowpipe con auto-ingesta (event-driven)",body:`
+    <div class="note new"><strong>Lo nuevo en este HOL.</strong> Cada archivo que llega a <code>s3://.../stream/</code> dispara una notificación de evento de S3 hacia una cola SQS de Snowflake, y el pipe carga los datos <strong>automáticamente en segundos</strong>, sin tareas ni intervención manual.</div>
+    <p>Flujo: <code>S3 (ObjectCreated) → SQS (Snowflake) → PIPE_FX_STREAM → OPERATION_FX_STREAM</code></p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- Tabla destino del stream
 CREATE OR REPLACE TABLE OPERATION_FX_STREAM LIKE OPERATION_SET_FX;
 
--- Snowpipe que carga lo que llegue a stream/
+-- Snowpipe con AUTO-INGESTA activada
 CREATE OR REPLACE PIPE PIPE_FX_STREAM
-  AUTO_INGEST = FALSE
+  AUTO_INGEST = TRUE
 AS COPY INTO OPERATION_FX_STREAM
    FROM @STG_SETICAP/stream/ FILE_FORMAT=FF_CSV_GZ;
 
-ALTER PIPE PIPE_FX_STREAM REFRESH;            -- primera carga manual
-SELECT SYSTEM$PIPE_STATUS('PIPE_FX_STREAM');  -- estado del pipe
+-- Obtener el ARN de la cola SQS del pipe (columna notification_channel)
+SHOW PIPES LIKE 'PIPE_FX_STREAM';
+SELECT "name","notification_channel" FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));</pre></div>
+    <p>Conecta S3 → SQS una sola vez (terminal del instructor, pega el SQS ARN del paso anterior):</p>
+    <div class="codebox"><span class="lang">bash</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>aws s3api put-bucket-notification-configuration --bucket demosjparrado \
+  --notification-configuration '{
+    "QueueConfigurations": [{
+      "Id": "seticap-snowpipe-autoingest",
+      "QueueArn": "&lt;NOTIFICATION_CHANNEL_DEL_PASO_ANTERIOR&gt;",
+      "Events": ["s3:ObjectCreated:*"],
+      "Filter": {"Key": {"FilterRules": [
+        {"Name":"prefix","Value":"set_icap_hol/stream/"},
+        {"Name":"suffix","Value":".csv.gz"}]}}
+    }]
+  }'</pre></div>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>ALTER PIPE PIPE_FX_STREAM REFRESH;            -- trae el backlog inicial
+SELECT SYSTEM$PIPE_STATUS('PIPE_FX_STREAM'); -- debe estar RUNNING
 
--- Task que refresca el pipe cada 5 minutos
-CREATE OR REPLACE TASK TASK_REFRESH_PIPE
-  WAREHOUSE=WH_HOL_SETICAP SCHEDULE='5 MINUTE'
-AS ALTER PIPE PIPE_FX_STREAM REFRESH;
-ALTER TASK TASK_REFRESH_PIPE RESUME;
-
--- Verificar ingestión (tras 5-10 min con el generador corriendo)
+-- Tras iniciar el generador, cada archivo nuevo se ingiere solo en segundos:
 SELECT COUNT(*) AS ops, ROUND(AVG(PRECIO),2) AS trm FROM OPERATION_FX_STREAM;
 SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
   TABLE_NAME=&gt;'OPERATION_FX_STREAM',
   START_TIME=&gt;DATEADD(HOUR,-2,CURRENT_TIMESTAMP()))) ORDER BY LAST_LOAD_TIME DESC;</pre></div>
-    <p>En una terminal, el instructor inicia el generador de streaming:</p>
+    <p>El generador deposita un lote cada 5 minutos:</p>
     <div class="codebox"><span class="lang">bash</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>export AWS_PROFILE=contributor-484577546576
 ~/miniforge3/bin/python scripts/gen_set_icap_stream.py --loop --interval 300</pre></div>
-    <div class="note"><strong>Variante producción:</strong> <code>AUTO_INGEST=TRUE</code> + notificación de evento S3 → SQS para ingesta event-driven en segundos (ver comentario en el .sql).</div>`},
+    <div class="note"><strong>Fallback (sin acceso a eventos S3):</strong> crea el pipe con <code>AUTO_INGEST=FALSE</code> y un <code>TASK</code> que ejecute <code>ALTER PIPE PIPE_FX_STREAM REFRESH</code> cada 5 minutos.</div>`},
   {n:5,t:"5 min",title:"Time Travel y Zero-Copy Cloning",body:`
     <p>Recupera datos y crea ambientes de desarrollo instantáneos sin duplicar almacenamiento.</p>
     <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>-- Clonado instantáneo de toda la base (ambiente dev sin copiar datos)
@@ -348,13 +357,17 @@ st.altair_chart(alt.Chart(rank).mark_bar().encode(
       <li>Compara el volumen de bancos vs comisionistas.</li>
     </ul>`},
   {n:12,t:"3 min",title:"Limpieza",body:`
-    <p>Suspende el task, detén el generador de streaming (Ctrl-C) y elimina los objetos del HOL.</p>
-    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>ALTER TASK IF EXISTS TASK_REFRESH_PIPE SUSPEND;
+    <p>Detén el generador de streaming (Ctrl-C), pausa el pipe y elimina los objetos del HOL.</p>
+    <div class="codebox"><span class="lang">sql</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>ALTER PIPE IF EXISTS PIPE_FX_STREAM SET PIPE_EXECUTION_PAUSED = TRUE;
+ALTER TASK IF EXISTS TASK_REFRESH_PIPE SUSPEND;  -- solo si usaste el fallback
 DROP DATABASE IF EXISTS DB_HOL_SETICAP_DEV;
 DROP DATABASE IF EXISTS DB_HOL_SETICAP;
 DROP WAREHOUSE IF EXISTS WH_HOL_SETICAP;
 DROP ROLE IF EXISTS ANALISTA_MERCADO;</pre></div>
-    <div class="note"><strong>¡Felicitaciones!</strong> Completaste el HOL de SET-ICAP: ingesta en tiempo real con Snowpipe, Cortex AI, Dynamic Tables y Snowflake Intelligence sobre el mercado de divisas SET-FX.</div>`},
+    <p>Quita la notificación de eventos del bucket (fuera de Snowflake):</p>
+    <div class="codebox"><span class="lang">bash</span><button class="btn-copy" onclick="copyCode(this)">Copiar</button><pre>aws s3api put-bucket-notification-configuration --bucket demosjparrado \
+  --notification-configuration '{}'</pre></div>
+    <div class="note"><strong>¡Felicitaciones!</strong> Completaste el HOL de SET-ICAP: auto-ingesta en tiempo real con Snowpipe, Cortex AI, Dynamic Tables y Snowflake Intelligence sobre el mercado de divisas SET-FX.</div>`},
 ];
 
 const KEY="seticap_hol_progress";

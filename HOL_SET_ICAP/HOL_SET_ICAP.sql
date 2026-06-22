@@ -278,61 +278,87 @@ SELECT * FROM V_OPERACIONES LIMIT 20;
 
 
 /* ************************************ PARTE 4 ⭐ NUEVO ***************************************
-   SNOWPIPE: INGESTA EN TIEMPO REAL.
-   Un proceso externo (gen_set_icap_stream.py) deposita un archivo de operaciones nuevas en
-   s3://demosjparrado/set_icap_hol/stream/ cada 5 minutos. Snowflake lo captura con Snowpipe.
+   SNOWPIPE CON AUTO-INGESTA (event-driven).
+   Un proceso externo (gen_set_icap_stream.py) deposita operaciones nuevas en
+   s3://demosjparrado/set_icap_hol/stream/ cada 5 minutos. Cada archivo nuevo dispara una
+   notificación de evento de S3 hacia una cola SQS administrada por Snowflake, y el pipe
+   carga los datos automáticamente en SEGUNDOS, sin tareas ni intervención manual.
 
-   En cuenta trial usamos AUTO_INGEST = FALSE + un TASK que refresca el pipe cada 5 minutos.
-   (Al final se muestra la variante AUTO_INGEST = TRUE con notificación de evento de S3.)
+   Flujo:  S3 (ObjectCreated) --> SQS (Snowflake) --> PIPE_FX_STREAM --> OPERATION_FX_STREAM
 ******************************************************************************************** */
 
 -- Tabla destino del stream (misma estructura que el histórico)
 CREATE OR REPLACE TABLE OPERATION_FX_STREAM LIKE OPERATION_SET_FX;
 
--- Snowpipe que carga lo que llegue a la carpeta stream/
+-- 4.1 Snowpipe con AUTO-INGESTA activada
 CREATE OR REPLACE PIPE PIPE_FX_STREAM
-  AUTO_INGEST = FALSE
-  COMMENT = 'Snowpipe de ingesta de operaciones FX en tiempo real'
+  AUTO_INGEST = TRUE
+  COMMENT = 'Snowpipe auto-ingesta de operaciones FX en tiempo real (event-driven)'
 AS
   COPY INTO OPERATION_FX_STREAM
   FROM @STG_SETICAP/stream/
   FILE_FORMAT = FF_CSV_GZ;
 
--- Primera carga manual (trae lo que ya exista en stream/)
+-- 4.2 Obtener el ARN de la cola SQS que Snowflake creó para este pipe.
+--     Copia el valor de la columna "notification_channel" (es un ARN de SQS).
+SHOW PIPES LIKE 'PIPE_FX_STREAM';
+SELECT "name", "notification_channel"
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+/* 4.3 Conectar S3 -> SQS (se hace UNA vez, fuera de Snowflake).
+   El instructor ejecuta en una terminal con acceso al bucket (reemplaza el SQS ARN del
+   paso 4.2). Esto hace que cada archivo nuevo en stream/ notifique al pipe automáticamente.
+
+   aws s3api put-bucket-notification-configuration \
+     --bucket demosjparrado \
+     --notification-configuration '{
+       "QueueConfigurations": [{
+         "Id": "seticap-snowpipe-autoingest",
+         "QueueArn": "<PEGAR_NOTIFICATION_CHANNEL_DEL_PASO_4.2>",
+         "Events": ["s3:ObjectCreated:*"],
+         "Filter": {"Key": {"FilterRules": [
+           {"Name": "prefix", "Value": "set_icap_hol/stream/"},
+           {"Name": "suffix", "Value": ".csv.gz"}
+         ]}}
+       }]
+     }'
+
+   Nota: este comando REEMPLAZA la configuración de notificaciones del bucket. Si el bucket
+   ya tiene otras notificaciones, primero hay que leerlas (get-bucket-notification-configuration)
+   y fusionarlas en un solo JSON.
+   --------------------------------------------------------------------------------------- */
+
+-- 4.4 Cargar de una vez lo que YA exista en stream/ (la auto-ingesta solo captura archivos
+--     NUEVOS posteriores a la conexión; este REFRESH trae el backlog inicial).
 ALTER PIPE PIPE_FX_STREAM REFRESH;
 
--- Estado del pipe
+-- 4.5 Verificar que el pipe esté en RUNNING y escuchando la cola SQS
 SELECT SYSTEM$PIPE_STATUS('PIPE_FX_STREAM');
 
--- Task que refresca el pipe automáticamente cada 5 minutos
-CREATE OR REPLACE TASK TASK_REFRESH_PIPE
-  WAREHOUSE = WH_HOL_SETICAP
-  SCHEDULE  = '5 MINUTE'
-  COMMENT   = 'Refresca PIPE_FX_STREAM para capturar nuevas operaciones de S3'
-AS
-  ALTER PIPE PIPE_FX_STREAM REFRESH;
-
-ALTER TASK TASK_REFRESH_PIPE RESUME;
-
--- Esperar 5-10 min mientras el generador externo deposita lotes y verificar la ingestión
+-- 4.6 Inicia el generador de streaming (terminal del instructor) y espera 1-2 minutos:
+--     export AWS_PROFILE=contributor-484577546576
+--     ~/miniforge3/bin/python scripts/gen_set_icap_stream.py --loop --interval 300
+--
+--     Cada archivo nuevo es ingerido automáticamente en segundos. Verifícalo:
 SELECT COUNT(*) AS operaciones_en_stream,
        MIN(HORA) AS primera, MAX(HORA) AS ultima,
        ROUND(AVG(PRECIO),2) AS trm_promedio
 FROM OPERATION_FX_STREAM;
 
--- Historial de cargas del pipe (qué archivos entraron y cuándo)
+-- 4.7 Historial de cargas del pipe (qué archivos entraron y cuándo)
 SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
   TABLE_NAME => 'OPERATION_FX_STREAM',
   START_TIME => DATEADD(HOUR, -2, CURRENT_TIMESTAMP())))
 ORDER BY LAST_LOAD_TIME DESC;
 
-/* --- VARIANTE AVANZADA (no ejecutar en trial sin permisos de S3 events) ---
-   Para ingesta event-driven real:
-   1) CREATE PIPE ... AUTO_INGEST = TRUE  -> Snowflake devuelve un notification_channel (SQS ARN)
-   2) SHOW PIPES;  -- copiar la columna notification_channel
-   3) En S3, crear un Event Notification (s3:ObjectCreated:*) que apunte a ese SQS ARN.
-   Resultado: cada archivo nuevo en stream/ dispara la carga en segundos, sin TASK.
-   ----------------------------------------------------------------------- */
+/* --- FALLBACK (solo si no puedes configurar la notificación de eventos de S3) ---
+   En entornos sin acceso para crear la notificación en S3, usa una tarea que refresque
+   el pipe cada 5 minutos en lugar de la auto-ingesta:
+     CREATE OR REPLACE PIPE PIPE_FX_STREAM AUTO_INGEST = FALSE AS COPY INTO ... ;
+     CREATE OR REPLACE TASK TASK_REFRESH_PIPE WAREHOUSE=WH_HOL_SETICAP SCHEDULE='5 MINUTE'
+       AS ALTER PIPE PIPE_FX_STREAM REFRESH;
+     ALTER TASK TASK_REFRESH_PIPE RESUME;
+   ----------------------------------------------------------------------------------- */
 
 
 /* ************************************ PARTE 5 ************************************************
@@ -576,14 +602,21 @@ st.altair_chart(
 
 
 /* ************************************ PARTE 12 **********************************************
-   Limpieza: suspendemos el task y eliminamos los objetos del HOL.
+   Limpieza: detenemos la ingesta y eliminamos los objetos del HOL.
 ******************************************************************************************** */
-ALTER TASK IF EXISTS TASK_REFRESH_PIPE SUSPEND;
+-- Detén el generador de streaming (Ctrl-C en la terminal) antes de limpiar.
+ALTER PIPE IF EXISTS PIPE_FX_STREAM SET PIPE_EXECUTION_PAUSED = TRUE;
+ALTER TASK IF EXISTS TASK_REFRESH_PIPE SUSPEND;  -- solo existe si usaste el fallback
 
 DROP DATABASE IF EXISTS DB_HOL_SETICAP_DEV;
 DROP DATABASE IF EXISTS DB_HOL_SETICAP;
 DROP WAREHOUSE IF EXISTS WH_HOL_SETICAP;
 DROP ROLE IF EXISTS ANALISTA_MERCADO;
+
+-- Quitar la notificación de eventos del bucket (fuera de Snowflake, el instructor):
+--   aws s3api put-bucket-notification-configuration --bucket demosjparrado \
+--     --notification-configuration '{}'
+-- (Si el bucket tenía otras notificaciones, restaurar el JSON original en lugar de vaciarlo.)
 
 -- ¡Felicitaciones! Completaste el HOL de SET-ICAP: ingesta en tiempo real con Snowpipe,
 -- Cortex AI, Dynamic Tables y Snowflake Intelligence sobre el mercado de divisas SET-FX.

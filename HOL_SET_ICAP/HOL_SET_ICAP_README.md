@@ -108,12 +108,35 @@ s3://demosjparrado/set_icap_hol/
 
 ---
 
-## Snowpipe: dos modos
+## Snowpipe: auto-ingesta (event-driven)
 
-| Modo | Cómo | Cuándo usarlo |
-|------|------|---------------|
-| **TASK REFRESH** (este HOL) | `AUTO_INGEST=FALSE` + `TASK` cada 5 min con `ALTER PIPE REFRESH` | Trial / sin permisos de eventos S3. Latencia ≤ 5 min. |
-| **AUTO_INGEST** (producción) | `AUTO_INGEST=TRUE` + notificación de evento S3 → SQS | Latencia de segundos, event-driven. Requiere config en S3. |
+El HOL usa **auto-ingesta real**: cada archivo nuevo en `set_icap_hol/stream/` dispara una
+notificación de evento de S3 hacia una cola SQS de Snowflake y el pipe carga los datos en
+segundos, sin tareas.
+
+```
+S3 (ObjectCreated) --> SQS (Snowflake) --> PIPE_FX_STREAM --> OPERATION_FX_STREAM
+```
+
+Pasos (Parte 4 del SQL):
+1. `CREATE PIPE PIPE_FX_STREAM AUTO_INGEST = TRUE AS COPY INTO ...`
+2. `SHOW PIPES` → copiar la columna `notification_channel` (ARN de SQS).
+3. Conectar S3 → SQS una sola vez (terminal del instructor):
+   ```bash
+   aws s3api put-bucket-notification-configuration --bucket demosjparrado \
+     --notification-configuration '{"QueueConfigurations":[{"Id":"seticap-snowpipe-autoingest",
+       "QueueArn":"<NOTIFICATION_CHANNEL>","Events":["s3:ObjectCreated:*"],
+       "Filter":{"Key":{"FilterRules":[{"Name":"prefix","Value":"set_icap_hol/stream/"},
+       {"Name":"suffix","Value":".csv.gz"}]}}}]}'
+   ```
+4. `ALTER PIPE PIPE_FX_STREAM REFRESH;` para traer el backlog inicial.
+
+> El comando `put-bucket-notification-configuration` **reemplaza** la config de notificaciones
+> del bucket. Si el bucket ya tiene otras, léelas con `get-bucket-notification-configuration`
+> y fusiónalas en un solo JSON.
+
+**Fallback** (sin acceso a eventos S3): `AUTO_INGEST=FALSE` + un `TASK` que ejecute
+`ALTER PIPE PIPE_FX_STREAM REFRESH` cada 5 minutos.
 
 ---
 
