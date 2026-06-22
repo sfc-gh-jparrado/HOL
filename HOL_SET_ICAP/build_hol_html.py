@@ -84,10 +84,44 @@ st.altair_chart(alt.Chart(rank).mark_bar().encode(
   x="VOLUMEN_COMPRA_MUSD:Q", y=alt.Y("ENTIDAD_SIGLA:N", sort="-x")
 ).properties(height=320), use_container_width=True)"""
 
+COCO_PROMPT = """Crea una app de Streamlit-in-Snowflake visualmente potente para el mercado
+de divisas SET-FX de SET-ICAP (Colombia). Usala con get_active_session() y
+SIN dependencias de red externas (solo altair/plotly nativos).
+
+Base de datos: DB_HOL_SETICAP, schema PUBLIC. Objetos disponibles:
+- DT_VWAP_DIARIO (FECHA, VWAP, VOLUMEN_MUSD, NUM_OPERACIONES, PRECIO_MIN, PRECIO_MAX, RANGO)
+- DT_RANKING_ENTIDADES (ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE, NUM_OPERACIONES, VOLUMEN_COMPRA_MUSD)
+- OPERATION_SET_FX (ID, FECHA, HORA, ANULADA, MERCADO, MONTO_USD, MONTO_MONEDA_DOS, PRECIO, PLAZO_CURVA, ENTIDAD_COMPRADORA, ENTIDAD_VENDEDORA, TEXTO_TERM)
+- OPERATION_FX_STREAM (mismas columnas, operaciones en vivo via Snowpipe)
+- ENTIDAD (ENTIDAD_ID, ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE)
+- MERCADO (MERCADO_ID, MERCADO_NOMBRE)
+
+Requisitos visuales (estilo fintech profesional, branding Snowflake #29B5E8 / #11567F):
+1. Encabezado con titulo "SET-FX - Mercado de Divisas" y selector de rango de fechas.
+2. Fila de KPI cards: TRM mas reciente (VWAP), variacion % vs dia anterior,
+   volumen del dia (M USD), num operaciones, % anuladas. Con flechas de tendencia y color.
+3. Grafico principal: evolucion de la TRM (VWAP diario) tipo linea con banda min-max
+   (area sombreada PRECIO_MIN-PRECIO_MAX) y tooltip rico.
+4. Barras horizontales: Top 10 entidades por volumen comprado, coloreadas por ENTIDAD_CLASE.
+5. Profundidad de mercado: comparativo compra vs venta por entidad (barras divergentes).
+6. Mapa de calor de actividad por hora del dia vs dia de la semana (num operaciones).
+7. Donut: distribucion de volumen por PLAZO_CURVA (T+1, 3M, etc.).
+8. Panel "En vivo" que lee OPERATION_FX_STREAM: ultimas operaciones en una tabla con
+   auto-refresh (st.fragment o autorefresh cada 30s) y un contador del total.
+9. Layout responsive con st.columns, st.container(border=True), metricas grandes,
+   tema oscuro elegante y tipografia clara. Usa @st.cache_data(ttl=300) en las consultas.
+
+Genera el app.py completo, listo para pegar en Snowsight -> Streamlit. No uses
+librerias que requieran instalacion externa mas alla de las disponibles en SiS."""
+
 STEP9 = ("15 min", "Streamlit: tablero del mercado SET-FX",
-         "<p>En Snowsight → Projects → Streamlit → <em>+ Streamlit App</em> (warehouse WH_HOL_SETICAP, database DB_HOL_SETICAP, schema PUBLIC). Pega el código:</p>"
+         "<p>En Snowsight → Projects → Streamlit → <em>+ Streamlit App</em> (warehouse WH_HOL_SETICAP, database DB_HOL_SETICAP, schema PUBLIC). Elige una de las dos opciones:</p>"
+         "<div class=\"note\"><strong>Opción A — Rápida.</strong> Pega este código base para un tablero funcional:</div>"
          "<div class=\"codebox\"><span class=\"lang\">python</span><button class=\"btn-copy\" onclick=\"copyCode(this)\">Copiar</button><pre>"
-         + html_escape(STREAMLIT_PY) + "</pre></div>")
+         + html_escape(STREAMLIT_PY) + "</pre></div>"
+         "<div class=\"note new\"><strong>Opción B — Genéralo con Cortex Code (CoCo).</strong> Para un dashboard visualmente potente, abre Cortex Code en tu cuenta y pega este prompt. CoCo arma el <code>app.py</code> completo conectado a tus objetos del HOL (KPIs, series TRM, profundidad de mercado, mapa de calor, panel en vivo de Snowpipe):</div>"
+         "<div class=\"codebox\"><span class=\"lang\">prompt · cortex code</span><button class=\"btn-copy\" onclick=\"copyCode(this)\">Copiar</button><pre>"
+         + html_escape(COCO_PROMPT) + "</pre></div>")
 
 STEP10 = ("8 min", "Semantic View para Cortex Analyst",
           "<p>En Snowsight → AI &amp; ML → Cortex Analyst → Create → Semantic View. Selecciona las tablas y métricas (o importa <code>HOL_SET_ICAP_semantic_model.yaml</code>).</p>"
