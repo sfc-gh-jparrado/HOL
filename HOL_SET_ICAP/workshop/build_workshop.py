@@ -64,7 +64,7 @@ LAB_TMPL = """<!DOCTYPE html>
     <section class="hero">
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
         <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-white.svg" alt="Snowflake" style="height:34px;opacity:.95">
-        <span style="color:rgba(255,255,255,.4);font-size:1.4rem;font-weight:200">×</span>
+        <span style="width:1px;height:26px;background:rgba(255,255,255,.3)"></span>
         <img src="https://set-icap.com/wp-content/uploads/2018/06/logo-set-icap-n.png" alt="SET-ICAP" style="height:34px;filter:brightness(0) invert(1);opacity:.95">
       </div>
       <span class="labtag">LAB {id} DE 3</span>
@@ -162,7 +162,7 @@ INDEX_TMPL = """<!DOCTYPE html>
   <div class="wrap" style="padding:0">
   <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
     <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-white.svg" alt="Snowflake" style="height:36px;opacity:.95">
-    <span style="color:rgba(255,255,255,.4);font-size:1.6rem;font-weight:200">×</span>
+    <span style="width:1px;height:28px;background:rgba(255,255,255,.3)"></span>
     <img src="https://set-icap.com/wp-content/uploads/2018/06/logo-set-icap-n.png" alt="SET-ICAP" style="height:36px;filter:brightness(0) invert(1);opacity:.95">
   </div>
   <h1>Workshop SET-ICAP</h1>
