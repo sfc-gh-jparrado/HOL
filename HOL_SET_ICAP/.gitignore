@@ -4,3 +4,4 @@ scripts/out_stream/
 scripts/.stream_state.json
 **/__pycache__/
 *.pyc
+scripts/out_400m/

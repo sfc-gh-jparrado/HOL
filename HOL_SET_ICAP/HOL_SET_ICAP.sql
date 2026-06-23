@@ -13,7 +13,8 @@
  operaciones FX en S3 cada 5 minutos y Snowflake las captura automáticamente.
 
  Datos 100% SINTÉTICOS para fines demostrativos en s3://demosjparrado/set_icap_hol/
- (11 tablas, csv.gz, delimitador ';'). No representan operaciones reales de SET-ICAP ni de
+ (12 tablas, csv.gz, delimitador ';', ~400M filas totales — 5 años de historia).
+ No representan operaciones reales de SET-ICAP ni de
  las entidades mencionadas.
 ********************************************************************************************
  -- Credenciales del stage (las entrega el instructor):
@@ -83,8 +84,9 @@ LIMIT 5;
 
 
 /* ************************************ PARTE 3 ************************************************
-   DDL de las 11 tablas con comentarios + COPY INTO del histórico.
-   Modelo: operation_set_fx (transaccional) se relaciona con catálogos y maestros.
+   DDL de las 12 tablas con comentarios + COPY INTO del histórico (~400M filas).
+   Modelo: operation_set_fx (transaccional, 120M) se relaciona con catálogos y maestros.
+   Nuevas tablas: OPERATION_SET_FX_CONTRAP_COMITENTE (40M) para comitentes por operación.
 ******************************************************************************************** */
 
 -- ---------- CATÁLOGOS ----------
@@ -228,7 +230,14 @@ CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAPARTE (
   COMITENTE_ID NUMBER   COMMENT 'FK a COMITENTE (cliente final, si aplica)'
 ) COMMENT='Contrapartes por operación (un registro por lado comprador/vendedor)';
 
--- COPY INTO del histórico (catálogos y maestros)
+CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE (
+  OPER_ID      NUMBER   COMMENT 'FK a OPERATION_SET_FX.ID',
+  ENTIDAD_ID   NUMBER   COMMENT 'FK a ENTIDAD (entidad que opera para el comitente)',
+  SUCURSAL_ID  NUMBER   COMMENT 'FK a SUCURSAL',
+  TRADER_ID    NUMBER   COMMENT 'FK a USUARIO (trader)',
+  COMITENTE_ID NUMBER   COMMENT 'FK a COMITENTE (cliente final)'
+) COMMENT='Comitentes involucrados en operaciones (~33% de operaciones tienen cliente final)';
+
 COPY INTO CURRENCY        FROM @STG_SETICAP/hist/currency/;
 COPY INTO MERCADO         FROM @STG_SETICAP/hist/mercado/;
 COPY INTO PARIDAD_MONEDA  FROM @STG_SETICAP/hist/paridad_moneda/;
@@ -239,13 +248,14 @@ COPY INTO SUCURSAL        FROM @STG_SETICAP/hist/sucursal/;
 COPY INTO USUARIO         FROM @STG_SETICAP/hist/usuario/;
 COPY INTO COMITENTE       FROM @STG_SETICAP/hist/comitente/;
 
--- Tablas grandes: subimos el warehouse para acelerar
-ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'LARGE';
+-- Tablas grandes: subimos a XLARGE para cargar 400M filas en minutos (~15-20 min)
+ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';
 COPY INTO OPERATION_SET_FX             FROM @STG_SETICAP/hist/operation_set_fx/;
 COPY INTO OPERATION_SET_FX_CONTRAPARTE FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;
+COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
 
--- Conteos
+-- Conteos (debe dar ~400M en total)
 SELECT 'CURRENCY' tabla, COUNT(*) registros FROM CURRENCY
 UNION ALL SELECT 'MERCADO', COUNT(*) FROM MERCADO
 UNION ALL SELECT 'PARIDAD_MONEDA', COUNT(*) FROM PARIDAD_MONEDA
@@ -257,6 +267,7 @@ UNION ALL SELECT 'USUARIO', COUNT(*) FROM USUARIO
 UNION ALL SELECT 'COMITENTE', COUNT(*) FROM COMITENTE
 UNION ALL SELECT 'OPERATION_SET_FX', COUNT(*) FROM OPERATION_SET_FX
 UNION ALL SELECT 'OPERATION_SET_FX_CONTRAPARTE', COUNT(*) FROM OPERATION_SET_FX_CONTRAPARTE
+UNION ALL SELECT 'OPERATION_SET_FX_CONTRAP_COMITENTE', COUNT(*) FROM OPERATION_SET_FX_CONTRAP_COMITENTE
 ORDER BY 1;
 
 -- Vista de negocio: operación con nombres de entidades (reproduce el join del cliente)
