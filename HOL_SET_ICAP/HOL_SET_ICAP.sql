@@ -238,6 +238,7 @@ CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE (
   COMITENTE_ID NUMBER   COMMENT 'FK a COMITENTE (cliente final)'
 ) COMMENT='Comitentes involucrados en operaciones (~33% de operaciones tienen cliente final)';
 
+-- COPY INTO del histórico — catálogos y maestros (con SMALL, son pocas filas)
 COPY INTO CURRENCY        FROM @STG_SETICAP/hist/currency/;
 COPY INTO MERCADO         FROM @STG_SETICAP/hist/mercado/;
 COPY INTO PARIDAD_MONEDA  FROM @STG_SETICAP/hist/paridad_moneda/;
@@ -248,11 +249,23 @@ COPY INTO SUCURSAL        FROM @STG_SETICAP/hist/sucursal/;
 COPY INTO USUARIO         FROM @STG_SETICAP/hist/usuario/;
 COPY INTO COMITENTE       FROM @STG_SETICAP/hist/comitente/;
 
--- Tablas grandes: subimos a XLARGE para cargar 400M filas en minutos (~15-20 min)
+-- 🧪 EXPERIMENTO: cargar 40M filas con SMALL (observemos cuánto tarda)
+COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;
+-- ⏱ Anota el tiempo... con SMALL y 40 millones de filas tarda VARIOS MINUTOS.
+
+-- Ahora TRUNCATE y recarga con un warehouse más potente para comparar
+TRUNCATE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE;
+
+ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'LARGE';
+-- LARGE = 8 créditos/hora (4x nodos de SMALL). Mismo COPY, misma tabla, mismo S3:
+COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;
+-- ⏱ Compara: ~4x más rápido. La diferencia en costo es mínima porque
+--    el trabajo se completa en una fracción del tiempo (pago por segundo activo).
+
+-- Tablas grandes (120M + 240M = 360M filas): usamos XLARGE (16 nodos, ~7-8 min total)
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';
 COPY INTO OPERATION_SET_FX             FROM @STG_SETICAP/hist/operation_set_fx/;
 COPY INTO OPERATION_SET_FX_CONTRAPARTE FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;
-COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
 
 -- Conteos (debe dar ~400M en total)
