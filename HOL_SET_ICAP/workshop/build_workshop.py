@@ -65,7 +65,7 @@ LAB_TMPL = """<!DOCTYPE html>
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
         <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-white.svg" alt="Snowflake" style="height:34px;opacity:.95">
         <span style="width:1px;height:26px;background:rgba(255,255,255,.3)"></span>
-        <img src="https://set-icap.com/wp-content/uploads/2018/06/logo-set-icap-n.png" alt="SET-ICAP" style="height:77px;filter:brightness(0) invert(1);opacity:.95">
+        <img src="https://set-icap.com/wp-content/uploads/2018/06/logo-set-icap-n.png" alt="SET-ICAP" style="height:65px;filter:brightness(0) invert(1);opacity:.95">
       </div>
       <span class="labtag">LAB {id} DE 3</span>
       <h1>{title}</h1>
@@ -163,7 +163,7 @@ INDEX_TMPL = """<!DOCTYPE html>
   <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
     <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-white.svg" alt="Snowflake" style="height:36px;opacity:.95">
     <span style="width:1px;height:28px;background:rgba(255,255,255,.3)"></span>
-    <img src="https://set-icap.com/wp-content/uploads/2018/06/logo-set-icap-n.png" alt="SET-ICAP" style="height:81px;filter:brightness(0) invert(1);opacity:.95">
+    <img src="https://set-icap.com/wp-content/uploads/2018/06/logo-set-icap-n.png" alt="SET-ICAP" style="height:69px;filter:brightness(0) invert(1);opacity:.95">
   </div>
   <h1>Workshop SET-ICAP</h1>
   <div class="tagline">Mercado de Divisas SET-FX · De S3 a Snowflake Intelligence, en tiempo real</div>
