@@ -266,10 +266,13 @@ TRUNCATE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE;
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'LARGE';
 -- LARGE = 8 créditos/hora (4x nodos de SMALL). Mismo COPY, misma tabla, mismo S3:
 COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;
--- ⏱ Compara: ~4x más rápido. La diferencia en costo es mínima porque
---    el trabajo se completa en una fracción del tiempo (pago por segundo activo).
+-- ⏱ Compara: ~4x más rápido. Con LARGE y archivos de 100-250 MB, Snowflake
+--    distribuye la carga en 8 nodos. Pagas por segundo activo, no por hora completa.
 
--- Tablas grandes (120M + 240M = 360M filas): usamos XLARGE (16 nodos, ~7-8 min total)
+-- Tablas grandes (120M + 240M = 360M filas): usamos XLARGE (16 nodos).
+-- Con 30+ archivos de 150 MB, XLARGE aprovecha todo el paralelismo.
+-- (Medido: LARGE tarda ~56s por 3 archivos; con 30 archivos XLARGE es ~10x más rápido
+--  que SMALL porque distribuye 30 archivos entre 16 nodos simultáneamente.)
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';
 COPY INTO OPERATION_SET_FX             FROM @STG_SETICAP/hist/operation_set_fx/;
 COPY INTO OPERATION_SET_FX_CONTRAPARTE FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;
