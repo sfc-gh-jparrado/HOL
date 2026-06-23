@@ -44,20 +44,25 @@ META = {
     2:  ("5 min", "Stage externo a S3 + File Format",
          "<p>Conectamos Snowflake al bucket S3 con los datos del HOL (CSV gzip ';').</p>"
          "<div class=\"note\"><strong>Credenciales:</strong> reemplaza <code>&lt;SOLICITAR_AL_INSTRUCTOR&gt;</code> por las llaves read-only del instructor.</div>"),
-    3:  ("10 min", "DDL + carga del histórico (COPY INTO)",
-         "<p>Creamos las 11 tablas del modelo SET-FX y cargamos un año de operaciones desde S3.</p>"),
-    4:  ("15 min", "⭐ Snowpipe con auto-ingesta (event-driven)",
-         "<div class=\"note new\"><strong>Lo nuevo.</strong> Cada archivo que llega a <code>stream/</code> dispara una notificación S3 → SQS y el pipe carga los datos en segundos, sin tareas. Para conectar S3→SQS usa el ARN del paso 4.2 con <code>aws s3api put-bucket-notification-configuration</code> (ver README).</div>"),
-    5:  ("5 min", "Time Travel y Zero-Copy Cloning",
+    3:  ("5 min", "DDL: creación de tablas",
+         "<p>Creamos las 12 tablas del modelo SET-FX (catálogos, maestros y transaccionales).</p>"),
+    4:  ("15 min", "Carga de datos + Warehouse Scaling",
+         "<p>Cargamos 400M filas desde S3. Demostramos el impacto del tamaño de warehouse:</p>"
+         "<ul><li><strong>SMALL</strong> → catálogos + 40M filas (lento)</li>"
+         "<li><strong>LARGE</strong> → misma tabla 40M recargada (~4x más rápido)</li>"
+         "<li><strong>XLARGE</strong> → 120M + 240M filas (máxima velocidad)</li></ul>"),
+    5:  ("15 min", "⭐ Snowpipe con auto-ingesta (event-driven)",
+         "<div class=\"note new\"><strong>Lo nuevo.</strong> Cada archivo que llega a <code>stream/</code> dispara una notificación S3 → SQS y el pipe carga los datos en segundos, sin tareas. Para conectar S3→SQS usa el ARN del paso 5.2 con <code>aws s3api put-bucket-notification-configuration</code> (ver README).</div>"),
+    6:  ("5 min", "Time Travel y Zero-Copy Cloning",
          "<p>Recupera datos y crea ambientes dev instantáneos sin duplicar almacenamiento.</p>"),
-    6:  ("10 min", "Enmascaramiento dinámico de datos",
+    7:  ("10 min", "Enmascaramiento dinámico de datos",
          "<p>Un analista no debe ver la identidad de las contrapartes. Aplicamos Dynamic Data Masking.</p>"),
-    7:  ("12 min", "Cortex AI: análisis de mercado con IA",
+    8:  ("12 min", "Cortex AI: análisis de mercado con IA",
          "<p>Clasificación, análisis diario, sentimiento y resumen con IA generativa.</p>"
          "<div class=\"note\"><strong>Nota:</strong> <code>AI_SENTIMENT</code> retorna OBJECT; se accede con <code>:categories[0]:sentiment::VARCHAR</code>.</div>"),
-    8:  ("10 min", "Dynamic Tables: analítica que se refresca sola",
+    9:  ("10 min", "Dynamic Tables: analítica que se refresca sola",
          "<p>VWAP diario y ranking de entidades, siempre actualizados (anti fan-out con DISTINCT).</p>"),
-    12: ("3 min", "Limpieza",
+    13: ("3 min", "Limpieza",
          "<p>Detén el generador de streaming (Ctrl-C), pausa el pipe y elimina los objetos del HOL.</p>"),
 }
 
@@ -114,7 +119,7 @@ Requisitos visuales (estilo fintech profesional, branding Snowflake #29B5E8 / #1
 Genera el app.py completo, listo para pegar en Snowsight -> Streamlit. No uses
 librerias que requieran instalacion externa mas alla de las disponibles en SiS."""
 
-STEP9 = ("15 min", "Streamlit: tablero del mercado SET-FX",
+STEP10 = ("15 min", "Streamlit: tablero del mercado SET-FX",
          "<p>En Snowsight → Projects → Streamlit → <em>+ Streamlit App</em> (warehouse WH_HOL_SETICAP, database DB_HOL_SETICAP, schema PUBLIC). Elige una de las dos opciones:</p>"
          "<div class=\"note\"><strong>Opción A — Rápida.</strong> Pega este código base para un tablero funcional:</div>"
          "<div class=\"codebox\"><span class=\"lang\">python</span><button class=\"btn-copy\" onclick=\"copyCode(this)\">Copiar</button><pre>"
@@ -123,14 +128,14 @@ STEP9 = ("15 min", "Streamlit: tablero del mercado SET-FX",
          "<div class=\"codebox\"><span class=\"lang\">prompt · cortex code</span><button class=\"btn-copy\" onclick=\"copyCode(this)\">Copiar</button><pre>"
          + html_escape(COCO_PROMPT) + "</pre></div>")
 
-STEP10 = ("8 min", "Semantic View para Cortex Analyst",
+STEP11 = ("8 min", "Semantic View para Cortex Analyst",
           "<p>En Snowsight → AI &amp; ML → Cortex Analyst → Create → Semantic View. Selecciona las tablas y métricas (o importa <code>HOL_SET_ICAP_semantic_model.yaml</code>).</p>"
           "<ul><li><strong>Tablas:</strong> OPERATION_SET_FX, ENTIDAD, MERCADO, PARIDAD_MONEDA</li>"
           "<li><strong>Relaciones:</strong> MERCADO→MERCADO_ID, ENTIDAD_COMPRADORA→ENTIDAD_ID, PARIDAD_ID→PARIDAD_ID</li>"
           "<li><strong>Métricas:</strong> volumen_usd=SUM(MONTO_USD), num_operaciones=COUNT(ID), vwap=SUM(PRECIO*MONTO_USD)/SUM(MONTO_USD), trm_promedio=AVG(PRECIO)</li>"
           "<li><strong>Dimensiones:</strong> FECHA, PLAZO_CURVA, MERCADO_NOMBRE, ENTIDAD_SIGLA</li></ul>")
 
-STEP11 = ("15 min", "Snowflake Intelligence: agente conversacional",
+STEP12 = ("15 min", "Snowflake Intelligence: agente conversacional",
           "<p>En Snowsight → AI &amp; ML → Agents → Create agent. Conecta la Semantic View y configura el agente experto del mercado FX.</p>"
           "<ul><li><strong>Nombre:</strong> AGT_SETICAP</li>"
           "<li><strong>Herramienta:</strong> Cortex Analyst → Semantic View <code>SV_SET_FX</code></li>"
@@ -150,16 +155,16 @@ def code_block(sql_text: str, lang="sql") -> str:
 
 def build_steps(parts: dict) -> str:
     steps = []
-    for n in range(1, 13):
-        if n in (1, 2, 3, 4, 5, 6, 7, 8, 12):
+    for n in range(1, 14):
+        if n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 13):
             t, title, intro = META[n]
             body = intro + code_block(parts[n], "sql")
-        elif n == 9:
-            t, title, body = STEP9
         elif n == 10:
             t, title, body = STEP10
         elif n == 11:
             t, title, body = STEP11
+        elif n == 12:
+            t, title, body = STEP12
         steps.append({"n": n, "t": t, "title": title, "body": body})
     # array JS con strings via JSON (escape seguro)
     items = []
@@ -174,7 +179,7 @@ def build_steps(parts: dict) -> str:
 def main():
     sql_text = open(SQL, encoding="utf-8").read()
     parts = split_parts(sql_text)
-    assert all(n in parts for n in range(1, 13)), f"faltan partes: {sorted(set(range(1,13))-set(parts))}"
+    assert all(n in parts for n in range(1, 14)), f"faltan partes: {sorted(set(range(1,14))-set(parts))}"
     new_steps = build_steps(parts)
 
     html = open(HTML, encoding="utf-8").read()

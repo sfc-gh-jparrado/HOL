@@ -238,7 +238,14 @@ CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE (
   COMITENTE_ID NUMBER   COMMENT 'FK a COMITENTE (cliente final)'
 ) COMMENT='Comitentes involucrados en operaciones (~33% de operaciones tienen cliente final)';
 
--- COPY INTO del histórico — catálogos y maestros (con SMALL, son pocas filas)
+
+/* ************************************ PARTE 4 ************************************************
+   Carga de datos históricos: COPY INTO + demostración de Warehouse Scaling.
+   Snowflake escala al vuelo — mismo dato, mismo S3, cambias el warehouse y la carga se
+   hace 4x más rápida. Solo pagas por los segundos que usas, no por hora completa.
+******************************************************************************************** */
+
+-- Catálogos y maestros (con SMALL, son pocas filas — instantáneo)
 COPY INTO CURRENCY        FROM @STG_SETICAP/hist/currency/;
 COPY INTO MERCADO         FROM @STG_SETICAP/hist/mercado/;
 COPY INTO PARIDAD_MONEDA  FROM @STG_SETICAP/hist/paridad_moneda/;
@@ -301,7 +308,7 @@ WHERE o.ANULADA = FALSE;
 SELECT * FROM V_OPERACIONES LIMIT 20;
 
 
-/* ************************************ PARTE 4 ⭐ NUEVO ***************************************
+/* ************************************ PARTE 5 ⭐ ***************************************
    SNOWPIPE CON AUTO-INGESTA (event-driven).
    Un proceso externo (gen_set_icap_stream.py) deposita operaciones nuevas en
    s3://demosjparrado/set_icap_hol/stream/ cada 5 minutos. Cada archivo nuevo dispara una
@@ -385,7 +392,7 @@ ORDER BY LAST_LOAD_TIME DESC;
    ----------------------------------------------------------------------------------- */
 
 
-/* ************************************ PARTE 5 ************************************************
+/* ************************************ PARTE 6 ************************************************
    Time Travel y Zero-Copy Cloning.
 ******************************************************************************************** */
 
@@ -405,7 +412,7 @@ UNDROP TABLE OPERATION_SET_FX;
 SELECT COUNT(*) AS sigue_disponible FROM OPERATION_SET_FX;
 
 
-/* ************************************ PARTE 6 ************************************************
+/* ************************************ PARTE 7 ************************************************
    Enmascaramiento dinámico de datos (Dynamic Data Masking).
    Un analista de mercado NO debe ver la identidad de las contrapartes de cada operación
    (información sensible bajo supervisión de la SFC).
@@ -440,7 +447,7 @@ FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX LIMIT 5;
 USE ROLE ACCOUNTADMIN;
 
 
-/* ************************************ PARTE 7 ************************************************
+/* ************************************ PARTE 8 ************************************************
    Cortex AI Functions: análisis de mercado con IA generativa.
    Usamos AI_COMPLETE (texto), AI_SENTIMENT (sentimiento) y SUMMARIZE.
 ******************************************************************************************** */
@@ -493,7 +500,7 @@ WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
   AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERATION_SET_FX));
 
 
-/* ************************************ PARTE 8 ************************************************
+/* ************************************ PARTE 9 ************************************************
    Dynamic Tables: analítica casi en tiempo real que se refresca sola.
    Combinan el histórico con el stream para métricas de mercado actualizadas.
 ******************************************************************************************** */
@@ -545,7 +552,7 @@ AS
 SELECT * FROM DT_RANKING_ENTIDADES LIMIT 15;
 
 
-/* ************************************ PARTE 9 ************************************************
+/* ************************************ PARTE 10 ************************************************
    Streamlit in Snowflake: tablero interactivo del mercado SET-FX.
    Snowsight -> Projects -> Streamlit -> + Streamlit App (warehouse WH_HOL_SETICAP,
    database DB_HOL_SETICAP, schema PUBLIC). Pega el siguiente código.
@@ -627,7 +634,7 @@ st.altair_chart(
    ----------------------------------------------------------------------------------- */
 
 
-/* ************************************ PARTE 10 ***********************************************
+/* ************************************ PARTE 11 ***********************************************
    Semantic View para Cortex Analyst (creación asistida en Snowsight UI).
    Snowsight -> AI & ML -> Cortex Analyst -> Create -> Semantic View. Selecciona:
      Tablas: OPERATION_SET_FX, ENTIDAD, MERCADO, PARIDAD_MONEDA
@@ -642,7 +649,7 @@ st.altair_chart(
 ******************************************************************************************** */
 
 
-/* ************************************ PARTE 11 **********************************************
+/* ************************************ PARTE 12 **********************************************
    Snowflake Intelligence: un Agente Cortex que responde en lenguaje natural.
    Snowsight -> AI & ML -> Agents (Snowflake Intelligence) -> Create agent.
      Nombre: AGT_SETICAP
@@ -661,7 +668,7 @@ st.altair_chart(
 ******************************************************************************************** */
 
 
-/* ************************************ PARTE 12 **********************************************
+/* ************************************ PARTE 13 **********************************************
    Limpieza: detenemos la ingesta y eliminamos los objetos del HOL.
 ******************************************************************************************** */
 -- Detén el generador de streaming (Ctrl-C en la terminal) antes de limpiar.

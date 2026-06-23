@@ -22,18 +22,18 @@ STEPS_JS = re.search(r"const STEPS = (\[.*?\];)\n", single, re.S).group(1)
 
 LABS = [
     {"id": 1, "slug": "ingesta_snowpipe", "title": "Ingesta y Snowpipe",
-     "subtitle": "Carga histórica desde S3 e ingesta en tiempo real",
-     "steps": [1, 2, 3, 4], "dur": "32 min",
-     "desc": "Configura el ambiente, carga un año de operaciones FX desde S3 y activa la ingesta en tiempo real con Snowpipe.",
+     "subtitle": "Creación de objetos, carga masiva y Snowpipe en tiempo real",
+     "steps": [1, 2, 3, 4, 5], "dur": "42 min",
+     "desc": "Configura el ambiente, crea las tablas, demuestra warehouse scaling con 400M filas y activa la auto-ingesta con Snowpipe.",
      "dep": "Ninguno (punto de partida)"},
     {"id": 2, "slug": "ai_analytics", "title": "AI Analytics",
      "subtitle": "Time Travel, Masking, Cortex AI y Dynamic Tables",
-     "steps": [5, 6, 7, 8], "dur": "37 min",
+     "steps": [6, 7, 8, 9], "dur": "37 min",
      "desc": "Recupera datos con Time Travel, protege contrapartes con masking, analiza el mercado con Cortex AI y crea métricas que se refrescan solas.",
      "dep": "Lab 1 (requiere DB_HOL_SETICAP y las tablas cargadas)"},
     {"id": 3, "slug": "intelligence_agent", "title": "Intelligence",
      "subtitle": "Streamlit, Cortex Analyst y Snowflake Intelligence",
-     "steps": [9, 10, 11, 12], "dur": "41 min",
+     "steps": [10, 11, 12, 13], "dur": "41 min",
      "desc": "Despliega un tablero Streamlit, crea una Semantic View para Cortex Analyst y un agente conversacional con Snowflake Intelligence.",
      "dep": "Lab 1 y Lab 2 (requiere Dynamic Tables y vistas)"},
 ]
