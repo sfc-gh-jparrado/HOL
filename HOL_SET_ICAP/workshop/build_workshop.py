@@ -42,7 +42,7 @@ LAB_TMPL = """<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lab {id} · {title} · Workshop SET-ICAP</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Lato:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet">
 <style>{css}
 .backlink{{display:inline-block;margin:18px 0 0 24px;color:var(--sf-blue);text-decoration:none;font-weight:700;font-size:.85rem}}
 .labtag{{display:inline-block;background:var(--sf-blue);color:#fff;padding:3px 12px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:10px}}
@@ -146,14 +146,14 @@ INDEX_TMPL = """<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Workshop SET-ICAP · Mercado de Divisas SET-FX</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Lato:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet">
 <style>{css}
 .wrap{{max-width:1000px;margin:0 auto;padding:40px 32px}}
 .cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:24px}}
 .card{{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;text-decoration:none;color:var(--body);transition:.2s;display:block}}
 .card:hover{{transform:translateY(-4px);box-shadow:0 12px 28px rgba(17,86,127,.12);border-color:var(--sf-blue)}}
-.card .num{{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--sf-blue),var(--sf-mid));color:#fff;font-family:var(--font-h);font-weight:800;font-size:1.2rem;display:flex;align-items:center;justify-content:center;margin-bottom:14px}}
-.card h3{{font-family:var(--font-h);color:var(--sf-mid);font-size:1.2rem;margin-bottom:6px}}
+.card .num{{width:44px;height:44px;border-radius:50%;background:linear-gradient(180deg,var(--sf-blue),var(--sf-navy));color:#fff;font-family:var(--font-h);font-weight:800;font-size:1.2rem;display:flex;align-items:center;justify-content:center;margin-bottom:14px}}
+.card h3{{font-family:var(--font-h);color:var(--sf-navy);font-size:1.2rem;margin-bottom:6px}}
 .card .sub{{font-size:.9rem;color:var(--sf-blue);font-weight:700;margin-bottom:10px}}
 .card .dur{{font-size:.78rem;color:#9AB;margin-top:12px}}
 .card .dep{{font-size:.75rem;color:#9AB;margin-top:4px;font-style:italic}}
