@@ -50,7 +50,7 @@ META = {
          "<p>Cargamos 400M filas desde S3 e impresionamos con la velocidad. Demostramos el impacto del tamaño de warehouse cargando la misma tabla de 120M dos veces:</p>"
          "<ul><li><strong>SMALL</strong> (2 nodos) → 120M operaciones en ~50s</li>"
          "<li><strong>XLARGE</strong> (16 nodos) → la misma tabla en ~21s (~2.4x)</li></ul>"
-         "<div class=\"note\"><strong>Lección:</strong> el paralelismo depende del <strong>número de archivos</strong> (30 archivos de 150 MB), no solo del warehouse. Luego se construye <code>OPERACIONES</code>, la tabla plana denormalizada (sin fan-out) que consume Cortex Analyst.</div>"),
+         "<div class=\"note\"><strong>Lección:</strong> el paralelismo depende del <strong>número de archivos</strong> (30 archivos de 150 MB), no solo del warehouse. La capa de consumo <code>OPERACIONES</code> (denormalizada, sin fan-out) ya no se arma aquí: en el paso 9 nace como <strong>Dynamic Table</strong> que se refresca sola con el stream.</div>"),
     5:  ("15 min", "⭐ Snowpipe con auto-ingesta (event-driven)",
          "<div class=\"note new\"><strong>Lo nuevo.</strong> Cada archivo que llega a <code>stream/</code> dispara una notificación S3 → SQS y el pipe carga los datos en segundos, sin tareas. Para conectar S3→SQS usa el ARN del paso 5.2 con <code>aws s3api put-bucket-notification-configuration</code> (ver README).</div>"),
     6:  ("5 min", "Time Travel y Zero-Copy Cloning",
@@ -60,8 +60,9 @@ META = {
     8:  ("12 min", "Cortex AI: análisis de mercado con IA",
          "<p>Clasificación, análisis diario, sentimiento y resumen con IA generativa.</p>"
          "<div class=\"note\"><strong>Nota:</strong> usamos <code>SNOWFLAKE.CORTEX.COMPLETE</code> y <code>SNOWFLAKE.CORTEX.SENTIMENT</code> (retorna FLOAT -1 a 1). Los prompts piden respuestas de una sola frase sin markdown.</div>"),
-    9:  ("10 min", "Dynamic Tables: analítica que se refresca sola",
-         "<p>VWAP diario y ranking de entidades, siempre actualizados (anti fan-out con DISTINCT).</p>"),
+    9:  ("10 min", "⭐ Dynamic Tables: la capa de consumo que se refresca sola",
+         "<p><code>OPERACIONES</code> deja de ser un CTAS manual y se vuelve una <strong>Dynamic Table</strong>: cada operación que Snowpipe ingesta la actualiza de forma <strong>incremental</strong> (solo las filas nuevas, sin reconstruir 120M). Sobre ella encadenamos VWAP diario y ranking de entidades con <code>TARGET_LAG = DOWNSTREAM</code>.</p>"
+         "<div class=\"note new\"><strong>Validado:</strong> los 4 joins son N:1 → Snowflake la crea como <code>REFRESH_MODE = INCREMENTAL</code>. Cadena: S3 → Snowpipe → <code>OPERACIONES</code> → métricas, sin ETL ni tareas.</div>"),
     13: ("3 min", "Limpieza",
          "<p>Detén el generador de streaming (Ctrl-C), pausa el pipe y elimina los objetos del HOL.</p>"),
 }

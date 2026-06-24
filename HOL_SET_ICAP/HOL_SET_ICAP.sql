@@ -299,36 +299,11 @@ UNION ALL SELECT 'OPERATION_SET_FX_CONTRAP_COMITENTE', COUNT(*) FROM OPERATION_S
 ORDER BY 1;
 
 -- ---------------------------------------------------------------------------
--- CAPA DE CONSUMO: tabla denormalizada OPERACIONES (la que usa Cortex Analyst).
--- Resuelve nombres de entidad (compradora/vendedora), mercado y paridad en UNA
--- sola tabla plana. Todos los joins son N:1 (cada operación tiene exactamente un
--- comprador, un vendedor, un mercado) => CERO fan-out => agregaciones siempre
--- correctas en Cortex Analyst y Snowflake CoWork. Es la ÚNICA tabla del semantic view.
--- (Las tablas de detalle —contraparte 240M, comitente 40M, sucursal, usuario—
---  se conservan para drill-down pero NO entran al modelo semántico.)
+-- CAPA DE CONSUMO: la tabla denormalizada OPERACIONES (la que usa Cortex Analyst)
+-- ya NO se construye aquí con un CTAS estático. En la PARTE 9 la creamos como
+-- DYNAMIC TABLE: se refresca sola (incremental) a medida que Snowpipe ingesta
+-- operaciones nuevas, sin tener que reconstruirla a mano. Continúa con la Parte 5.
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE TABLE OPERACIONES AS
-SELECT
-  o.ID, o.FECHA, o.HORA, o.ANULADA,
-  o.MERCADO, m.MERCADO_NOMBRE,
-  o.SUB_MERCADO,
-  o.PLAZO_CURVA, o.DIAS, o.FECHA_VALOR,
-  o.MONTO_USD, o.MONTO_MONEDA_DOS AS MONTO_COP,
-  o.PRECIO, o.PRECIO_SPOT, o.POINTS_FORWARD,
-  o.PARIDAD_ID, p.NOMBRE AS PARIDAD_NOMBRE,
-  o.ENTIDAD_COMPRADORA, ec.ENTIDAD_SIGLA AS COMPRADOR_SIGLA, ec.ENTIDAD_NOMBRE AS COMPRADOR_NOMBRE, ec.ENTIDAD_CLASE AS COMPRADOR_CLASE, ec.ENTIDAD_CIUDAD AS COMPRADOR_CIUDAD,
-  o.ENTIDAD_VENDEDORA,  ev.ENTIDAD_SIGLA AS VENDEDOR_SIGLA,  ev.ENTIDAD_NOMBRE AS VENDEDOR_NOMBRE,  ev.ENTIDAD_CLASE AS VENDEDOR_CLASE,  ev.ENTIDAD_CIUDAD AS VENDEDOR_CIUDAD,
-  o.REGISTRO, o.ENVIADA_CAMARA, o.BANDERA_FISICO_COMPENSACION,
-  o.TEXTO_TERM
-FROM OPERATION_SET_FX o
-JOIN MERCADO m         ON o.MERCADO = m.MERCADO_ID
-JOIN PARIDAD_MONEDA p  ON o.PARIDAD_ID = p.PARIDAD_ID
-JOIN ENTIDAD ec        ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
-JOIN ENTIDAD ev        ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID;
-
--- 120M filas denormalizadas, listas para consumo (CTAS medido: ~8 segundos en XLARGE). Verifica:
-SELECT COUNT(*) AS filas_operaciones, COUNT(DISTINCT COMPRADOR_SIGLA) AS entidades FROM OPERACIONES;
-SELECT * FROM OPERACIONES LIMIT 20;
 
 
 /* ************************************ PARTE 5 ⭐ ***************************************
@@ -483,7 +458,7 @@ SELECT ID, PRECIO, MONTO_USD, PLAZO_CURVA,
     'USD/COP a ' || PRECIO::VARCHAR || ', monto ' || ROUND(MONTO_USD/1000,0)::VARCHAR ||
     'K USD, plazo ' || COALESCE(PLAZO_CURVA,'T+1') || '. Responde solo la categoría.'
   ) AS tipo_operacion
-FROM OPERACIONES
+FROM OPERATION_SET_FX
 WHERE ANULADA = FALSE
 LIMIT 15;
 
@@ -497,7 +472,7 @@ SELECT FECHA,
     ROUND(AVG(PRECIO),2)::VARCHAR || ' COP/USD, volumen ' ||
     ROUND(SUM(MONTO_USD)/1e6,1)::VARCHAR || 'M USD en ' || COUNT(*)::VARCHAR || ' operaciones.'
   ) AS analisis_ia
-FROM OPERACIONES
+FROM OPERATION_SET_FX
 WHERE ANULADA = FALSE
 GROUP BY FECHA
 ORDER BY FECHA DESC
@@ -511,7 +486,7 @@ SELECT ID, TEXTO_TERM,
     WHEN SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM) < -0.3 THEN 'Bajista'
     ELSE 'Neutral'
   END AS sentimiento_mercado
-FROM OPERACIONES
+FROM OPERATION_SET_FX
 WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
 LIMIT 25;
 
@@ -519,17 +494,54 @@ LIMIT 25;
 SELECT SNOWFLAKE.CORTEX.SUMMARIZE(
   LISTAGG(DISTINCT TEXTO_TERM, ' ') WITHIN GROUP (ORDER BY TEXTO_TERM)
 ) AS resumen_mercado
-FROM OPERACIONES
+FROM OPERATION_SET_FX
 WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
-  AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERACIONES));
+  AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERATION_SET_FX));
 
 
-/* ************************************ PARTE 9 ************************************************
-   Dynamic Tables: analítica casi en tiempo real que se refresca sola.
-   Combinan el histórico con el stream para métricas de mercado actualizadas.
+/* ************************************ PARTE 9 ⭐ *********************************************
+   Dynamic Tables: la capa analítica que se refresca SOLA (sin ETL, sin tareas).
+   OPERACIONES deja de ser un CTAS manual y se vuelve una Dynamic Table: cada vez que
+   Snowpipe (Parte 5) ingesta operaciones nuevas, OPERACIONES se actualiza sola de forma
+   INCREMENTAL (solo procesa las filas nuevas, no reconstruye los 120M). Sobre ella
+   encadenamos las métricas de mercado, que la siguen automáticamente (TARGET_LAG=DOWNSTREAM).
+   Cadena: OPERATION_SET_FX (Snowpipe) -> OPERACIONES (DT) -> DT_VWAP_DIARIO / DT_RANKING_ENTIDADES
 ******************************************************************************************** */
 
--- 9.1 VWAP diario (Volume-Weighted Average Price) del USD/COP
+-- 9.1 CAPA DE CONSUMO como Dynamic Table denormalizada (la que usa Cortex Analyst).
+-- Resuelve nombres de entidad (compradora/vendedora), mercado y paridad en UNA sola tabla
+-- plana. Todos los joins son N:1 (cada operación tiene exactamente un comprador, un vendedor,
+-- un mercado) => refresh INCREMENTAL + CERO fan-out => agregaciones siempre correctas en
+-- Cortex Analyst y Snowflake CoWork. Es la ÚNICA tabla del semantic view.
+-- TARGET_LAG = DOWNSTREAM: se refresca tan seguido como lo necesiten sus DT derivadas (5 min).
+CREATE OR REPLACE DYNAMIC TABLE OPERACIONES
+  TARGET_LAG   = DOWNSTREAM
+  WAREHOUSE    = WH_HOL_SETICAP
+  REFRESH_MODE = INCREMENTAL
+AS
+SELECT
+  o.ID, o.FECHA, o.HORA, o.ANULADA,
+  o.MERCADO, m.MERCADO_NOMBRE,
+  o.SUB_MERCADO,
+  o.PLAZO_CURVA, o.DIAS, o.FECHA_VALOR,
+  o.MONTO_USD, o.MONTO_MONEDA_DOS AS MONTO_COP,
+  o.PRECIO, o.PRECIO_SPOT, o.POINTS_FORWARD,
+  o.PARIDAD_ID, p.NOMBRE AS PARIDAD_NOMBRE,
+  o.ENTIDAD_COMPRADORA, ec.ENTIDAD_SIGLA AS COMPRADOR_SIGLA, ec.ENTIDAD_NOMBRE AS COMPRADOR_NOMBRE, ec.ENTIDAD_CLASE AS COMPRADOR_CLASE, ec.ENTIDAD_CIUDAD AS COMPRADOR_CIUDAD,
+  o.ENTIDAD_VENDEDORA,  ev.ENTIDAD_SIGLA AS VENDEDOR_SIGLA,  ev.ENTIDAD_NOMBRE AS VENDEDOR_NOMBRE,  ev.ENTIDAD_CLASE AS VENDEDOR_CLASE,  ev.ENTIDAD_CIUDAD AS VENDEDOR_CIUDAD,
+  o.REGISTRO, o.ENVIADA_CAMARA, o.BANDERA_FISICO_COMPENSACION,
+  o.TEXTO_TERM
+FROM OPERATION_SET_FX o
+JOIN MERCADO m         ON o.MERCADO = m.MERCADO_ID
+JOIN PARIDAD_MONEDA p  ON o.PARIDAD_ID = p.PARIDAD_ID
+JOIN ENTIDAD ec        ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
+JOIN ENTIDAD ev        ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID;
+
+-- Verifica el refresh y que sea INCREMENTAL (no FULL):
+SHOW DYNAMIC TABLES LIKE 'OPERACIONES';
+SELECT COUNT(*) AS filas_operaciones, COUNT(DISTINCT COMPRADOR_SIGLA) AS entidades FROM OPERACIONES;
+
+-- 9.2 VWAP diario (Volume-Weighted Average Price) del USD/COP
 CREATE OR REPLACE DYNAMIC TABLE DT_VWAP_DIARIO
   TARGET_LAG = '5 minutes'
   WAREHOUSE  = WH_HOL_SETICAP
@@ -548,7 +560,7 @@ AS
 
 SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA DESC LIMIT 15;
 
--- 9.2 Ranking de entidades más activas (volumen comprado)
+-- 9.3 Ranking de entidades más activas (volumen comprado)
 -- OPERACIONES ya tiene el nombre/clase resuelto (sin fan-out): agregación directa.
 CREATE OR REPLACE DYNAMIC TABLE DT_RANKING_ENTIDADES
   TARGET_LAG = '5 minutes'
@@ -653,9 +665,10 @@ st.altair_chart(
 /* ************************************ PARTE 11 ***********************************************
    Semantic View para Cortex Analyst (creación asistida en Snowsight UI).
    Snowsight -> AI & ML -> Cortex Analyst -> Create -> Semantic View. Selecciona:
-     Tabla ÚNICA: OPERACIONES (tabla plana denormalizada de la Parte 4)
+     Tabla ÚNICA: OPERACIONES (Dynamic Table plana denormalizada de la Parte 9)
        → Una sola tabla, SIN relaciones que definir, SIN riesgo de fan-out.
          Esto garantiza agregaciones correctas en Cortex Analyst y Snowflake CoWork.
+         Al ser Dynamic Table, el modelo semántico siempre ve datos frescos del stream.
      Métricas: total_volumen_usd = SUM(MONTO_USD), num_operaciones = COUNT(ID),
                vwap = SUM(PRECIO*MONTO_USD)/SUM(MONTO_USD), trm_promedio = AVG(PRECIO)
      Dimensiones: FECHA, PLAZO_CURVA, MERCADO_NOMBRE, PARIDAD_NOMBRE,
