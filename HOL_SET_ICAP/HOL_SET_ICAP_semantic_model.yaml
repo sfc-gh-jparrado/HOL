@@ -1,60 +1,74 @@
 name: SV_SET_FX
-description: Modelo semántico del mercado de divisas SET-FX (SET-ICAP) - operaciones FX, entidades, mercados y paridades. Datos sintéticos.
+description: Modelo semántico del mercado de divisas SET-FX (SET-ICAP) - operaciones FX desnormalizadas con entidades, mercados y paridades. Datos sintéticos.
 tables:
-  - name: operacion
+  - name: operaciones
     base_table:
       database: DB_HOL_SETICAP
       schema: PUBLIC
-      table: OPERATION_SET_FX
+      table: OPERACIONES
     primary_key:
       columns: [ID]
-    description: Operaciones de divisas negociadas o registradas en SET-FX
+    description: Operaciones de divisas negociadas o registradas en SET-FX (tabla desnormalizada)
     dimensions:
       - name: id
         expr: ID
         data_type: NUMBER
         unique: true
-      - name: anulada
-        expr: ANULADA
-        data_type: BOOLEAN
-        synonyms: [anulada, cancelada]
-        sample_values: ['true', 'false']
-      - name: mercado_id
-        expr: MERCADO
-        data_type: NUMBER
-      - name: paridad_id
-        expr: PARIDAD_ID
-        data_type: NUMBER
-      - name: entidad_compradora
-        expr: ENTIDAD_COMPRADORA
-        data_type: NUMBER
-        synonyms: [comprador, entidad que compra]
-      - name: entidad_vendedora
-        expr: ENTIDAD_VENDEDORA
-        data_type: NUMBER
-        synonyms: [vendedor, entidad que vende]
+      - name: mercado_nombre
+        expr: MERCADO_NOMBRE
+        data_type: VARCHAR
+        synonyms: [mercado, tipo de mercado, nombre del mercado]
+        sample_values: ['Contado USD/COP', 'Forward USD/COP', 'Swap USD/COP', 'Next Day USD/COP']
+      - name: paridad_nombre
+        expr: PARIDAD_NOMBRE
+        data_type: VARCHAR
+        synonyms: [par, paridad, par de monedas, divisa]
+        sample_values: ['USD/COP', 'EUR/COP', 'EUR/USD']
       - name: plazo_curva
         expr: PLAZO_CURVA
         data_type: VARCHAR
-        synonyms: [plazo, tenor, curva]
-        sample_values: [T+0, T+1, T+2, 1W, 1M, 3M, 6M, 1Y]
-      - name: registro
-        expr: REGISTRO
+        synonyms: [plazo, tenor, curva, vencimiento]
+        sample_values: ['T+0', 'T+1', 'T+2', '1M', '3M', '6M']
+      - name: comprador_sigla
+        expr: COMPRADOR_SIGLA
+        data_type: VARCHAR
+        synonyms: [sigla comprador, código comprador]
+      - name: comprador_nombre
+        expr: COMPRADOR_NOMBRE
+        data_type: VARCHAR
+        synonyms: [comprador, entidad compradora, banco comprador, quien compra]
+      - name: comprador_clase
+        expr: COMPRADOR_CLASE
+        data_type: VARCHAR
+        synonyms: [tipo comprador, clase comprador, tipo de entidad compradora]
+        sample_values: ['Banco', 'Comisionista', 'Corporación Financiera', 'Banco Central']
+      - name: comprador_ciudad
+        expr: COMPRADOR_CIUDAD
+        data_type: VARCHAR
+        synonyms: [ciudad comprador, plaza comprador]
+      - name: vendedor_sigla
+        expr: VENDEDOR_SIGLA
+        data_type: VARCHAR
+        synonyms: [sigla vendedor, código vendedor]
+      - name: vendedor_clase
+        expr: VENDEDOR_CLASE
+        data_type: VARCHAR
+        synonyms: [tipo vendedor, clase vendedor, tipo de entidad vendedora]
+        sample_values: ['Banco', 'Comisionista', 'Corporación Financiera', 'Banco Central']
+      - name: anulada
+        expr: ANULADA
         data_type: BOOLEAN
-        synonyms: [es registro, registro vs negociacion]
-      - name: mes
-        expr: DATE_TRUNC('month', FECHA)
-        data_type: DATE
-        synonyms: [mes]
+        synonyms: [anulada, cancelada, operación anulada]
+        sample_values: ['true', 'false']
     time_dimensions:
       - name: fecha
         expr: FECHA
         data_type: DATE
-        synonyms: [fecha, día de la operación]
+        synonyms: [fecha, día de la operación, fecha negociación]
       - name: fecha_valor
         expr: FECHA_VALOR
         data_type: DATE
-        synonyms: [fecha de liquidación, settlement]
+        synonyms: [fecha de liquidación, settlement, fecha valor]
     measures:
       - name: num_operaciones
         expr: COUNT(ID)
@@ -67,7 +81,7 @@ tables:
         default_aggregation: sum
         description: Volumen total negociado en USD
       - name: volumen_cop
-        expr: SUM(MONTO_MONEDA_DOS)
+        expr: SUM(MONTO_COP)
         data_type: NUMBER
         default_aggregation: sum
         description: Volumen total en COP
@@ -86,162 +100,56 @@ tables:
         default_aggregation: avg
         description: Monto promedio por operación en USD
 
-  - name: entidad
-    base_table:
-      database: DB_HOL_SETICAP
-      schema: PUBLIC
-      table: ENTIDAD
-    primary_key:
-      columns: [ENTIDAD_ID]
-    description: Intermediarios del Mercado Cambiario (IMC) participantes
-    dimensions:
-      - name: entidad_id
-        expr: ENTIDAD_ID
-        data_type: NUMBER
-        unique: true
-      - name: sigla
-        expr: ENTIDAD_SIGLA
-        data_type: VARCHAR
-        synonyms: [sigla, código de entidad]
-      - name: nombre
-        expr: ENTIDAD_NOMBRE
-        data_type: VARCHAR
-        synonyms: [entidad, banco, IMC, razón social]
-      - name: clase
-        expr: ENTIDAD_CLASE
-        data_type: VARCHAR
-        synonyms: [tipo de entidad, clase]
-        sample_values: [Banco, Comisionista, Corporación Financiera, Banco Central, Fiduciaria]
-      - name: tipo
-        expr: ENTIDAD_TIPO
-        data_type: VARCHAR
-        sample_values: [Privado, Oficial, Extranjero, Cooperativo]
-      - name: ciudad
-        expr: ENTIDAD_CIUDAD
-        data_type: VARCHAR
-      - name: creador_mercado
-        expr: ENTIDAD_CREADOR_MERCADO
-        data_type: BOOLEAN
-        synonyms: [market maker, creador de mercado]
-    measures:
-      - name: num_entidades
-        expr: COUNT(DISTINCT ENTIDAD_ID)
-        data_type: NUMBER
-        default_aggregation: count_distinct
-
-  - name: mercado
-    base_table:
-      database: DB_HOL_SETICAP
-      schema: PUBLIC
-      table: MERCADO
-    primary_key:
-      columns: [MERCADO_ID]
-    description: Catálogo de mercados de negociación
-    dimensions:
-      - name: mercado_id
-        expr: MERCADO_ID
-        data_type: NUMBER
-        unique: true
-      - name: nombre
-        expr: MERCADO_NOMBRE
-        data_type: VARCHAR
-        synonyms: [mercado, tipo de mercado]
-        sample_values: [Contado USD/COP, Forward USD/COP, Swap USD/COP, Next Day USD/COP]
-
-  - name: paridad
-    base_table:
-      database: DB_HOL_SETICAP
-      schema: PUBLIC
-      table: PARIDAD_MONEDA
-    primary_key:
-      columns: [PARIDAD_ID]
-    description: Pares de monedas (paridades)
-    dimensions:
-      - name: paridad_id
-        expr: PARIDAD_ID
-        data_type: NUMBER
-        unique: true
-      - name: nombre
-        expr: NOMBRE
-        data_type: VARCHAR
-        synonyms: [par, paridad, par de monedas]
-        sample_values: [USD/COP, EUR/COP, EUR/USD, GBP/USD]
-
-relationships:
-  - name: operacion_mercado
-    left_table: operacion
-    right_table: mercado
-    relationship_columns:
-      - left_column: MERCADO
-        right_column: MERCADO_ID
-    join_type: inner
-    relationship_type: many_to_one
-
-  - name: operacion_comprador
-    left_table: operacion
-    right_table: entidad
-    relationship_columns:
-      - left_column: ENTIDAD_COMPRADORA
-        right_column: ENTIDAD_ID
-    join_type: inner
-    relationship_type: many_to_one
-
-  - name: operacion_paridad
-    left_table: operacion
-    right_table: paridad
-    relationship_columns:
-      - left_column: PARIDAD_ID
-        right_column: PARIDAD_ID
-    join_type: inner
-    relationship_type: many_to_one
-
 verified_queries:
   - name: vwap_usdcop_ultima_semana
     question: ¿Cuál fue el VWAP del USD/COP la última semana?
     sql: |
       SELECT ROUND(SUM(PRECIO * MONTO_USD) / NULLIF(SUM(MONTO_USD), 0), 2) AS vwap
-      FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX
-      WHERE ANULADA = FALSE AND MERCADO = 76
-        AND FECHA >= DATEADD(day, -7, (SELECT MAX(FECHA) FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX))
+      FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES
+      WHERE ANULADA = FALSE AND PARIDAD_NOMBRE = 'USD/COP'
+        AND FECHA >= DATEADD(day, -7, (SELECT MAX(FECHA) FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES))
 
   - name: entidad_mayor_volumen_mes
     question: ¿Qué entidad negoció el mayor volumen el último mes?
     sql: |
-      SELECT e.ENTIDAD_NOMBRE, ROUND(SUM(o.MONTO_USD)/1e6, 1) AS volumen_musd
-      FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX o
-      JOIN DB_HOL_SETICAP.PUBLIC.ENTIDAD e ON o.ENTIDAD_COMPRADORA = e.ENTIDAD_ID
-      WHERE o.ANULADA = FALSE
-        AND o.FECHA >= DATEADD(month, -1, (SELECT MAX(FECHA) FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX))
-      GROUP BY 1 ORDER BY 2 DESC LIMIT 1
+      SELECT COMPRADOR_NOMBRE, ROUND(SUM(MONTO_USD) / 1e6, 1) AS volumen_musd
+      FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES
+      WHERE ANULADA = FALSE
+        AND FECHA >= DATEADD(month, -1, (SELECT MAX(FECHA) FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES))
+      GROUP BY COMPRADOR_NOMBRE
+      ORDER BY volumen_musd DESC
+      LIMIT 1
 
   - name: volumen_por_plazo
     question: ¿Cuál es el volumen negociado por plazo (tenor)?
     sql: |
-      SELECT PLAZO_CURVA, ROUND(SUM(MONTO_USD)/1e6, 1) AS volumen_musd, COUNT(*) AS num_ops
-      FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX
+      SELECT PLAZO_CURVA, ROUND(SUM(MONTO_USD) / 1e6, 1) AS volumen_musd, COUNT(*) AS num_ops
+      FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES
       WHERE ANULADA = FALSE
-      GROUP BY 1 ORDER BY 2 DESC
+      GROUP BY PLAZO_CURVA
+      ORDER BY volumen_musd DESC
 
   - name: bancos_vs_comisionistas
     question: Compara el volumen negociado entre bancos y comisionistas
     sql: |
-      SELECT e.ENTIDAD_CLASE, ROUND(SUM(o.MONTO_USD)/1e6, 1) AS volumen_musd, COUNT(*) AS num_ops
-      FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX o
-      JOIN DB_HOL_SETICAP.PUBLIC.ENTIDAD e ON o.ENTIDAD_COMPRADORA = e.ENTIDAD_ID
-      WHERE o.ANULADA = FALSE
-      GROUP BY 1 ORDER BY 2 DESC
+      SELECT COMPRADOR_CLASE, ROUND(SUM(MONTO_USD) / 1e6, 1) AS volumen_musd, COUNT(*) AS num_ops
+      FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES
+      WHERE ANULADA = FALSE
+      GROUP BY COMPRADOR_CLASE
+      ORDER BY volumen_musd DESC
 
   - name: evolucion_trm_mensual
     question: ¿Cómo evolucionó la TRM promedio mes a mes?
     sql: |
       SELECT DATE_TRUNC('month', FECHA) AS mes, ROUND(AVG(PRECIO), 2) AS trm_promedio
-      FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX
-      WHERE ANULADA = FALSE AND MERCADO = 76
-      GROUP BY 1 ORDER BY 1
+      FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES
+      WHERE ANULADA = FALSE AND PARIDAD_NOMBRE = 'USD/COP'
+      GROUP BY mes
+      ORDER BY mes
 
   - name: operaciones_anuladas
     question: ¿Cuántas operaciones se anularon y qué porcentaje representan?
     sql: |
       SELECT COUNT_IF(ANULADA = TRUE) AS anuladas, COUNT(*) AS total,
              ROUND(100.0 * COUNT_IF(ANULADA = TRUE) / COUNT(*), 2) AS pct_anuladas
-      FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX
+      FROM DB_HOL_SETICAP.PUBLIC.OPERACIONES

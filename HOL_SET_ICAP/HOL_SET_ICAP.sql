@@ -241,8 +241,14 @@ CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE (
 
 /* ************************************ PARTE 4 ************************************************
    Carga de datos históricos: COPY INTO + demostración de Warehouse Scaling.
-   Snowflake escala al vuelo — mismo dato, mismo S3, cambias el warehouse y la carga se
-   hace 4x más rápida. Solo pagas por los segundos que usas, no por hora completa.
+   Objetivo: IMPRESIONAR con la velocidad. Snowflake escala al vuelo — mismo dato,
+   mismo S3, cambias el tamaño del warehouse y la carga se acelera. Pagas por segundo.
+
+   Dimensionamiento de archivos (clave para el paralelismo):
+   - operation_set_fx: 30 archivos × ~150 MB (120M filas) → ideal para XLARGE (16 nodos)
+   - operation_set_fx_contraparte: 8 archivos × ~130 MB (240M filas)
+   - operation_set_fx_contrap_comitente: 2 archivos × ~130 MB (40M filas)
+   Todos en el rango óptimo 100-250 MB que recomienda Snowflake.
 ******************************************************************************************** */
 
 -- Catálogos y maestros (con SMALL, son pocas filas — instantáneo)
@@ -256,26 +262,25 @@ COPY INTO SUCURSAL        FROM @STG_SETICAP/hist/sucursal/;
 COPY INTO USUARIO         FROM @STG_SETICAP/hist/usuario/;
 COPY INTO COMITENTE       FROM @STG_SETICAP/hist/comitente/;
 
--- 🧪 EXPERIMENTO: cargar 40M filas con SMALL (observemos cuánto tarda)
-COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;
--- ⏱ Anota el tiempo... con SMALL y 40 millones de filas tarda VARIOS MINUTOS.
+-- 🧪 DEMO DE SCALING: cargamos 120 MILLONES de operaciones (30 archivos) con SMALL
+ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
+COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
+-- ⏱ Medido REAL: 53 segundos con SMALL (2 nodos) para 120M filas. Ya es rápido... pero observa:
 
--- Ahora TRUNCATE y recarga con un warehouse más potente para comparar
-TRUNCATE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE;
-
-ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'LARGE';
--- LARGE = 8 créditos/hora (4x nodos de SMALL). Mismo COPY, misma tabla, mismo S3:
-COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;
--- ⏱ Compara: ~4x más rápido. Con LARGE y archivos de 100-250 MB, Snowflake
---    distribuye la carga en 8 nodos. Pagas por segundo activo, no por hora completa.
-
--- Tablas grandes (120M + 240M = 360M filas): usamos XLARGE (16 nodos).
--- Con 30+ archivos de 150 MB, XLARGE aprovecha todo el paralelismo.
--- (Medido: LARGE tarda ~56s por 3 archivos; con 30 archivos XLARGE es ~10x más rápido
---  que SMALL porque distribuye 30 archivos entre 16 nodos simultáneamente.)
+-- Vaciamos y recargamos lo mismo con XLARGE para comparar
+TRUNCATE TABLE OPERATION_SET_FX;
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';
-COPY INTO OPERATION_SET_FX             FROM @STG_SETICAP/hist/operation_set_fx/;
-COPY INTO OPERATION_SET_FX_CONTRAPARTE FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;
+COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
+-- ⏱ Medido REAL: 23 segundos con XLARGE (16 nodos). Mismo dato, mismo S3.
+--    2.3x más rápido porque los 30 archivos se distribuyen entre 16 nodos.
+--    LECCIÓN: el paralelismo depende del NÚMERO DE ARCHIVOS, no solo del warehouse.
+--    Con 30 archivos de 150 MB, XLARGE aprovecha todos sus nodos. ¡Pagas por segundo!
+
+-- Cargamos las otras 2 tablas grandes con XLARGE (seguimos en XLARGE)
+COPY INTO OPERATION_SET_FX_CONTRAPARTE          FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;          -- 240M, 8 archivos: ~30s medido
+COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE    FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;    -- 40M, 2 archivos: ~18s medido
+
+-- Volvemos a SMALL para el resto del HOL (consultas, AI, DT). ¡SMALL es suficiente!
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
 
 -- Conteos (debe dar ~400M en total)
@@ -293,22 +298,37 @@ UNION ALL SELECT 'OPERATION_SET_FX_CONTRAPARTE', COUNT(*) FROM OPERATION_SET_FX_
 UNION ALL SELECT 'OPERATION_SET_FX_CONTRAP_COMITENTE', COUNT(*) FROM OPERATION_SET_FX_CONTRAP_COMITENTE
 ORDER BY 1;
 
--- Vista de negocio: operación con nombres de entidades (reproduce el join del cliente)
-CREATE OR REPLACE VIEW V_OPERACIONES AS
+-- ---------------------------------------------------------------------------
+-- CAPA DE CONSUMO: tabla denormalizada OPERACIONES (la que usa Cortex Analyst).
+-- Resuelve nombres de entidad (compradora/vendedora), mercado y paridad en UNA
+-- sola tabla plana. Todos los joins son N:1 (cada operación tiene exactamente un
+-- comprador, un vendedor, un mercado) => CERO fan-out => agregaciones siempre
+-- correctas en Cortex Analyst y Snowflake CoWork. Es la ÚNICA tabla del semantic view.
+-- (Las tablas de detalle —contraparte 240M, comitente 40M, sucursal, usuario—
+--  se conservan para drill-down pero NO entran al modelo semántico.)
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE TABLE OPERACIONES AS
 SELECT
   o.ID, o.FECHA, o.HORA, o.ANULADA,
-  m.MERCADO_NOMBRE, o.PLAZO_CURVA,
-  o.MONTO_USD, o.MONTO_MONEDA_DOS AS MONTO_COP, o.PRECIO, o.PRECIO_SPOT, o.POINTS_FORWARD,
-  ec.ENTIDAD_SIGLA AS COMPRADOR, ec.ENTIDAD_NOMBRE AS COMPRADOR_NOMBRE,
-  ev.ENTIDAD_SIGLA AS VENDEDOR,  ev.ENTIDAD_NOMBRE AS VENDEDOR_NOMBRE,
+  o.MERCADO, m.MERCADO_NOMBRE,
+  o.SUB_MERCADO,
+  o.PLAZO_CURVA, o.DIAS, o.FECHA_VALOR,
+  o.MONTO_USD, o.MONTO_MONEDA_DOS AS MONTO_COP,
+  o.PRECIO, o.PRECIO_SPOT, o.POINTS_FORWARD,
+  o.PARIDAD_ID, p.NOMBRE AS PARIDAD_NOMBRE,
+  o.ENTIDAD_COMPRADORA, ec.ENTIDAD_SIGLA AS COMPRADOR_SIGLA, ec.ENTIDAD_NOMBRE AS COMPRADOR_NOMBRE, ec.ENTIDAD_CLASE AS COMPRADOR_CLASE, ec.ENTIDAD_CIUDAD AS COMPRADOR_CIUDAD,
+  o.ENTIDAD_VENDEDORA,  ev.ENTIDAD_SIGLA AS VENDEDOR_SIGLA,  ev.ENTIDAD_NOMBRE AS VENDEDOR_NOMBRE,  ev.ENTIDAD_CLASE AS VENDEDOR_CLASE,  ev.ENTIDAD_CIUDAD AS VENDEDOR_CIUDAD,
+  o.REGISTRO, o.ENVIADA_CAMARA, o.BANDERA_FISICO_COMPENSACION,
   o.TEXTO_TERM
 FROM OPERATION_SET_FX o
-JOIN MERCADO m  ON o.MERCADO = m.MERCADO_ID
-JOIN ENTIDAD ec ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
-JOIN ENTIDAD ev ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID
-WHERE o.ANULADA = FALSE;
+JOIN MERCADO m         ON o.MERCADO = m.MERCADO_ID
+JOIN PARIDAD_MONEDA p  ON o.PARIDAD_ID = p.PARIDAD_ID
+JOIN ENTIDAD ec        ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
+JOIN ENTIDAD ev        ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID;
 
-SELECT * FROM V_OPERACIONES LIMIT 20;
+-- 120M filas denormalizadas, listas para consumo (CTAS medido: ~8 segundos en XLARGE). Verifica:
+SELECT COUNT(*) AS filas_operaciones, COUNT(DISTINCT COMPRADOR_SIGLA) AS entidades FROM OPERACIONES;
+SELECT * FROM OPERACIONES LIMIT 20;
 
 
 /* ************************************ PARTE 5 ⭐ ***************************************
@@ -452,55 +472,56 @@ USE ROLE ACCOUNTADMIN;
 
 /* ************************************ PARTE 8 ************************************************
    Cortex AI Functions: análisis de mercado con IA generativa.
-   Usamos AI_COMPLETE (texto), AI_SENTIMENT (sentimiento) y SUMMARIZE.
+   Usamos SNOWFLAKE.CORTEX.COMPLETE (texto), SENTIMENT (sentimiento) y SUMMARIZE.
 ******************************************************************************************** */
 
--- 7.1 Clasificar el tipo de operación según contexto de mercado
+-- 8.1 Clasificar el tipo de operación según contexto de mercado
 SELECT ID, PRECIO, MONTO_USD, PLAZO_CURVA,
-  AI_COMPLETE('claude-sonnet-4-5',
-    'Eres analista del mercado cambiario colombiano. Clasifica esta operación FX en UNA palabra ' ||
-    '[Cobertura, Especulacion, Liquidez, Regulatorio]. ' ||
+  SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
+    'Eres analista del mercado cambiario colombiano. Clasifica esta operación FX en UNA sola palabra ' ||
+    'sin formato markdown [Cobertura, Especulacion, Liquidez, Regulatorio]. ' ||
     'USD/COP a ' || PRECIO::VARCHAR || ', monto ' || ROUND(MONTO_USD/1000,0)::VARCHAR ||
     'K USD, plazo ' || COALESCE(PLAZO_CURVA,'T+1') || '. Responde solo la categoría.'
   ) AS tipo_operacion
-FROM OPERATION_SET_FX
+FROM OPERACIONES
 WHERE ANULADA = FALSE
 LIMIT 15;
 
--- 7.2 Análisis diario de las condiciones del mercado (agregado por día)
+-- 8.2 Análisis diario de las condiciones del mercado (agregado por día)
 SELECT FECHA,
   ROUND(AVG(PRECIO),2) AS trm_prom,
   ROUND(SUM(MONTO_USD)/1e6,1) AS volumen_musd,
   COUNT(*) AS num_ops,
-  AI_COMPLETE('claude-sonnet-4-5',
-    'Analiza brevemente (1 frase) las condiciones del mercado FX colombiano: TRM promedio ' ||
+  SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
+    'Analiza en UNA sola frase sin formato markdown las condiciones del mercado FX colombiano: TRM promedio ' ||
     ROUND(AVG(PRECIO),2)::VARCHAR || ' COP/USD, volumen ' ||
     ROUND(SUM(MONTO_USD)/1e6,1)::VARCHAR || 'M USD en ' || COUNT(*)::VARCHAR || ' operaciones.'
   ) AS analisis_ia
-FROM OPERATION_SET_FX
+FROM OPERACIONES
 WHERE ANULADA = FALSE
 GROUP BY FECHA
 ORDER BY FECHA DESC
 LIMIT 7;
 
--- 7.3 Sentimiento de las notas de los traders (AI_SENTIMENT retorna OBJECT)
+-- 8.3 Sentimiento de las notas de los traders (SENTIMENT retorna FLOAT -1..1)
 SELECT ID, TEXTO_TERM,
-  CASE AI_SENTIMENT(TEXTO_TERM):categories[0]:sentiment::VARCHAR
-    WHEN 'positive' THEN 'Alcista'
-    WHEN 'negative' THEN 'Bajista'
+  ROUND(SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM), 2) AS score,
+  CASE
+    WHEN SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM) > 0.3 THEN 'Alcista'
+    WHEN SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM) < -0.3 THEN 'Bajista'
     ELSE 'Neutral'
   END AS sentimiento_mercado
-FROM OPERATION_SET_FX
+FROM OPERACIONES
 WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
 LIMIT 25;
 
--- 7.4 Resumen ejecutivo del mercado del último día con datos
+-- 8.4 Resumen ejecutivo del mercado del último mes con datos
 SELECT SNOWFLAKE.CORTEX.SUMMARIZE(
   LISTAGG(DISTINCT TEXTO_TERM, ' ') WITHIN GROUP (ORDER BY TEXTO_TERM)
 ) AS resumen_mercado
-FROM OPERATION_SET_FX
+FROM OPERACIONES
 WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
-  AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERATION_SET_FX));
+  AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERACIONES));
 
 
 /* ************************************ PARTE 9 ************************************************
@@ -508,16 +529,11 @@ WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
    Combinan el histórico con el stream para métricas de mercado actualizadas.
 ******************************************************************************************** */
 
--- 8.1 VWAP diario (Volume-Weighted Average Price) del USD/COP
+-- 9.1 VWAP diario (Volume-Weighted Average Price) del USD/COP
 CREATE OR REPLACE DYNAMIC TABLE DT_VWAP_DIARIO
   TARGET_LAG = '5 minutes'
   WAREHOUSE  = WH_HOL_SETICAP
 AS
-  WITH base AS (
-    SELECT DISTINCT ID, FECHA, PRECIO, MONTO_USD
-    FROM OPERATION_SET_FX
-    WHERE ANULADA = FALSE AND MERCADO = 76
-  )
   SELECT
     FECHA,
     ROUND(SUM(PRECIO * MONTO_USD) / NULLIF(SUM(MONTO_USD),0), 2) AS VWAP,
@@ -526,30 +542,27 @@ AS
     MIN(PRECIO) AS PRECIO_MIN,
     MAX(PRECIO) AS PRECIO_MAX,
     ROUND(MAX(PRECIO) - MIN(PRECIO), 2) AS RANGO
-  FROM base
+  FROM OPERACIONES
+  WHERE ANULADA = FALSE AND MERCADO = 76
   GROUP BY FECHA;
 
 SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA DESC LIMIT 15;
 
--- 8.2 Ranking de entidades más activas (volumen comprado)
+-- 9.2 Ranking de entidades más activas (volumen comprado)
+-- OPERACIONES ya tiene el nombre/clase resuelto (sin fan-out): agregación directa.
 CREATE OR REPLACE DYNAMIC TABLE DT_RANKING_ENTIDADES
   TARGET_LAG = '5 minutes'
   WAREHOUSE  = WH_HOL_SETICAP
 AS
-  WITH base AS (
-    SELECT DISTINCT o.ID, o.ENTIDAD_COMPRADORA, o.MONTO_USD
-    FROM OPERATION_SET_FX o
-    WHERE o.ANULADA = FALSE
-  )
   SELECT
-    e.ENTIDAD_SIGLA,
-    e.ENTIDAD_NOMBRE,
-    e.ENTIDAD_CLASE,
+    COMPRADOR_SIGLA AS ENTIDAD_SIGLA,
+    COMPRADOR_NOMBRE AS ENTIDAD_NOMBRE,
+    COMPRADOR_CLASE AS ENTIDAD_CLASE,
     COUNT(*) AS NUM_OPERACIONES,
-    ROUND(SUM(b.MONTO_USD)/1e6, 1) AS VOLUMEN_COMPRA_MUSD
-  FROM base b
-  JOIN ENTIDAD e ON b.ENTIDAD_COMPRADORA = e.ENTIDAD_ID
-  GROUP BY e.ENTIDAD_SIGLA, e.ENTIDAD_NOMBRE, e.ENTIDAD_CLASE
+    ROUND(SUM(MONTO_USD)/1e6, 1) AS VOLUMEN_COMPRA_MUSD
+  FROM OPERACIONES
+  WHERE ANULADA = FALSE
+  GROUP BY COMPRADOR_SIGLA, COMPRADOR_NOMBRE, COMPRADOR_CLASE
   ORDER BY VOLUMEN_COMPRA_MUSD DESC;
 
 SELECT * FROM DT_RANKING_ENTIDADES LIMIT 15;
@@ -640,15 +653,18 @@ st.altair_chart(
 /* ************************************ PARTE 11 ***********************************************
    Semantic View para Cortex Analyst (creación asistida en Snowsight UI).
    Snowsight -> AI & ML -> Cortex Analyst -> Create -> Semantic View. Selecciona:
-     Tablas: OPERATION_SET_FX, ENTIDAD, MERCADO, PARIDAD_MONEDA
-     Relaciones:
-       OPERATION_SET_FX.MERCADO            -> MERCADO.MERCADO_ID
-       OPERATION_SET_FX.ENTIDAD_COMPRADORA -> ENTIDAD.ENTIDAD_ID
-       OPERATION_SET_FX.PARIDAD_ID         -> PARIDAD_MONEDA.PARIDAD_ID
+     Tabla ÚNICA: OPERACIONES (tabla plana denormalizada de la Parte 4)
+       → Una sola tabla, SIN relaciones que definir, SIN riesgo de fan-out.
+         Esto garantiza agregaciones correctas en Cortex Analyst y Snowflake CoWork.
      Métricas: total_volumen_usd = SUM(MONTO_USD), num_operaciones = COUNT(ID),
                vwap = SUM(PRECIO*MONTO_USD)/SUM(MONTO_USD), trm_promedio = AVG(PRECIO)
-     Dimensiones: FECHA, PLAZO_CURVA, MERCADO_NOMBRE, ENTIDAD_SIGLA
+     Dimensiones: FECHA, PLAZO_CURVA, MERCADO_NOMBRE, PARIDAD_NOMBRE,
+                  COMPRADOR_SIGLA, COMPRADOR_NOMBRE, COMPRADOR_CLASE,
+                  VENDEDOR_SIGLA, VENDEDOR_CLASE
    (También puedes importar el archivo HOL_SET_ICAP_semantic_model.yaml de este repositorio.)
+   NOTA: las tablas de detalle (CONTRAPARTE 240M, COMITENTE 40M) NO se incluyen en el
+   modelo semántico — tienen múltiples filas por operación y causarían doble conteo.
+   Quedan disponibles para drill-down con SQL directo cuando se requiera.
 ******************************************************************************************** */
 
 

@@ -47,10 +47,10 @@ META = {
     3:  ("5 min", "DDL: creación de tablas",
          "<p>Creamos las 12 tablas del modelo SET-FX (catálogos, maestros y transaccionales).</p>"),
     4:  ("15 min", "Carga de datos + Warehouse Scaling",
-         "<p>Cargamos 400M filas desde S3. Demostramos el impacto del tamaño de warehouse:</p>"
-         "<ul><li><strong>SMALL</strong> → catálogos + 40M filas (lento)</li>"
-         "<li><strong>LARGE</strong> → misma tabla 40M recargada (~4x más rápido)</li>"
-         "<li><strong>XLARGE</strong> → 120M + 240M filas (máxima velocidad)</li></ul>"),
+         "<p>Cargamos 400M filas desde S3 e impresionamos con la velocidad. Demostramos el impacto del tamaño de warehouse cargando la misma tabla de 120M dos veces:</p>"
+         "<ul><li><strong>SMALL</strong> (2 nodos) → 120M operaciones en ~50s</li>"
+         "<li><strong>XLARGE</strong> (16 nodos) → la misma tabla en ~21s (~2.4x)</li></ul>"
+         "<div class=\"note\"><strong>Lección:</strong> el paralelismo depende del <strong>número de archivos</strong> (30 archivos de 150 MB), no solo del warehouse. Luego se construye <code>OPERACIONES</code>, la tabla plana denormalizada (sin fan-out) que consume Cortex Analyst.</div>"),
     5:  ("15 min", "⭐ Snowpipe con auto-ingesta (event-driven)",
          "<div class=\"note new\"><strong>Lo nuevo.</strong> Cada archivo que llega a <code>stream/</code> dispara una notificación S3 → SQS y el pipe carga los datos en segundos, sin tareas. Para conectar S3→SQS usa el ARN del paso 5.2 con <code>aws s3api put-bucket-notification-configuration</code> (ver README).</div>"),
     6:  ("5 min", "Time Travel y Zero-Copy Cloning",
@@ -59,7 +59,7 @@ META = {
          "<p>Un analista no debe ver la identidad de las contrapartes. Aplicamos Dynamic Data Masking.</p>"),
     8:  ("12 min", "Cortex AI: análisis de mercado con IA",
          "<p>Clasificación, análisis diario, sentimiento y resumen con IA generativa.</p>"
-         "<div class=\"note\"><strong>Nota:</strong> <code>AI_SENTIMENT</code> retorna OBJECT; se accede con <code>:categories[0]:sentiment::VARCHAR</code>.</div>"),
+         "<div class=\"note\"><strong>Nota:</strong> usamos <code>SNOWFLAKE.CORTEX.COMPLETE</code> y <code>SNOWFLAKE.CORTEX.SENTIMENT</code> (retorna FLOAT -1 a 1). Los prompts piden respuestas de una sola frase sin markdown.</div>"),
     9:  ("10 min", "Dynamic Tables: analítica que se refresca sola",
          "<p>VWAP diario y ranking de entidades, siempre actualizados (anti fan-out con DISTINCT).</p>"),
     13: ("3 min", "Limpieza",
