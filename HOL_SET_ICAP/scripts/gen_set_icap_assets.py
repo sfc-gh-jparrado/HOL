@@ -21,7 +21,7 @@ import boto3
 
 BUCKET = "demosjparrado"
 PREFIX = "set_icap_hol/archivos/"
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out_assets")
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "archivos")
 os.makedirs(OUT, exist_ok=True)
 
 # Credenciales WRITER (IAM estático). ROTAR tras el HOL.
