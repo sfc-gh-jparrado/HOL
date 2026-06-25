@@ -507,6 +507,9 @@ LEFT JOIN COMITENTE cmv     ON cpv.COMITENTE_ID = cmv.OFFSHORE_ID;          -- 5
 ALTER DYNAMIC TABLE OPERACIONES MODIFY COLUMN ENTIDAD_COMPRADORA SET MASKING POLICY MP_ENTIDAD;
 ALTER DYNAMIC TABLE OPERACIONES MODIFY COLUMN ENTIDAD_VENDEDORA  SET MASKING POLICY MP_ENTIDAD;
 
+-- Optimización de costo: el X-LARGE solo se usó para construir la DT; el resto del HOL corre en SMALL.
+ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
+
 -- 8.2 Métricas de mercado directamente sobre la tabla plana (sin DTs adicionales).
 --     VWAP diario (Volume-Weighted Average Price) del USD/COP:
 SELECT FECHA,
