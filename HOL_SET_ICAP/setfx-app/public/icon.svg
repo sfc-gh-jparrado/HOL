@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#0A0E1A"/>
+  <path d="M14 44 L24 20 L34 44" stroke="#29B5E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M30 44 L40 20 L50 44" stroke="#22D3EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="32" y="56" text-anchor="middle" font-size="8" font-weight="700" fill="#8FA0C2" font-family="system-ui">FX</text>
+</svg>

@@ -1,0 +1,23 @@
+definition_version: "2"
+
+entities:
+  setfx_dashboard:
+    type: snowflake-app
+    identifier:
+      name: SETFX_DASHBOARD
+      database: DB_HOL_SETICAP
+      schema: PUBLIC
+    artifacts:
+      - src: ./*
+        dest: ./
+        ignore:
+          - node_modules
+          - .env*
+          - __pycache__
+          - "*.pyc"
+          - .next
+          - .git
+          - snowflake.log
+
+    query_warehouse: BANCO_WH
+    code_workspace: DB_HOL_SETICAP.PUBLIC.SNOWFLAKE_APPS

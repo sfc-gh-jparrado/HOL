@@ -1,0 +1,11 @@
+install:
+  commands:
+    - ["npm", "ci", "--include=dev"]
+
+run:
+  command: ["node", ".next/standalone/server.js"]
+
+profile:
+  label: "SET-FX Mercado de Divisas"
+  description: "Dashboard interactivo del mercado de divisas SET-FX — VWAP, volumen, top entidades, operaciones recientes"
+  icon: icon.svg

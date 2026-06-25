@@ -1,0 +1,35 @@
+{
+  "name": "setfx-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "d3": "^7.9.0",
+    "framer-motion": "^11.15.0",
+    "lucide-react": "^1.17.0",
+    "next": "^16.2.7",
+    "postcss": "^8.5.15",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "snowflake-sdk": "^2.4.3",
+    "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
+    "@types/snowflake-sdk": "^1.6.24",
+    "smol-toml": "^1.3.1",
+    "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "axios": "^1.16.1",
+    "postcss": "^8.5.15"
+  }
+}
