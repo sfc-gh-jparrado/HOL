@@ -19,5 +19,5 @@ entities:
           - .git
           - snowflake.log
 
-    query_warehouse: BANCO_WH
+    query_warehouse: WH_HOL_SETICAP
     code_workspace: DB_HOL_SETICAP.PUBLIC.SNOWFLAKE_APPS
