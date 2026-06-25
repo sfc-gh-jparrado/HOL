@@ -489,13 +489,10 @@ y haz `DROP` al terminar. Valida: conteos, `COUNT(DT)==COUNT(base)`, masking con
 Cortex (texto/imagen/audio), Search `ACTIVE`+preview, Analyst genera SQL, agente responde por REST.
 
 ### 13. Comentarios del SQL: NO narres lo que dice el instructor
-Los comentarios del código describen el **qué** y el **por qué** del SQL, no el guion de la demo.
-**El instructor narra en vivo** la mecánica y el impacto; el código no debe duplicarlo. Evita en los comentarios:
-- **Nodos / arquitectura de cómputo** ("usa N nodos", "el XLARGE tiene 16 servidores", "paraleliza en X hilos").
-- **Tiempos / velocidad** ("carga en ~30 segundos", "tarda 2 min", "instantáneo").
-- **Conteos de archivos** ("128 archivos de ~37MB", "particionado en N partes").
-- **Frases de presentador** ("esto demuestra que…", "como ves, Snowflake es rapidísimo", "¡impresionante!").
-
-Por qué: esos detalles son el discurso del instructor; en el código distraen, envejecen mal y le quitan
-protagonismo a quien presenta. Bien: `-- Recargamos con un warehouse mayor para comparar.`
+Los comentarios describen el **qué** y el **por qué** del SQL, no el guion de la demo (eso lo
+narra el instructor en vivo). Evita en los comentarios: **nodos/arquitectura de cómputo**,
+**tiempos/velocidad** ("en ~30s", "instantáneo"), **conteos de archivos** ("128 archivos de ~37MB")
+y **frases de presentador** ("esto demuestra que…", "¡impresionante!"). Distraen, envejecen mal y
+le quitan protagonismo a quien presenta.
+Bien: `-- Recargamos con un warehouse mayor para comparar.` ·
 Mal: `-- Con XLARGE (16 nodos) recargamos los 128 archivos en ~25s para impresionar.`
