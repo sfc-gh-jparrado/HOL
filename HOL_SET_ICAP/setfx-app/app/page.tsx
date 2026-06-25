@@ -10,11 +10,13 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full border-b border-[var(--border)]" style={{ background: "rgba(10, 14, 26, 0.92)", backdropFilter: "blur(12px)" }}>
         <div className="w-full px-6 h-14 flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={LOGO_SRC}
-            alt="SET-ICAP"
-            style={{ height: 30 }}
-          />
+          <span style={{ display: "inline-flex", alignItems: "center", background: "#fff", borderRadius: 8, padding: "4px 10px" }}>
+            <img
+              src={LOGO_SRC}
+              alt="SET-ICAP"
+              style={{ height: 28, display: "block" }}
+            />
+          </span>
           <span className="text-sm font-semibold tracking-tight text-gradient">
             {APP_TITLE}
           </span>
