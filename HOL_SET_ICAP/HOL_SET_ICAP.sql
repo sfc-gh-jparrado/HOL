@@ -376,60 +376,29 @@ USE ROLE ACCOUNTADMIN;
 
 
 /* ************************************ PARTE 7 ************************************************
-   Cortex AI Functions: análisis de mercado con IA generativa.
-   Usamos SNOWFLAKE.CORTEX.COMPLETE (texto), SENTIMENT (sentimiento) y SUMMARIZE.
+   Cortex AI Functions: comentario de mercado automático sobre datos reales.
+   Con SNOWFLAKE.CORTEX.COMPLETE generamos, por día, una lectura ejecutiva del mercado FX
+   en ESPAÑOL a partir de las cifras reales (TRM promedio, volumen, número de operaciones).
+   Caso de negocio: alimentar el reporte diario de la mesa y las comunicaciones a clientes
+   sin que un analista lo redacte a mano.
 ******************************************************************************************** */
 
--- 7.1 Clasificar el tipo de operación según contexto de mercado
-SELECT ID, PRECIO, MONTO_USD, PLAZO_CURVA,
-  SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
-    'Eres analista del mercado cambiario colombiano. Clasifica esta operación FX en UNA sola palabra ' ||
-    'sin formato markdown [Cobertura, Especulacion, Liquidez, Regulatorio]. ' ||
-    'USD/COP a ' || PRECIO::VARCHAR || ', monto ' || ROUND(MONTO_USD/1000,0)::VARCHAR ||
-    'K USD, plazo ' || COALESCE(PLAZO_CURVA,'T+1') || '. Responde solo la categoría.'
-  ) AS tipo_operacion
-FROM OPERATION_SET_FX
-WHERE ANULADA = FALSE
-LIMIT 15;
-
--- 7.2 Análisis diario de las condiciones del mercado (agregado por día)
 SELECT FECHA,
-  ROUND(AVG(PRECIO),2) AS trm_prom,
+  ROUND(AVG(PRECIO),2)        AS trm_prom,
   ROUND(SUM(MONTO_USD)/1e6,1) AS volumen_musd,
-  COUNT(*) AS num_ops,
+  COUNT(*)                    AS num_ops,
   SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
-    'Analiza en UNA sola frase sin formato markdown las condiciones del mercado FX colombiano: TRM promedio ' ||
-    ROUND(AVG(PRECIO),2)::VARCHAR || ' COP/USD, volumen ' ||
-    ROUND(SUM(MONTO_USD)/1e6,1)::VARCHAR || 'M USD en ' || COUNT(*)::VARCHAR || ' operaciones.'
-  ) AS analisis_ia
+    'Eres analista de la mesa de divisas de SET-ICAP (Colombia). Redacta en ESPAÑOL, en UNA sola ' ||
+    'frase y sin markdown, un comentario ejecutivo del mercado USD/COP para este día, con una ' ||
+    'implicación accionable para un tesorero. Datos: TRM promedio ' || ROUND(AVG(PRECIO),2)::VARCHAR ||
+    ' COP/USD, volumen ' || ROUND(SUM(MONTO_USD)/1e6,1)::VARCHAR || ' millones USD en ' ||
+    COUNT(*)::VARCHAR || ' operaciones.'
+  ) AS comentario_mercado
 FROM OPERATION_SET_FX
 WHERE ANULADA = FALSE
 GROUP BY FECHA
 ORDER BY FECHA DESC
 LIMIT 7;
-
--- 7.3 Perspectiva de mercado a partir de las notas de los traders.
---     IMPORTANTE: SENTIMENT mide el TONO emocional del texto, NO la dirección del mercado
---     (una nota "alcista" puede tener tono negativo). Para clasificar la dirección usamos
---     COMPLETE (semánticamente correcto) y mostramos SENTIMENT aparte solo como tono.
-SELECT ID, TEXTO_TERM,
-  TRIM(SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
-    'Eres analista FX. Según esta nota de un trader del mercado USD/COP colombiano, clasifica la ' ||
-    'PERSPECTIVA del peso en UNA palabra sin markdown: Alcista (TRM sube / peso se deprecia), ' ||
-    'Bajista (TRM baja / peso se aprecia) o Neutral. Nota: ' || TEXTO_TERM || '. Responde solo la palabra.'
-  )) AS perspectiva_mercado,
-  ROUND(SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM), 2) AS tono_nota
-FROM OPERATION_SET_FX
-WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
-LIMIT 25;
-
--- 7.4 Resumen ejecutivo del mercado del último mes con datos
-SELECT SNOWFLAKE.CORTEX.SUMMARIZE(
-  LISTAGG(DISTINCT TEXTO_TERM, ' ') WITHIN GROUP (ORDER BY TEXTO_TERM)
-) AS resumen_mercado
-FROM OPERATION_SET_FX
-WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
-  AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERATION_SET_FX));
 
 
 /* ************************************ PARTE 7B **********************************************

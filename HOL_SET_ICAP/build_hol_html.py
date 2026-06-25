@@ -54,8 +54,8 @@ META = {
     6:  ("10 min", "Enmascaramiento dinámico de datos",
          "<p>Un analista no debe ver la identidad de las contrapartes. Aplicamos Dynamic Data Masking.</p>"),
     7:  ("12 min", "Cortex AI: texto + imágenes + audio",
-         "<p>Análisis de mercado con IA generativa: clasificación de operaciones, análisis diario, <strong>perspectiva de mercado</strong> desde las notas, y resumen. Además <strong>multimodal</strong>: lectura de un gráfico de la TRM (visión) y transcripción de una llamada de mesa de dinero (audio).</p>"
-         "<div class=\"note\"><strong>Validez:</strong> para la dirección del mercado usamos <code>COMPLETE</code> (Alcista/Bajista/Neutral), no <code>SENTIMENT</code> — que mide tono, no dirección. Imagen con <code>pixtral-large</code> + <code>PROMPT</code>/<code>TO_FILE</code>; audio con <code>AI_TRANSCRIBE</code>.</div>"),
+         "<p>Comentario de mercado <strong>automático en español</strong> sobre cifras reales (TRM promedio, volumen, número de operaciones) — listo para el reporte diario de la mesa. Además <strong>multimodal</strong>: lectura de un gráfico de la TRM (visión) y transcripción de una llamada de mesa de dinero (audio).</p>"
+         "<div class=\"note\"><strong>Caso de negocio:</strong> en vez de un análisis interpretativo débil, el modelo redacta una lectura ejecutiva accionable fundamentada en los datos agregados del día. Imagen con <code>pixtral-large</code> + <code>TO_FILE</code>; audio con <code>AI_TRANSCRIBE</code>.</div>"),
     8:  ("10 min", "⭐ Dynamic Table: la vista plana del cliente, viva",
          "<p>Una <strong>sola</strong> Dynamic Table <code>OPERACIONES</code> replica el query del cliente (unión de todas las tablas) con grano <strong>1 fila por operación</strong>: la contraparte se aplana por lado (comprador/vendedor) para evitar fan-out. Se refresca sola (incremental cuando aplica) y es la única tabla del semantic view de Cortex Analyst → agregaciones correctas.</p>"
          "<div class=\"note new\"><strong>Verificación:</strong> <code>COUNT(*)</code> de OPERACIONES = <code>COUNT(*)</code> de OPERATION_SET_FX (sin fan-out).</div>"),
