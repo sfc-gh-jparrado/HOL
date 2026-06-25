@@ -297,42 +297,44 @@ ORDER BY 1;
 
 
 /* ************************************ PARTE 5 ************************************************
-   Time Travel: consultar el PASADO sin modificar nada (operador BEFORE).
-   Snowflake guarda el historial de cada tabla, así que podemos "viajar en el tiempo" y ver
-   cómo estaba antes de un cambio — SIN UPDATE ni DELETE. Aquí comparamos el estado de la
-   tabla ANTES de la carga de la Parte 4 contra el estado ACTUAL, en una sola consulta.
-   (Ejecuta todo en el mismo worksheet para que la variable de sesión persista.)
+   Time Travel & UNDROP: recupérate de errores sin backups ni restauraciones.
+   Snowflake conserva el historial de cada tabla, así que puedes deshacer un DROP o un
+   cambio destructivo (p. ej. un UPDATE sin WHERE) "viajando en el tiempo".
+   (Ejecuta en el mismo worksheet para que la variable de sesión persista.)
 ******************************************************************************************** */
 
--- 5.1 Captura el query_id del COPY INTO que cargó OPERATION_SET_FX en la Parte 4.
-SET copy_qid = (
-  SELECT QUERY_ID
-  FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())
-  WHERE QUERY_TEXT ILIKE 'COPY INTO OPERATION_SET_FX %'
-    AND EXECUTION_STATUS = 'SUCCESS'
-  ORDER BY START_TIME DESC
-  LIMIT 1
-);
-SELECT $copy_qid AS query_id_del_copy;
+-- Tabla de demostración pequeña (clon del catálogo MERCADO), para no tocar las tablas grandes.
+CREATE OR REPLACE TABLE T_DEMO_TT AS SELECT * FROM MERCADO;
+SELECT COUNT(*) AS filas FROM T_DEMO_TT;
 
--- 5.2 Compara en UNA consulta el ANTES (Time Travel, justo antes de la carga) vs AHORA.
---     BEFORE(STATEMENT => ...) devuelve la tabla tal como estaba ANTES de ese statement.
-SELECT 'antes de la carga' AS momento, COUNT(*) AS filas, ROUND(AVG(PRECIO),2) AS trm_promedio
-FROM OPERATION_SET_FX BEFORE(STATEMENT => $copy_qid)
-UNION ALL
-SELECT 'ahora' AS momento, COUNT(*) AS filas, ROUND(AVG(PRECIO),2) AS trm_promedio
-FROM OPERATION_SET_FX;
--- Resultado esperado: 'antes de la carga' = 0 filas; 'ahora' = 120M filas. ¡Viajaste en el tiempo!
+-- 5.1 DROP y UNDROP: recuperar una tabla borrada por error, al instante.
+DROP TABLE T_DEMO_TT;                   -- borrada por accidente
+UNDROP TABLE T_DEMO_TT;                 -- recuperada al instante (sin restaurar backups)
+SELECT COUNT(*) AS filas_tras_undrop FROM T_DEMO_TT;
 
--- 5.3 Otras formas de viajar en el tiempo (solo lectura):
---     -- A un momento relativo (hace 60 segundos):
---     SELECT COUNT(*) FROM OPERATION_SET_FX AT(OFFSET => -60);
---     -- A un timestamp exacto:
---     SELECT COUNT(*) FROM OPERATION_SET_FX AT(TIMESTAMP => '2026-06-19 09:00:00'::TIMESTAMP_LTZ);
+-- 5.2 UPDATE SIN WHERE (daño masivo) y recuperación con Time Travel.
+-- Estado bueno (los nombres reales de cada mercado):
+SELECT MERCADO_ID, MERCADO_NOMBRE FROM T_DEMO_TT ORDER BY MERCADO_ID;
 
--- 5.4 Zero-Copy Cloning: una copia instantánea de toda la base para análisis, sin duplicar
---     almacenamiento (no modifica la base original).
-CREATE OR REPLACE DATABASE DB_HOL_SETICAP_DEV CLONE DB_HOL_SETICAP;
+-- El clásico accidente: un UPDATE SIN WHERE sobrescribe TODAS las filas.
+UPDATE T_DEMO_TT SET MERCADO_NOMBRE = 'CORRUPTO';
+SET bad_qid = LAST_QUERY_ID();          -- id del UPDATE dañino (para el BEFORE)
+SELECT MERCADO_ID, MERCADO_NOMBRE FROM T_DEMO_TT ORDER BY MERCADO_ID;   -- todo 'CORRUPTO'
+
+-- Recuperación con un BEFORE de ~3 minutos (estado previo al UPDATE):
+--   Forma por tiempo — "hace 3 minutos" (requiere que la tabla tenga ≥3 min de historia):
+SELECT MERCADO_ID, MERCADO_NOMBRE
+FROM T_DEMO_TT AT(OFFSET => -180)       -- 180 s = 3 minutos atrás
+ORDER BY MERCADO_ID;
+--   Forma a prueba de tiempo — justo ANTES del UPDATE por su query_id (siempre funciona):
+SELECT MERCADO_ID, MERCADO_NOMBRE
+FROM T_DEMO_TT BEFORE(STATEMENT => $bad_qid)
+ORDER BY MERCADO_ID;
+
+-- Restauramos la tabla al estado bueno (antes del UPDATE):
+CREATE OR REPLACE TABLE T_DEMO_TT AS
+  SELECT * FROM T_DEMO_TT BEFORE(STATEMENT => $bad_qid);
+SELECT MERCADO_ID, MERCADO_NOMBRE FROM T_DEMO_TT ORDER BY MERCADO_ID;   -- recuperado
 
 
 /* ************************************ PARTE 6 ************************************************
@@ -695,7 +697,6 @@ SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
 /* ************************************ PARTE 12 **********************************************
    Limpieza: eliminamos los objetos del HOL.
 ******************************************************************************************** */
-DROP DATABASE IF EXISTS DB_HOL_SETICAP_DEV;
 DROP DATABASE IF EXISTS DB_HOL_SETICAP;
 DROP WAREHOUSE IF EXISTS WH_HOL_SETICAP;
 DROP ROLE IF EXISTS ANALISTA_MERCADO;

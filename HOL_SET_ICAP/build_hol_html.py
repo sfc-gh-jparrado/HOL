@@ -49,8 +49,8 @@ META = {
     4:  ("15 min", "Carga de datos + Warehouse Scaling",
          "<p>Cargamos 400M filas desde S3 y demostramos el impacto del tamaño de warehouse cargando la misma tabla de 120M con SMALL y luego con XLARGE.</p>"
          "<div class=\"note\">La capa de consumo <code>OPERACIONES</code> (denormalizada, sin fan-out) nace en el paso 8 como <strong>Dynamic Table</strong>.</div>"),
-    5:  ("5 min", "Time Travel y Zero-Copy Cloning",
-         "<p>Recupera datos y crea ambientes dev instantáneos sin duplicar almacenamiento.</p>"),
+    5:  ("5 min", "Time Travel & UNDROP",
+         "<p>Recupérate de errores sin backups: <code>DROP</code>/<code>UNDROP</code> de una tabla y recuperación de un <code>UPDATE</code> sin <code>WHERE</code> con un <strong>BEFORE de ~3 minutos</strong> (o por query_id del statement dañino).</p>"),
     6:  ("10 min", "Enmascaramiento dinámico de datos",
          "<p>Un analista no debe ver la identidad de las contrapartes. Aplicamos Dynamic Data Masking.</p>"),
     7:  ("12 min", "Cortex AI: texto + imágenes + audio",
