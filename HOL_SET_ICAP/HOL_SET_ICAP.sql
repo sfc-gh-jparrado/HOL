@@ -276,6 +276,20 @@ COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
 --    LECCIÓN: el paralelismo depende del NÚMERO DE ARCHIVOS, no solo del warehouse.
 --    Con 30 archivos de 150 MB, XLARGE aprovecha todos sus nodos. ¡Pagas por segundo!
 
+/* 🧪 EXPERIMENTO OPCIONAL — "¿y si uso un 2XLARGE?" (la trampa del sobre-dimensionamiento)
+   Intuición común: "más grande = más rápido". Probémoslo y midamos de verdad:
+     TRUNCATE TABLE OPERATION_SET_FX;
+     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = '2XLARGE';   -- 32 nodos
+     COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
+     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';    -- vuelve a XLARGE
+
+   ⏱ Medido REAL: 2XLARGE = ~63s  vs  XLARGE = ~23s  → ¡el 2XLARGE es MÁS LENTO!
+   ¿Por qué? Solo hay 30 archivos: un XLARGE (16 nodos) ya los reparte casi 2:1.
+   Un 2XLARGE (32 nodos) deja nodos OCIOSOS y suma overhead de coordinación,
+   mientras cuesta el DOBLE de créditos/segundo.
+   LECCIÓN para el cliente: dimensiona por el NÚMERO DE ARCHIVOS, no por instinto.
+   Para 30 archivos de 150 MB, XLARGE es el punto óptimo costo/rendimiento. */
+
 -- Cargamos las otras 2 tablas grandes con XLARGE (seguimos en XLARGE)
 COPY INTO OPERATION_SET_FX_CONTRAPARTE          FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;          -- 240M, 8 archivos: ~30s medido
 COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE    FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;    -- 40M, 2 archivos: ~18s medido
