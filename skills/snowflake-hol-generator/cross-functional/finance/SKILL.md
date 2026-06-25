@@ -1,0 +1,311 @@
+# Sub-Skill: Finanzas (P&G, Reportes)
+
+## Metadata
+- **Parent**: snowflake-hol-generator
+- **Name**: cross-functional/finance
+- **Área**: Finanzas / Contabilidad
+- **Aplicable a**: Todas las industrias
+- **Duración**: ~20 minutos adicionales
+
+---
+
+## 🎯 Contexto de Negocio
+
+Este módulo transversal agrega capacidades de análisis financiero:
+- Estado de Pérdidas y Ganancias (P&G)
+- Análisis de gastos por centro de costo
+- Reportes trimestrales
+- Presupuesto vs Real
+- Forecasting básico
+
+---
+
+## Datos Sintéticos
+
+### Tabla: CUENTAS_CONTABLES
+```sql
+CREATE OR REPLACE TABLE RAW.CUENTAS_CONTABLES (
+    ID_CUENTA VARCHAR(10) PRIMARY KEY,
+    CODIGO_CUENTA VARCHAR(20),
+    NOMBRE_CUENTA VARCHAR(100),
+    TIPO VARCHAR(20), -- INGRESO, COSTO, GASTO, ACTIVO, PASIVO
+    CATEGORIA VARCHAR(50),
+    SUBCATEGORIA VARCHAR(50),
+    NIVEL NUMBER,
+    CUENTA_PADRE VARCHAR(10)
+);
+
+INSERT INTO RAW.CUENTAS_CONTABLES VALUES
+-- Ingresos
+('CTA001', '4000', 'Ingresos', 'INGRESO', 'Ingresos', NULL, 1, NULL),
+('CTA002', '4100', 'Ventas Nacionales', 'INGRESO', 'Ingresos', 'Ventas', 2, 'CTA001'),
+('CTA003', '4200', 'Ventas Internacionales', 'INGRESO', 'Ingresos', 'Ventas', 2, 'CTA001'),
+('CTA004', '4300', 'Otros Ingresos', 'INGRESO', 'Ingresos', 'Otros', 2, 'CTA001'),
+
+-- Costos
+('CTA010', '5000', 'Costos de Venta', 'COSTO', 'Costos', NULL, 1, NULL),
+('CTA011', '5100', 'Costo de Producto', 'COSTO', 'Costos', 'Producto', 2, 'CTA010'),
+('CTA012', '5200', 'Costo de Distribución', 'COSTO', 'Costos', 'Logística', 2, 'CTA010'),
+
+-- Gastos Operativos
+('CTA020', '6000', 'Gastos Operativos', 'GASTO', 'Gastos', NULL, 1, NULL),
+('CTA021', '6100', 'Nómina', 'GASTO', 'Gastos', 'Personal', 2, 'CTA020'),
+('CTA022', '6200', 'Renta y Servicios', 'GASTO', 'Gastos', 'Instalaciones', 2, 'CTA020'),
+('CTA023', '6300', 'Marketing', 'GASTO', 'Gastos', 'Comercial', 2, 'CTA020'),
+('CTA024', '6400', 'Tecnología', 'GASTO', 'Gastos', 'IT', 2, 'CTA020'),
+('CTA025', '6500', 'Administrativos', 'GASTO', 'Gastos', 'Administración', 2, 'CTA020'),
+
+-- Gastos Financieros
+('CTA030', '7000', 'Gastos Financieros', 'GASTO', 'Financieros', NULL, 1, NULL),
+('CTA031', '7100', 'Intereses', 'GASTO', 'Financieros', 'Intereses', 2, 'CTA030'),
+('CTA032', '7200', 'Comisiones Bancarias', 'GASTO', 'Financieros', 'Comisiones', 2, 'CTA030');
+```
+
+### Tabla: CENTROS_COSTO
+```sql
+CREATE OR REPLACE TABLE RAW.CENTROS_COSTO (
+    ID_CENTRO VARCHAR(10) PRIMARY KEY,
+    CODIGO_CENTRO VARCHAR(20),
+    NOMBRE_CENTRO VARCHAR(100),
+    TIPO VARCHAR(30),
+    DEPARTAMENTO VARCHAR(50),
+    RESPONSABLE VARCHAR(100),
+    PRESUPUESTO_ANUAL NUMBER(15,2)
+);
+
+INSERT INTO RAW.CENTROS_COSTO VALUES
+('CC001', 'CC-VENTAS', 'Ventas y Comercial', 'REVENUE_CENTER', 'Comercial', 'Director Comercial', 5000000),
+('CC002', 'CC-MKT', 'Marketing', 'COST_CENTER', 'Marketing', 'Director Marketing', 2000000),
+('CC003', 'CC-OPS', 'Operaciones', 'COST_CENTER', 'Operaciones', 'Director Operaciones', 8000000),
+('CC004', 'CC-IT', 'Tecnología', 'COST_CENTER', 'IT', 'CTO', 3000000),
+('CC005', 'CC-RRHH', 'Recursos Humanos', 'COST_CENTER', 'RRHH', 'Director RRHH', 1500000),
+('CC006', 'CC-FIN', 'Finanzas', 'COST_CENTER', 'Finanzas', 'CFO', 1000000),
+('CC007', 'CC-ADMIN', 'Administración General', 'COST_CENTER', 'Administración', 'CEO', 2500000);
+```
+
+### Tabla: MOVIMIENTOS_CONTABLES
+```sql
+CREATE OR REPLACE TABLE RAW.MOVIMIENTOS_CONTABLES (
+    ID_MOVIMIENTO VARCHAR(20) PRIMARY KEY,
+    FECHA DATE,
+    ID_CUENTA VARCHAR(10),
+    ID_CENTRO VARCHAR(10),
+    DESCRIPCION VARCHAR(200),
+    MONTO NUMBER(15,2),
+    TIPO_MOVIMIENTO VARCHAR(10), -- DEBITO, CREDITO
+    ESTADO VARCHAR(20), -- REAL, PRESUPUESTO, FORECAST
+    FOREIGN KEY (ID_CUENTA) REFERENCES RAW.CUENTAS_CONTABLES(ID_CUENTA),
+    FOREIGN KEY (ID_CENTRO) REFERENCES RAW.CENTROS_COSTO(ID_CENTRO)
+);
+
+-- Generar movimientos contables (24 meses)
+INSERT INTO RAW.MOVIMIENTOS_CONTABLES
+SELECT 
+    'MOV' || TO_CHAR(CURRENT_DATE(), 'YYYYMMDD') || LPAD(SEQ4()::VARCHAR, 6, '0') AS ID_MOVIMIENTO,
+    DATEADD('day', -UNIFORM(1, 730, RANDOM()), CURRENT_DATE()) AS FECHA,
+    ARRAY_CONSTRUCT('CTA002', 'CTA003', 'CTA011', 'CTA012', 'CTA021', 'CTA022', 'CTA023', 'CTA024', 'CTA025', 'CTA031')[UNIFORM(0, 9, RANDOM())]::VARCHAR AS ID_CUENTA,
+    'CC00' || UNIFORM(1, 7, RANDOM()) AS ID_CENTRO,
+    ARRAY_CONSTRUCT(
+        'Factura proveedor', 'Pago nómina', 'Venta cliente', 'Gasto publicidad',
+        'Licencia software', 'Servicio consultoría', 'Renta oficina', 'Servicios públicos'
+    )[UNIFORM(0, 7, RANDOM())]::VARCHAR AS DESCRIPCION,
+    ROUND(UNIFORM(1000, 500000, RANDOM())::FLOAT, 2) AS MONTO,
+    CASE WHEN UNIFORM(1, 10, RANDOM()) <= 4 THEN 'CREDITO' ELSE 'DEBITO' END AS TIPO_MOVIMIENTO,
+    ARRAY_CONSTRUCT('REAL', 'REAL', 'REAL', 'REAL', 'PRESUPUESTO', 'FORECAST')[UNIFORM(0, 5, RANDOM())]::VARCHAR AS ESTADO
+FROM TABLE(GENERATOR(ROWCOUNT => 10000));
+```
+
+### Tabla: PRESUPUESTO
+```sql
+CREATE OR REPLACE TABLE RAW.PRESUPUESTO (
+    ID_PRESUPUESTO VARCHAR(15) PRIMARY KEY,
+    ANIO NUMBER,
+    MES NUMBER,
+    ID_CUENTA VARCHAR(10),
+    ID_CENTRO VARCHAR(10),
+    MONTO_PRESUPUESTADO NUMBER(15,2),
+    MONTO_FORECAST NUMBER(15,2),
+    VERSION VARCHAR(10), -- V1, V2, ACTUAL
+    FECHA_CREACION TIMESTAMP,
+    FOREIGN KEY (ID_CUENTA) REFERENCES RAW.CUENTAS_CONTABLES(ID_CUENTA),
+    FOREIGN KEY (ID_CENTRO) REFERENCES RAW.CENTROS_COSTO(ID_CENTRO)
+);
+
+-- Generar presupuesto mensual
+INSERT INTO RAW.PRESUPUESTO
+SELECT 
+    'BUD' || y.ANIO || LPAD(m.MES::VARCHAR, 2, '0') || cta.ID_CUENTA || cc.ID_CENTRO AS ID_PRESUPUESTO,
+    y.ANIO,
+    m.MES,
+    cta.ID_CUENTA,
+    cc.ID_CENTRO,
+    ROUND(UNIFORM(50000, 500000, RANDOM())::FLOAT, 2) AS MONTO_PRESUPUESTADO,
+    ROUND(UNIFORM(45000, 520000, RANDOM())::FLOAT, 2) AS MONTO_FORECAST,
+    'ACTUAL' AS VERSION,
+    CURRENT_TIMESTAMP() AS FECHA_CREACION
+FROM (SELECT YEAR(CURRENT_DATE()) - 1 AS ANIO UNION SELECT YEAR(CURRENT_DATE()) AS ANIO) y
+CROSS JOIN (SELECT SEQ4() + 1 AS MES FROM TABLE(GENERATOR(ROWCOUNT => 12))) m
+CROSS JOIN RAW.CUENTAS_CONTABLES cta
+CROSS JOIN RAW.CENTROS_COSTO cc
+WHERE cta.NIVEL = 2
+  AND UNIFORM(1, 10, RANDOM()) <= 4; -- No todas las combinaciones
+```
+
+---
+
+## Vistas Analíticas
+
+### Estado de Pérdidas y Ganancias
+```sql
+CREATE OR REPLACE VIEW ANALYTICS.V_ESTADO_RESULTADOS AS
+WITH MOVIMIENTOS_AGG AS (
+    SELECT 
+        DATE_TRUNC('MONTH', m.FECHA) AS MES,
+        c.TIPO,
+        c.CATEGORIA,
+        c.NOMBRE_CUENTA,
+        SUM(CASE WHEN m.TIPO_MOVIMIENTO = 'CREDITO' THEN m.MONTO ELSE -m.MONTO END) AS MONTO_NETO
+    FROM RAW.MOVIMIENTOS_CONTABLES m
+    JOIN RAW.CUENTAS_CONTABLES c ON m.ID_CUENTA = c.ID_CUENTA
+    WHERE m.ESTADO = 'REAL'
+    GROUP BY DATE_TRUNC('MONTH', m.FECHA), c.TIPO, c.CATEGORIA, c.NOMBRE_CUENTA
+)
+SELECT 
+    MES,
+    
+    -- Ingresos
+    SUM(CASE WHEN TIPO = 'INGRESO' THEN MONTO_NETO ELSE 0 END) AS INGRESOS_TOTALES,
+    
+    -- Costos
+    SUM(CASE WHEN TIPO = 'COSTO' THEN ABS(MONTO_NETO) ELSE 0 END) AS COSTOS_TOTALES,
+    
+    -- Utilidad Bruta
+    SUM(CASE WHEN TIPO = 'INGRESO' THEN MONTO_NETO ELSE 0 END) - 
+    SUM(CASE WHEN TIPO = 'COSTO' THEN ABS(MONTO_NETO) ELSE 0 END) AS UTILIDAD_BRUTA,
+    
+    -- Gastos Operativos
+    SUM(CASE WHEN TIPO = 'GASTO' AND CATEGORIA = 'Gastos' THEN ABS(MONTO_NETO) ELSE 0 END) AS GASTOS_OPERATIVOS,
+    
+    -- Utilidad Operativa (EBIT)
+    SUM(CASE WHEN TIPO = 'INGRESO' THEN MONTO_NETO ELSE 0 END) - 
+    SUM(CASE WHEN TIPO = 'COSTO' THEN ABS(MONTO_NETO) ELSE 0 END) -
+    SUM(CASE WHEN TIPO = 'GASTO' AND CATEGORIA = 'Gastos' THEN ABS(MONTO_NETO) ELSE 0 END) AS UTILIDAD_OPERATIVA,
+    
+    -- Gastos Financieros
+    SUM(CASE WHEN CATEGORIA = 'Financieros' THEN ABS(MONTO_NETO) ELSE 0 END) AS GASTOS_FINANCIEROS,
+    
+    -- Utilidad Antes de Impuestos
+    SUM(CASE WHEN TIPO = 'INGRESO' THEN MONTO_NETO ELSE 0 END) - 
+    SUM(CASE WHEN TIPO IN ('COSTO', 'GASTO') THEN ABS(MONTO_NETO) ELSE 0 END) AS UTILIDAD_ANTES_IMPUESTOS
+
+FROM MOVIMIENTOS_AGG
+GROUP BY MES
+ORDER BY MES;
+
+-- Vista de análisis presupuesto vs real
+CREATE OR REPLACE VIEW ANALYTICS.V_PRESUPUESTO_VS_REAL AS
+SELECT 
+    p.ANIO,
+    p.MES,
+    c.NOMBRE_CUENTA,
+    c.TIPO AS TIPO_CUENTA,
+    cc.NOMBRE_CENTRO,
+    
+    -- Montos
+    p.MONTO_PRESUPUESTADO,
+    p.MONTO_FORECAST,
+    COALESCE(r.MONTO_REAL, 0) AS MONTO_REAL,
+    
+    -- Variaciones
+    COALESCE(r.MONTO_REAL, 0) - p.MONTO_PRESUPUESTADO AS VARIACION_ABSOLUTA,
+    ROUND((COALESCE(r.MONTO_REAL, 0) - p.MONTO_PRESUPUESTADO) / NULLIF(p.MONTO_PRESUPUESTADO, 0) * 100, 2) AS VARIACION_PCT,
+    
+    -- Clasificación
+    CASE 
+        WHEN ABS((COALESCE(r.MONTO_REAL, 0) - p.MONTO_PRESUPUESTADO) / NULLIF(p.MONTO_PRESUPUESTADO, 0)) <= 0.05 THEN '🟢 En línea'
+        WHEN ABS((COALESCE(r.MONTO_REAL, 0) - p.MONTO_PRESUPUESTADO) / NULLIF(p.MONTO_PRESUPUESTADO, 0)) <= 0.15 THEN '🟡 Variación moderada'
+        ELSE '🔴 Variación significativa'
+    END AS ESTADO_VARIACION
+
+FROM RAW.PRESUPUESTO p
+JOIN RAW.CUENTAS_CONTABLES c ON p.ID_CUENTA = c.ID_CUENTA
+JOIN RAW.CENTROS_COSTO cc ON p.ID_CENTRO = cc.ID_CENTRO
+LEFT JOIN (
+    SELECT 
+        YEAR(FECHA) AS ANIO,
+        MONTH(FECHA) AS MES,
+        ID_CUENTA,
+        ID_CENTRO,
+        SUM(CASE WHEN TIPO_MOVIMIENTO = 'CREDITO' THEN MONTO ELSE -MONTO END) AS MONTO_REAL
+    FROM RAW.MOVIMIENTOS_CONTABLES
+    WHERE ESTADO = 'REAL'
+    GROUP BY YEAR(FECHA), MONTH(FECHA), ID_CUENTA, ID_CENTRO
+) r ON p.ANIO = r.ANIO AND p.MES = r.MES AND p.ID_CUENTA = r.ID_CUENTA AND p.ID_CENTRO = r.ID_CENTRO
+WHERE p.VERSION = 'ACTUAL';
+
+-- Vista de gastos por centro de costo
+CREATE OR REPLACE VIEW ANALYTICS.V_GASTOS_CENTRO_COSTO AS
+SELECT 
+    DATE_TRUNC('MONTH', m.FECHA) AS MES,
+    cc.NOMBRE_CENTRO,
+    cc.DEPARTAMENTO,
+    cc.RESPONSABLE,
+    cc.PRESUPUESTO_ANUAL,
+    cc.PRESUPUESTO_ANUAL / 12 AS PRESUPUESTO_MENSUAL,
+    SUM(m.MONTO) AS GASTO_REAL,
+    SUM(m.MONTO) - (cc.PRESUPUESTO_ANUAL / 12) AS VARIACION,
+    ROUND(SUM(m.MONTO) / (cc.PRESUPUESTO_ANUAL / 12) * 100, 1) AS PCT_PRESUPUESTO
+FROM RAW.MOVIMIENTOS_CONTABLES m
+JOIN RAW.CUENTAS_CONTABLES c ON m.ID_CUENTA = c.ID_CUENTA
+JOIN RAW.CENTROS_COSTO cc ON m.ID_CENTRO = cc.ID_CENTRO
+WHERE c.TIPO IN ('COSTO', 'GASTO')
+  AND m.ESTADO = 'REAL'
+GROUP BY DATE_TRUNC('MONTH', m.FECHA), cc.NOMBRE_CENTRO, cc.DEPARTAMENTO, cc.RESPONSABLE, cc.PRESUPUESTO_ANUAL;
+```
+
+---
+
+## KPIs Financieros
+
+```sql
+-- Vista de KPIs financieros clave
+CREATE OR REPLACE VIEW ANALYTICS.V_KPIS_FINANCIEROS AS
+WITH METRICAS_MES AS (
+    SELECT 
+        DATE_TRUNC('MONTH', m.FECHA) AS MES,
+        SUM(CASE WHEN c.TIPO = 'INGRESO' THEN m.MONTO ELSE 0 END) AS INGRESOS,
+        SUM(CASE WHEN c.TIPO = 'COSTO' THEN m.MONTO ELSE 0 END) AS COSTOS,
+        SUM(CASE WHEN c.TIPO = 'GASTO' THEN m.MONTO ELSE 0 END) AS GASTOS
+    FROM RAW.MOVIMIENTOS_CONTABLES m
+    JOIN RAW.CUENTAS_CONTABLES c ON m.ID_CUENTA = c.ID_CUENTA
+    WHERE m.ESTADO = 'REAL'
+    GROUP BY DATE_TRUNC('MONTH', m.FECHA)
+)
+SELECT 
+    MES,
+    INGRESOS,
+    COSTOS,
+    GASTOS,
+    INGRESOS - COSTOS AS UTILIDAD_BRUTA,
+    ROUND((INGRESOS - COSTOS) / NULLIF(INGRESOS, 0) * 100, 2) AS MARGEN_BRUTO_PCT,
+    INGRESOS - COSTOS - GASTOS AS UTILIDAD_NETA,
+    ROUND((INGRESOS - COSTOS - GASTOS) / NULLIF(INGRESOS, 0) * 100, 2) AS MARGEN_NETO_PCT,
+    
+    -- Comparación con mes anterior
+    LAG(INGRESOS) OVER (ORDER BY MES) AS INGRESOS_MES_ANT,
+    ROUND((INGRESOS - LAG(INGRESOS) OVER (ORDER BY MES)) / NULLIF(LAG(INGRESOS) OVER (ORDER BY MES), 0) * 100, 2) AS CRECIMIENTO_MOM
+FROM METRICAS_MES
+ORDER BY MES DESC;
+```
+
+---
+
+## Preguntas Sugeridas para el Agente
+
+- "Muestra el estado de resultados del último trimestre"
+- "¿Cuál es el margen bruto y neto mensual?"
+- "¿Qué centros de costo están por encima del presupuesto?"
+- "Comparar gastos reales vs presupuestados por departamento"
+- "Tendencia de ingresos de los últimos 12 meses"
+- "¿Cuál es la utilidad operativa (EBIT) por mes?"
+- "Top 5 cuentas con mayor variación vs presupuesto"
