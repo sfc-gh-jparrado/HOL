@@ -47,10 +47,8 @@ META = {
     3:  ("5 min", "DDL: creación de tablas",
          "<p>Creamos las 12 tablas del modelo SET-FX (catálogos, maestros y transaccionales).</p>"),
     4:  ("15 min", "Carga de datos + Warehouse Scaling",
-         "<p>Cargamos 400M filas desde S3 e impresionamos con la velocidad. Demostramos el impacto del tamaño de warehouse cargando la misma tabla de 120M dos veces:</p>"
-         "<ul><li><strong>SMALL</strong> (2 nodos) → 120M operaciones en ~50s</li>"
-         "<li><strong>XLARGE</strong> (16 nodos) → la misma tabla en ~21s (~2.4x)</li></ul>"
-         "<div class=\"note\"><strong>Lección:</strong> el paralelismo depende del <strong>número de archivos</strong> (30 archivos de 150 MB), no solo del warehouse. La capa de consumo <code>OPERACIONES</code> (denormalizada, sin fan-out) nace en el paso 8 como <strong>Dynamic Table</strong>.</div>"),
+         "<p>Cargamos 400M filas desde S3 y demostramos el impacto del tamaño de warehouse cargando la misma tabla de 120M con SMALL y luego con XLARGE.</p>"
+         "<div class=\"note\">La capa de consumo <code>OPERACIONES</code> (denormalizada, sin fan-out) nace en el paso 8 como <strong>Dynamic Table</strong>.</div>"),
     5:  ("5 min", "Time Travel y Zero-Copy Cloning",
          "<p>Recupera datos y crea ambientes dev instantáneos sin duplicar almacenamiento.</p>"),
     6:  ("10 min", "Enmascaramiento dinámico de datos",

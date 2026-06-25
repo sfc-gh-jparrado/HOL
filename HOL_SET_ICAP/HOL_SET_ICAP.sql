@@ -246,7 +246,7 @@ CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE (
    mismo S3, cambias el tamaño del warehouse y la carga se acelera. Pagas por segundo.
 
    Dimensionamiento de archivos (clave para el paralelismo):
-   - operation_set_fx: 30 archivos × ~150 MB (120M filas) → ideal para XLARGE (16 nodos)
+   - operation_set_fx: 30 archivos × ~150 MB (120M filas)
    - operation_set_fx_contraparte: 8 archivos × ~130 MB (240M filas)
    - operation_set_fx_contrap_comitente: 2 archivos × ~130 MB (40M filas)
    Todos en el rango óptimo 100-250 MB que recomienda Snowflake.
@@ -263,37 +263,24 @@ COPY INTO SUCURSAL        FROM @STG_SETICAP/hist/sucursal/;
 COPY INTO USUARIO         FROM @STG_SETICAP/hist/usuario/;
 COPY INTO COMITENTE       FROM @STG_SETICAP/hist/comitente/;
 
--- 🧪 DEMO DE SCALING: cargamos 120 MILLONES de operaciones (30 archivos) con SMALL
+-- DEMO DE SCALING: cargamos 120 MILLONES de operaciones (30 archivos) con SMALL
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
 COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
--- ⏱ Medido REAL: 53 segundos con SMALL (2 nodos) para 120M filas. Ya es rápido... pero observa:
 
 -- Vaciamos y recargamos lo mismo con XLARGE para comparar
 TRUNCATE TABLE OPERATION_SET_FX;
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';
 COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
--- ⏱ Medido REAL: 23 segundos con XLARGE (16 nodos). Mismo dato, mismo S3.
---    2.3x más rápido porque los 30 archivos se distribuyen entre 16 nodos.
---    LECCIÓN: el paralelismo depende del NÚMERO DE ARCHIVOS, no solo del warehouse.
---    Con 30 archivos de 150 MB, XLARGE aprovecha todos sus nodos. ¡Pagas por segundo!
 
-/* 🧪 EXPERIMENTO OPCIONAL — "¿y si uso un 2XLARGE?" (la trampa del sobre-dimensionamiento)
-   Intuición común: "más grande = más rápido". Probémoslo y midamos de verdad:
+/* EXPERIMENTO OPCIONAL — prueba con un 2XLARGE y compara los tiempos tú mismo:
      TRUNCATE TABLE OPERATION_SET_FX;
-     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = '2XLARGE';   -- 32 nodos
+     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = '2XLARGE';
      COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
-     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';    -- vuelve a XLARGE
+     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';    -- vuelve a XLARGE */
 
-   ⏱ Medido REAL: 2XLARGE = ~63s  vs  XLARGE = ~23s  → ¡el 2XLARGE es MÁS LENTO!
-   ¿Por qué? Solo hay 30 archivos: un XLARGE (16 nodos) ya los reparte casi 2:1.
-   Un 2XLARGE (32 nodos) deja nodos OCIOSOS y suma overhead de coordinación,
-   mientras cuesta el DOBLE de créditos/segundo.
-   LECCIÓN para el cliente: dimensiona por el NÚMERO DE ARCHIVOS, no por instinto.
-   Para 30 archivos de 150 MB, XLARGE es el punto óptimo costo/rendimiento. */
-
--- Cargamos las otras 2 tablas grandes con XLARGE (seguimos en XLARGE)
-COPY INTO OPERATION_SET_FX_CONTRAPARTE          FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;          -- 240M, 8 archivos: ~30s medido
-COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE    FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;    -- 40M, 2 archivos: ~18s medido
+-- Cargamos las otras 2 tablas grandes (seguimos en XLARGE)
+COPY INTO OPERATION_SET_FX_CONTRAPARTE          FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;          -- 240M, 8 archivos
+COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE    FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;    -- 40M, 2 archivos
 
 -- Volvemos a SMALL para el resto del HOL (consultas, AI, DT). ¡SMALL es suficiente!
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
@@ -312,12 +299,6 @@ UNION ALL SELECT 'OPERATION_SET_FX', COUNT(*) FROM OPERATION_SET_FX
 UNION ALL SELECT 'OPERATION_SET_FX_CONTRAPARTE', COUNT(*) FROM OPERATION_SET_FX_CONTRAPARTE
 UNION ALL SELECT 'OPERATION_SET_FX_CONTRAP_COMITENTE', COUNT(*) FROM OPERATION_SET_FX_CONTRAP_COMITENTE
 ORDER BY 1;
-
--- ---------------------------------------------------------------------------
--- CAPA DE CONSUMO: la tabla denormalizada OPERACIONES (la que usa Cortex Analyst)
--- no se construye aquí con un CTAS estático. En la PARTE 8 la creamos como
--- DYNAMIC TABLE: se refresca de forma incremental sobre el histórico, sin tener
--- que reconstruirla a mano. Continúa con la Parte 5 (Time Travel).
 
 
 /* ************************************ PARTE 5 ************************************************
