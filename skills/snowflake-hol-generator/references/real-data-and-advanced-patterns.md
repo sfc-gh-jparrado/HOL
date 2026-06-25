@@ -6,9 +6,14 @@ una **capa de consumo viva** con Dynamic Tables, **Cortex multimodal**, y un age
 `GENERATOR`). Úsalo cuando el cliente quiere impacto de escala real (cientos de millones
 de filas), ingesta desde S3, o un HOL "tipo producción".
 
-> **Estilo (preferencias del autor):** todo en **español**; en los comentarios del SQL
-> **no** narres conteos de archivos ni tiempos ("se carga en N segundos", "128 archivos");
-> el instructor habla eso. Comenta el *qué* y el *por qué*, no la mecánica de nodos.
+> **Estilo (preferencias del autor):** todo en **español**; los comentarios del SQL describen el
+> **qué** y el **por qué**, **nunca** la narrativa que el instructor dice en vivo. NO menciones en
+> los comentarios: **nodos / arquitectura de cómputo**, **tiempos o velocidad** ("en ~30s",
+> "instantáneo"), **conteos de archivos** ("128 archivos de ~37MB"), ni **frases de presentador**
+> ("esto demuestra que…", "¡impresionante!"). Eso lo habla el instructor; en el código distrae,
+> envejece mal y le quita protagonismo a quien presenta.
+> Bien: `-- Recargamos con un warehouse mayor para comparar.`
+> Mal: `-- Con XLARGE (16 nodos) recargamos los 128 archivos en ~25s para impresionar.`
 
 ---
 
