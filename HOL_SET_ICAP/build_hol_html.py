@@ -155,8 +155,11 @@ def main():
     html = open(HTML, encoding="utf-8").read()
     # Reemplaza el bloque 'const STEPS = [ ... ];' (hasta el primer '];' seguido de salto)
     # Reemplazo con función para que re.sub NO interprete los \n del JSON como saltos reales
-    new_html = re.sub(r"const STEPS = \[.*?\n\];", lambda m: new_steps, html, count=1, flags=re.S)
-    assert new_html != html and "const STEPS" in new_html, "no se reemplazó STEPS"
+    assert re.search(r"const STEPS = \[.*?\n\s*\];", html, flags=re.S), "no se encontró el bloque STEPS en el HTML"
+    new_html = re.sub(r"const STEPS = \[.*?\n\s*\];", lambda m: new_steps, html, count=1, flags=re.S)
+    if new_html == html:
+        print("OK: set_icap_hol.html ya está al día (sin cambios). STEPS bytes=" + str(len(new_steps)))
+        return
     open(HTML, "w", encoding="utf-8").write(new_html)
     print(f"OK: set_icap_hol.html regenerado con código completo. STEPS bytes={len(new_steps)}")
 
