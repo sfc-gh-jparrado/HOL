@@ -29,11 +29,11 @@ TARGET_OPS = 120_000_000
 TARGET_CP  = TARGET_OPS * 2    # 240M (siempre 2 por op)
 TARGET_CM  = 40_000_000        # comitentes
 
-# File sizing: target 100-250 MB gzip each (measured from test run)
-# operation_set_fx: 2M rows = 79 MB → 4M rows ≈ 158 MB ✓  (30 files for 120M)
-# contraparte: 4M rows = 18 MB → 30M rows ≈ 135 MB ✓  (8 files for 240M)
-# comitente: 2.5M rows = 17 MB → 20M rows ≈ 136 MB ✓  (2 files for 40M)
-ROWS_PER_FILE_OPS = 4_000_000   # ~30 files × 158 MB = 120M
+# File sizing: re-particionado para SATURAR un XLARGE (128 hilos) en COPY INTO.
+# operation_set_fx: 940K filas ≈ 37 MB → 128 files para 120M (cada hilo del XL recibe ~1 archivo)
+# contraparte: 30M rows ≈ 135 MB ✓  (8 files for 240M)
+# comitente: 20M rows ≈ 136 MB ✓  (2 files for 40M)
+ROWS_PER_FILE_OPS = 940_000     # ~128 files × 37 MB = 120M (satura XLARGE)
 ROWS_PER_FILE_CP  = 30_000_000  # ~8 files × 135 MB = 240M
 ROWS_PER_FILE_CM  = 20_000_000  # ~2 files × 136 MB = 40M
 

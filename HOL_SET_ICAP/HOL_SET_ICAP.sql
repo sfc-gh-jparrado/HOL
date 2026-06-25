@@ -246,10 +246,10 @@ CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE (
    mismo S3, cambias el tamaño del warehouse y la carga se acelera. Pagas por segundo.
 
    Dimensionamiento de archivos (clave para el paralelismo):
-   - operation_set_fx: ~150 MB (120M filas)
+   - operation_set_fx: ~37 MB c/u (120M filas) — particionado fino para saturar un XLARGE
    - operation_set_fx_contraparte: ~130 MB (240M filas)
    - operation_set_fx_contrap_comitente: ~130 MB (40M filas)
-   Todos en el rango óptimo 100-250 MB que recomienda Snowflake.
+   COPY INTO paraleliza 1 archivo por hilo; con más archivos el warehouse grande ocupa todos sus hilos.
 ******************************************************************************************** */
 
 -- Catálogos y maestros (con SMALL, son pocas filas — instantáneo)
