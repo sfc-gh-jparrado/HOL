@@ -1,6 +1,6 @@
 /* ********************************************************************************************
                    HANDS ON LAB - SET-ICAP | Mercado de Divisas SET-FX
-                   "De S3 a Snowflake Intelligence, en tiempo real"
+                   "De S3 a Snowflake Intelligence"
 ********************************************************************************************
  SET-ICAP es la compañía líder en negociación y registro de divisas y valores OTC en Colombia.
  Filial de la Bolsa de Valores de Colombia (BVC) y de TP ICAP Group. Opera el sistema
@@ -9,8 +9,9 @@
  Este HOL recorre 12 partes. Copia todo el contenido en un Worksheet de Snowflake y ejecuta
  cada parte en orden. Comentarios y notas en español.
 
- LO NUEVO en este HOL: ingesta en TIEMPO REAL con Snowpipe. Un proceso externo deposita
- operaciones FX en S3 cada 5 minutos y Snowflake las captura automáticamente.
+ Recorrido: cargas 400M filas desde S3 a velocidad de warehouse, construyes una capa de
+ consumo viva con Dynamic Tables, analizas el mercado con Cortex AI y expones todo a un
+ agente de Snowflake Intelligence.
 
  Datos 100% SINTÉTICOS para fines demostrativos en s3://demosjparrado/set_icap_hol/
  (12 tablas, csv.gz, delimitador ';', ~400M filas totales — 5 años de historia).
@@ -314,97 +315,12 @@ ORDER BY 1;
 
 -- ---------------------------------------------------------------------------
 -- CAPA DE CONSUMO: la tabla denormalizada OPERACIONES (la que usa Cortex Analyst)
--- ya NO se construye aquí con un CTAS estático. En la PARTE 9 la creamos como
--- DYNAMIC TABLE: se refresca sola (incremental) a medida que Snowpipe ingesta
--- operaciones nuevas, sin tener que reconstruirla a mano. Continúa con la Parte 5.
--- ---------------------------------------------------------------------------
+-- no se construye aquí con un CTAS estático. En la PARTE 8 la creamos como
+-- DYNAMIC TABLE: se refresca de forma incremental sobre el histórico, sin tener
+-- que reconstruirla a mano. Continúa con la Parte 5 (Time Travel).
 
 
-/* ************************************ PARTE 5 ⭐ ***************************************
-   SNOWPIPE CON AUTO-INGESTA (event-driven).
-   Un proceso externo (gen_set_icap_stream.py) deposita operaciones nuevas en
-   s3://demosjparrado/set_icap_hol/stream/ cada 5 minutos. Cada archivo nuevo dispara una
-   notificación de evento de S3 hacia una cola SQS administrada por Snowflake, y el pipe
-   carga los datos automáticamente en SEGUNDOS, sin tareas ni intervención manual.
-
-   Flujo:  S3 (ObjectCreated) --> SQS (Snowflake) --> PIPE_FX_STREAM --> OPERATION_FX_STREAM
-******************************************************************************************** */
-
--- Tabla destino del stream (misma estructura que el histórico)
-CREATE OR REPLACE TABLE OPERATION_FX_STREAM LIKE OPERATION_SET_FX;
-
--- 4.1 Snowpipe con AUTO-INGESTA activada
-CREATE OR REPLACE PIPE PIPE_FX_STREAM
-  AUTO_INGEST = TRUE
-  COMMENT = 'Snowpipe auto-ingesta de operaciones FX en tiempo real (event-driven)'
-AS
-  COPY INTO OPERATION_FX_STREAM
-  FROM @STG_SETICAP/stream/
-  FILE_FORMAT = FF_CSV_GZ;
-
--- 4.2 Obtener el ARN de la cola SQS que Snowflake creó para este pipe.
---     Copia el valor de la columna "notification_channel" (es un ARN de SQS).
-SHOW PIPES LIKE 'PIPE_FX_STREAM';
-SELECT "name", "notification_channel"
-FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
-
-/* 4.3 Conectar S3 -> SQS (se hace UNA vez, fuera de Snowflake).
-   El instructor ejecuta en una terminal con acceso al bucket (reemplaza el SQS ARN del
-   paso 4.2). Esto hace que cada archivo nuevo en stream/ notifique al pipe automáticamente.
-
-   aws s3api put-bucket-notification-configuration \
-     --bucket demosjparrado \
-     --notification-configuration '{
-       "QueueConfigurations": [{
-         "Id": "seticap-snowpipe-autoingest",
-         "QueueArn": "<PEGAR_NOTIFICATION_CHANNEL_DEL_PASO_4.2>",
-         "Events": ["s3:ObjectCreated:*"],
-         "Filter": {"Key": {"FilterRules": [
-           {"Name": "prefix", "Value": "set_icap_hol/stream/"},
-           {"Name": "suffix", "Value": ".csv.gz"}
-         ]}}
-       }]
-     }'
-
-   Nota: este comando REEMPLAZA la configuración de notificaciones del bucket. Si el bucket
-   ya tiene otras notificaciones, primero hay que leerlas (get-bucket-notification-configuration)
-   y fusionarlas en un solo JSON.
-   --------------------------------------------------------------------------------------- */
-
--- 4.4 Cargar de una vez lo que YA exista en stream/ (la auto-ingesta solo captura archivos
---     NUEVOS posteriores a la conexión; este REFRESH trae el backlog inicial).
-ALTER PIPE PIPE_FX_STREAM REFRESH;
-
--- 4.5 Verificar que el pipe esté en RUNNING y escuchando la cola SQS
-SELECT SYSTEM$PIPE_STATUS('PIPE_FX_STREAM');
-
--- 4.6 Inicia el generador de streaming (terminal del instructor) y espera 1-2 minutos:
---     export AWS_PROFILE=contributor-484577546576
---     ~/miniforge3/bin/python scripts/gen_set_icap_stream.py --loop --interval 300
---
---     Cada archivo nuevo es ingerido automáticamente en segundos. Verifícalo:
-SELECT COUNT(*) AS operaciones_en_stream,
-       MIN(HORA) AS primera, MAX(HORA) AS ultima,
-       ROUND(AVG(PRECIO),2) AS trm_promedio
-FROM OPERATION_FX_STREAM;
-
--- 4.7 Historial de cargas del pipe (qué archivos entraron y cuándo)
-SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
-  TABLE_NAME => 'OPERATION_FX_STREAM',
-  START_TIME => DATEADD(HOUR, -2, CURRENT_TIMESTAMP())))
-ORDER BY LAST_LOAD_TIME DESC;
-
-/* --- FALLBACK (solo si no puedes configurar la notificación de eventos de S3) ---
-   En entornos sin acceso para crear la notificación en S3, usa una tarea que refresque
-   el pipe cada 5 minutos en lugar de la auto-ingesta:
-     CREATE OR REPLACE PIPE PIPE_FX_STREAM AUTO_INGEST = FALSE AS COPY INTO ... ;
-     CREATE OR REPLACE TASK TASK_REFRESH_PIPE WAREHOUSE=WH_HOL_SETICAP SCHEDULE='5 MINUTE'
-       AS ALTER PIPE PIPE_FX_STREAM REFRESH;
-     ALTER TASK TASK_REFRESH_PIPE RESUME;
-   ----------------------------------------------------------------------------------- */
-
-
-/* ************************************ PARTE 6 ************************************************
+/* ************************************ PARTE 5 ************************************************
    Time Travel y Zero-Copy Cloning.
 ******************************************************************************************** */
 
@@ -424,7 +340,7 @@ UNDROP TABLE OPERATION_SET_FX;
 SELECT COUNT(*) AS sigue_disponible FROM OPERATION_SET_FX;
 
 
-/* ************************************ PARTE 7 ************************************************
+/* ************************************ PARTE 6 ************************************************
    Enmascaramiento dinámico de datos (Dynamic Data Masking).
    Un analista de mercado NO debe ver la identidad de las contrapartes de cada operación
    (información sensible bajo supervisión de la SFC).
@@ -459,12 +375,12 @@ FROM DB_HOL_SETICAP.PUBLIC.OPERATION_SET_FX LIMIT 5;
 USE ROLE ACCOUNTADMIN;
 
 
-/* ************************************ PARTE 8 ************************************************
+/* ************************************ PARTE 7 ************************************************
    Cortex AI Functions: análisis de mercado con IA generativa.
    Usamos SNOWFLAKE.CORTEX.COMPLETE (texto), SENTIMENT (sentimiento) y SUMMARIZE.
 ******************************************************************************************** */
 
--- 8.1 Clasificar el tipo de operación según contexto de mercado
+-- 7.1 Clasificar el tipo de operación según contexto de mercado
 SELECT ID, PRECIO, MONTO_USD, PLAZO_CURVA,
   SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
     'Eres analista del mercado cambiario colombiano. Clasifica esta operación FX en UNA sola palabra ' ||
@@ -476,7 +392,7 @@ FROM OPERATION_SET_FX
 WHERE ANULADA = FALSE
 LIMIT 15;
 
--- 8.2 Análisis diario de las condiciones del mercado (agregado por día)
+-- 7.2 Análisis diario de las condiciones del mercado (agregado por día)
 SELECT FECHA,
   ROUND(AVG(PRECIO),2) AS trm_prom,
   ROUND(SUM(MONTO_USD)/1e6,1) AS volumen_musd,
@@ -492,7 +408,7 @@ GROUP BY FECHA
 ORDER BY FECHA DESC
 LIMIT 7;
 
--- 8.3 Sentimiento de las notas de los traders (SENTIMENT retorna FLOAT -1..1)
+-- 7.3 Sentimiento de las notas de los traders (SENTIMENT retorna FLOAT -1..1)
 SELECT ID, TEXTO_TERM,
   ROUND(SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM), 2) AS score,
   CASE
@@ -504,7 +420,7 @@ FROM OPERATION_SET_FX
 WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
 LIMIT 25;
 
--- 8.4 Resumen ejecutivo del mercado del último mes con datos
+-- 7.4 Resumen ejecutivo del mercado del último mes con datos
 SELECT SNOWFLAKE.CORTEX.SUMMARIZE(
   LISTAGG(DISTINCT TEXTO_TERM, ' ') WITHIN GROUP (ORDER BY TEXTO_TERM)
 ) AS resumen_mercado
@@ -513,16 +429,17 @@ WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
   AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERATION_SET_FX));
 
 
-/* ************************************ PARTE 9 ⭐ *********************************************
+/* ************************************ PARTE 8 ⭐ *********************************************
    Dynamic Tables: la capa analítica que se refresca SOLA (sin ETL, sin tareas).
-   OPERACIONES deja de ser un CTAS manual y se vuelve una Dynamic Table: cada vez que
-   Snowpipe (Parte 5) ingesta operaciones nuevas, OPERACIONES se actualiza sola de forma
-   INCREMENTAL (solo procesa las filas nuevas, no reconstruye los 120M). Sobre ella
-   encadenamos las métricas de mercado, que la siguen automáticamente (TARGET_LAG=DOWNSTREAM).
-   Cadena: OPERATION_SET_FX (Snowpipe) -> OPERACIONES (DT) -> DT_VWAP_DIARIO / DT_RANKING_ENTIDADES
+   OPERACIONES deja de ser un CTAS manual y se vuelve una Dynamic Table: se mantiene
+   al día de forma INCREMENTAL sobre el histórico (solo procesa filas nuevas o cambiadas,
+   no reconstruye los 120M). Cuando el cliente conecte su ingesta real, la capa de consumo
+   y sus métricas se actualizan solas. Sobre ella encadenamos las métricas de mercado,
+   que la siguen automáticamente (TARGET_LAG=DOWNSTREAM).
+   Cadena: OPERATION_SET_FX -> OPERACIONES (DT) -> DT_VWAP_DIARIO / DT_RANKING_ENTIDADES
 ******************************************************************************************** */
 
--- 9.1 CAPA DE CONSUMO como Dynamic Table denormalizada (la que usa Cortex Analyst).
+-- 8.1 CAPA DE CONSUMO como Dynamic Table denormalizada (la que usa Cortex Analyst).
 -- Resuelve nombres de entidad (compradora/vendedora), mercado y paridad en UNA sola tabla
 -- plana. Todos los joins son N:1 (cada operación tiene exactamente un comprador, un vendedor,
 -- un mercado) => refresh INCREMENTAL + CERO fan-out => agregaciones siempre correctas en
@@ -555,7 +472,7 @@ JOIN ENTIDAD ev        ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID;
 SHOW DYNAMIC TABLES LIKE 'OPERACIONES';
 SELECT COUNT(*) AS filas_operaciones, COUNT(DISTINCT COMPRADOR_SIGLA) AS entidades FROM OPERACIONES;
 
--- 9.2 VWAP diario (Volume-Weighted Average Price) del USD/COP
+-- 8.2 VWAP diario (Volume-Weighted Average Price) del USD/COP
 CREATE OR REPLACE DYNAMIC TABLE DT_VWAP_DIARIO
   TARGET_LAG = '5 minutes'
   WAREHOUSE  = WH_HOL_SETICAP
@@ -574,7 +491,7 @@ AS
 
 SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA DESC LIMIT 15;
 
--- 9.3 Ranking de entidades más activas (volumen comprado)
+-- 8.3 Ranking de entidades más activas (volumen comprado)
 -- OPERACIONES ya tiene el nombre/clase resuelto (sin fan-out): agregación directa.
 CREATE OR REPLACE DYNAMIC TABLE DT_RANKING_ENTIDADES
   TARGET_LAG = '5 minutes'
@@ -594,7 +511,7 @@ AS
 SELECT * FROM DT_RANKING_ENTIDADES LIMIT 15;
 
 
-/* ************************************ PARTE 10 ************************************************
+/* ************************************ PARTE 9 ************************************************
    Streamlit in Snowflake: tablero interactivo del mercado SET-FX.
    Snowsight -> Projects -> Streamlit -> + Streamlit App (warehouse WH_HOL_SETICAP,
    database DB_HOL_SETICAP, schema PUBLIC). Pega el siguiente código.
@@ -617,12 +534,11 @@ def q(sql):
 
 vwap = q("SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA")
 rank = q("SELECT * FROM DT_RANKING_ENTIDADES LIMIT 10")
-stream = q("SELECT COUNT(*) N, ROUND(AVG(PRECIO),2) TRM FROM OPERATION_FX_STREAM")
 
 c1, c2, c3 = st.columns(3)
 c1.metric("TRM más reciente (VWAP)", f"{vwap['VWAP'].iloc[-1]:,.2f}")
 c2.metric("Volumen último día (M USD)", f"{vwap['VOLUMEN_MUSD'].iloc[-1]:,.1f}")
-c3.metric("Operaciones en stream", f"{int(stream['N'].iloc[0]):,}")
+c3.metric("Operaciones último día", f"{int(vwap['NUM_OPERACIONES'].iloc[-1]):,}")
 
 st.subheader("Evolución de la TRM (VWAP diario)")
 st.altair_chart(
@@ -652,7 +568,7 @@ st.altair_chart(
    - DT_VWAP_DIARIO (FECHA, VWAP, VOLUMEN_MUSD, NUM_OPERACIONES, PRECIO_MIN, PRECIO_MAX, RANGO)
    - DT_RANKING_ENTIDADES (ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE, NUM_OPERACIONES, VOLUMEN_COMPRA_MUSD)
    - OPERATION_SET_FX (ID, FECHA, HORA, ANULADA, MERCADO, MONTO_USD, MONTO_MONEDA_DOS, PRECIO, PLAZO_CURVA, ENTIDAD_COMPRADORA, ENTIDAD_VENDEDORA, TEXTO_TERM)
-   - OPERATION_FX_STREAM (mismas columnas, operaciones en vivo vía Snowpipe)
+   - OPERACIONES (Dynamic Table denormalizada: + COMPRADOR_NOMBRE/CLASE, VENDEDOR_NOMBRE/CLASE, MERCADO_NOMBRE, PARIDAD_NOMBRE)
    - ENTIDAD (ENTIDAD_ID, ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE)
    - MERCADO (MERCADO_ID, MERCADO_NOMBRE)
 
@@ -666,8 +582,8 @@ st.altair_chart(
    5. Profundidad de mercado: comparativo compra vs venta por entidad (barras divergentes).
    6. Mapa de calor de actividad por hora del día vs día de la semana (núm operaciones).
    7. Donut: distribución de volumen por PLAZO_CURVA (T+1, 3M, etc.).
-   8. Panel "En vivo" que lee OPERATION_FX_STREAM: últimas operaciones en una tabla con
-      auto-refresh (st.fragment o autorefresh cada 30s) y un contador del total.
+   8. Tabla de operaciones más recientes (OPERACIONES ordenado por FECHA y HORA desc, top 50)
+      con formato de moneda y badges por ENTIDAD_CLASE.
    9. Layout responsive con st.columns, st.container(border=True), métricas grandes,
       tema oscuro elegante y tipografía clara. Usa @st.cache_data(ttl=300) en las consultas.
 
@@ -676,13 +592,13 @@ st.altair_chart(
    ----------------------------------------------------------------------------------- */
 
 
-/* ************************************ PARTE 11 ***********************************************
+/* ************************************ PARTE 10 ***********************************************
    Semantic View para Cortex Analyst (creación asistida en Snowsight UI).
    Snowsight -> AI & ML -> Cortex Analyst -> Create -> Semantic View. Selecciona:
-     Tabla ÚNICA: OPERACIONES (Dynamic Table plana denormalizada de la Parte 9)
+     Tabla ÚNICA: OPERACIONES (Dynamic Table plana denormalizada de la Parte 8)
        → Una sola tabla, SIN relaciones que definir, SIN riesgo de fan-out.
          Esto garantiza agregaciones correctas en Cortex Analyst y Snowflake CoWork.
-         Al ser Dynamic Table, el modelo semántico siempre ve datos frescos del stream.
+         Al ser Dynamic Table, el modelo semántico se mantiene al día automáticamente.
      Métricas: total_volumen_usd = SUM(MONTO_USD), num_operaciones = COUNT(ID),
                vwap = SUM(PRECIO*MONTO_USD)/SUM(MONTO_USD), trm_promedio = AVG(PRECIO)
      Dimensiones: FECHA, PLAZO_CURVA, MERCADO_NOMBRE, PARIDAD_NOMBRE,
@@ -695,7 +611,7 @@ st.altair_chart(
 ******************************************************************************************** */
 
 
-/* ************************************ PARTE 12 **********************************************
+/* ************************************ PARTE 11 **********************************************
    Snowflake Intelligence: un Agente Cortex que responde en lenguaje natural.
    Snowsight -> AI & ML -> Agents (Snowflake Intelligence) -> Create agent.
      Nombre: AGT_SETICAP
@@ -714,22 +630,13 @@ st.altair_chart(
 ******************************************************************************************** */
 
 
-/* ************************************ PARTE 13 **********************************************
-   Limpieza: detenemos la ingesta y eliminamos los objetos del HOL.
+/* ************************************ PARTE 12 **********************************************
+   Limpieza: eliminamos los objetos del HOL.
 ******************************************************************************************** */
--- Detén el generador de streaming (Ctrl-C en la terminal) antes de limpiar.
-ALTER PIPE IF EXISTS PIPE_FX_STREAM SET PIPE_EXECUTION_PAUSED = TRUE;
-ALTER TASK IF EXISTS TASK_REFRESH_PIPE SUSPEND;  -- solo existe si usaste el fallback
-
 DROP DATABASE IF EXISTS DB_HOL_SETICAP_DEV;
 DROP DATABASE IF EXISTS DB_HOL_SETICAP;
 DROP WAREHOUSE IF EXISTS WH_HOL_SETICAP;
 DROP ROLE IF EXISTS ANALISTA_MERCADO;
 
--- Quitar la notificación de eventos del bucket (fuera de Snowflake, el instructor):
---   aws s3api put-bucket-notification-configuration --bucket demosjparrado \
---     --notification-configuration '{}'
--- (Si el bucket tenía otras notificaciones, restaurar el JSON original en lugar de vaciarlo.)
-
--- ¡Felicitaciones! Completaste el HOL de SET-ICAP: ingesta en tiempo real con Snowpipe,
--- Cortex AI, Dynamic Tables y Snowflake Intelligence sobre el mercado de divisas SET-FX.
+-- ¡Felicitaciones! Completaste el HOL de SET-ICAP: carga masiva desde S3, Cortex AI,
+-- Dynamic Tables y Snowflake Intelligence sobre el mercado de divisas SET-FX.
