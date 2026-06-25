@@ -58,45 +58,40 @@ META = {
          "<div class=\"note\"><strong>Caso de negocio:</strong> en vez de un análisis interpretativo débil, el modelo redacta una lectura ejecutiva accionable fundamentada en los datos agregados del día. Imagen con <code>pixtral-large</code> + <code>TO_FILE</code>; audio con <code>AI_TRANSCRIBE</code>.</div>"),
     8:  ("10 min", "⭐ Dynamic Table: la vista plana del cliente, viva",
          "<p>Una <strong>sola</strong> Dynamic Table <code>OPERACIONES</code> replica el query del cliente (unión de todas las tablas) con grano <strong>1 fila por operación</strong>: la contraparte se aplana por lado (comprador/vendedor) para evitar fan-out. Se refresca sola (incremental cuando aplica) y es la única tabla del semantic view de Cortex Analyst → agregaciones correctas.</p>"
-         "<div class=\"note new\"><strong>Verificación:</strong> <code>COUNT(*)</code> de OPERACIONES = <code>COUNT(*)</code> de OPERATION_SET_FX (sin fan-out).</div>"),
+         "<div class=\"note new\"><strong>Verificación:</strong> al unir <strong>120M</strong> de operaciones con <strong>240M</strong> de contrapartes, OPERACIONES mantiene 1 fila por operación (sin fan-out).</div>"),
     12: ("3 min", "Limpieza",
          "<p>Elimina la base de datos, el warehouse y el rol del HOL.</p>"),
 }
 
 # Paso no-SQL (curado): prompt para generar el dashboard con CoCo
-COCO_PROMPT = """Crea una app de Streamlit-in-Snowflake VISUALMENTE POTENTE para el mercado de divisas
-SET-FX de SET-ICAP (Colombia). Usala con get_active_session() y SIN dependencias de red externas
-(solo Streamlit nativo + altair/plotly disponibles en SiS).
+COCO_PROMPT = """Crea una app de Streamlit-in-Snowflake SENCILLA pero VISUALMENTE BONITA para el mercado de
+divisas SET-FX de SET-ICAP (Colombia). PRIORIDAD: que funcione a la PRIMERA, sin errores.
+Usa get_active_session() y SOLO componentes nativos de Streamlit (st.metric, st.line_chart,
+st.bar_chart, st.dataframe). NO uses altair, plotly ni librerias externas.
 
-Base de datos: DB_HOL_SETICAP, schema PUBLIC. Fuente principal: la Dynamic Table OPERACIONES
-(1 fila por operacion, ya denormalizada). Columnas relevantes:
-- FECHA, HORA, ANULADA, MERCADO, MERCADO_NOMBRE, SUBMERCADO_NOMBRE, PARIDAD_NOMBRE, PLAZO_CURVA
-- MONTO_USD, MONTO_COP, PRECIO (TRM), PRECIO_SPOT, POINTS_FORWARD
-- COMPRADOR_SIGLA / COMPRADOR_NOMBRE / COMPRADOR_CLASE / COMPRADOR_CIUDAD
-- VENDEDOR_SIGLA / VENDEDOR_NOMBRE / VENDEDOR_CLASE / VENDEDOR_CIUDAD
-- COMPRADOR_TRADER, VENDEDOR_TRADER, COMPRADOR_COMITENTE, VENDEDOR_COMITENTE
-No hay tablas pre-agregadas: calcula todo con agregaciones SQL sobre OPERACIONES. Ejemplo:
-VWAP diario = SUM(PRECIO*MONTO_USD)/NULLIF(SUM(MONTO_USD),0) por FECHA, con ANULADA=FALSE y MERCADO=76.
+Fuente: tabla DB_HOL_SETICAP.PUBLIC.OPERACIONES. Columnas: FECHA, HORA, ANULADA,
+MERCADO_NOMBRE, PLAZO_CURVA, MONTO_USD, PRECIO (TRM), COMPRADOR_SIGLA, COMPRADOR_CLASE.
 
-Diseno (estilo fintech profesional, TEMA OSCURO, branding Snowflake #29B5E8 / #11567F):
-1. Hero con titulo "SET-FX - Mercado de Divisas", subtitulo y selector de rango de fechas.
-2. KPI cards grandes con delta/flechas y color: TRM (VWAP) mas reciente, variacion % vs dia anterior,
-   volumen del dia (M USD), numero de operaciones, % anuladas.
-3. Grafico principal: evolucion de la TRM (VWAP diario) tipo linea con banda min-max sombreada y tooltip rico.
-4. Barras horizontales: Top 10 entidades compradoras por volumen, coloreadas por COMPRADOR_CLASE.
-5. Profundidad de mercado: compra vs venta por clase de entidad (barras divergentes).
-6. Mapa de calor de actividad por HORA del dia vs dia de la semana (numero de operaciones).
-7. Donut: distribucion de volumen por PLAZO_CURVA (T+0, T+1, 3M...).
-8. Tabla de las 50 operaciones mas recientes (ORDER BY FECHA, HORA desc) con formato de moneda.
-9. Layout responsive con st.columns y st.container(border=True), tema oscuro elegante con acentos en
-   #29B5E8. Usa @st.cache_data(ttl=300) y maneja DataFrame vacio.
+Haz TODAS las agregaciones en SQL (no en Python) y cachea con @st.cache_data(ttl=600).
+Manten la UI ligera: una consulta por seccion, sin calculos pesados en el cliente.
 
-Hazlo realmente atractivo: paleta coherente, espaciado generoso y que parezca un terminal de trading
-profesional. Genera el app.py COMPLETO, listo para pegar en Snowsight -> Streamlit."""
+Diseno (tema oscuro, acento Snowflake #29B5E8):
+1. Titulo "SET-FX - Mercado de Divisas" y un st.caption descriptivo.
+2. Tres KPI con st.metric en st.columns(3): VWAP del ultimo dia, volumen total (M USD)
+   y total de operaciones.
+3. st.line_chart del VWAP diario:
+     SELECT FECHA, SUM(PRECIO*MONTO_USD)/NULLIF(SUM(MONTO_USD),0) AS VWAP
+     FROM OPERACIONES WHERE ANULADA = FALSE GROUP BY FECHA ORDER BY FECHA.
+4. st.bar_chart del Top 10 de entidades compradoras por volumen (COMPRADOR_SIGLA).
+5. st.dataframe con las 50 operaciones mas recientes (ORDER BY FECHA, HORA DESC).
+
+Robustez (para que NO falle): convierte FECHA con pd.to_datetime, usa df.set_index('FECHA')
+antes de st.line_chart, y si algun DataFrame viene vacio muestra st.info(...) y termina con
+st.stop(). Genera el app.py COMPLETO, listo para pegar en Snowsight -> Streamlit."""
 
 STEP9 = ("15 min", "Streamlit: tablero del mercado SET-FX (con CoCo)",
          "<p>En Snowsight → Projects → Streamlit → <em>+ Streamlit App</em> (warehouse WH_HOL_SETICAP, database DB_HOL_SETICAP, schema PUBLIC).</p>"
-         "<div class=\"note new\"><strong>Genéralo con Cortex Code (CoCo).</strong> No escribes código a mano: abre Cortex Code, pega este prompt y CoCo arma el <code>app.py</code> completo — un dashboard fintech de tema oscuro con KPIs, serie de la TRM, profundidad de mercado, mapa de calor y tabla de operaciones — conectado a tus objetos del HOL:</div>"
+         "<div class=\"note new\"><strong>Genéralo con Cortex Code (CoCo).</strong> No escribes código a mano: abre Cortex Code, pega este prompt y CoCo arma el <code>app.py</code> — un tablero sencillo de tema oscuro con KPIs, serie de la TRM (VWAP), top de entidades y tabla de operaciones, hecho para mostrarse a la primera sin errores:</div>"
          "<div class=\"codebox\"><span class=\"lang\">prompt · cortex code</span><button class=\"btn-copy\" onclick=\"copyCode(this)\">Copiar</button><pre>"
          + html_escape(COCO_PROMPT) + "</pre></div>")
 
@@ -107,7 +102,7 @@ STEP10 = ("12 min", "Cortex Analyst + Cortex Search",
           "<li><strong>CS_ENTIDADES</strong> — Cortex Search sobre el catálogo de entidades para descubrir/desambiguar contrapartes por nombre, sigla, clase o ciudad.</li></ul>"
           "<div class=\"note\">El código de abajo crea ambos servicios de búsqueda y los prueba con <code>SEARCH_PREVIEW</code>.</div>"
           + "<div class=\"codebox\"><span class=\"lang\">sql</span><button class=\"btn-copy\" onclick=\"copyCode(this)\">Copiar</button><pre>"
-          + html_escape("""-- Cortex Search sobre las NOTAS de mercado\nCREATE OR REPLACE CORTEX SEARCH SERVICE CS_NOTAS_MERCADO\n  ON TEXTO_TERM\n  ATTRIBUTES FECHA, MERCADO_NOMBRE, COMPRADOR_SIGLA, VENDEDOR_SIGLA, PLAZO_CURVA\n  WAREHOUSE = WH_HOL_SETICAP TARGET_LAG = '1 hour'\n  AS SELECT TEXTO_TERM, FECHA, MERCADO_NOMBRE, COMPRADOR_SIGLA, VENDEDOR_SIGLA, PLAZO_CURVA\n     FROM OPERACIONES WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> '';\n\n-- Cortex Search sobre el catálogo de ENTIDADES\nCREATE OR REPLACE CORTEX SEARCH SERVICE CS_ENTIDADES\n  ON ENTIDAD_NOMBRE\n  ATTRIBUTES ENTIDAD_SIGLA, ENTIDAD_CLASE, ENTIDAD_TIPO, ENTIDAD_CIUDAD\n  WAREHOUSE = WH_HOL_SETICAP TARGET_LAG = '1 hour'\n  AS SELECT ENTIDAD_NOMBRE, ENTIDAD_SIGLA, ENTIDAD_CLASE, ENTIDAD_TIPO, ENTIDAD_CIUDAD FROM ENTIDAD;\n\nSHOW CORTEX SEARCH SERVICES;""") + "</pre></div>")
+          + html_escape("""-- Cortex Search sobre las NOTAS de mercado (desde TABLAS BASE: la DT en modo\n-- FULL no soporta change tracking, que Cortex Search requiere).\nCREATE OR REPLACE CORTEX SEARCH SERVICE CS_NOTAS_MERCADO\n  ON TEXTO_TERM\n  ATTRIBUTES FECHA, MERCADO_NOMBRE, COMPRADOR_SIGLA, VENDEDOR_SIGLA, PLAZO_CURVA\n  WAREHOUSE = WH_HOL_SETICAP TARGET_LAG = '1 hour'\n  AS SELECT o.TEXTO_TERM, o.FECHA, m.MERCADO_NOMBRE,\n            ec.ENTIDAD_SIGLA AS COMPRADOR_SIGLA, ev.ENTIDAD_SIGLA AS VENDEDOR_SIGLA, o.PLAZO_CURVA\n     FROM OPERATION_SET_FX o\n     JOIN MERCADO m  ON o.MERCADO = m.MERCADO_ID\n     JOIN ENTIDAD ec ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID\n     JOIN ENTIDAD ev ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID\n     WHERE o.TEXTO_TERM IS NOT NULL AND o.TEXTO_TERM <> '';\n\n-- Cortex Search sobre el catálogo de ENTIDADES\nCREATE OR REPLACE CORTEX SEARCH SERVICE CS_ENTIDADES\n  ON ENTIDAD_NOMBRE\n  ATTRIBUTES ENTIDAD_SIGLA, ENTIDAD_CLASE, ENTIDAD_TIPO, ENTIDAD_CIUDAD\n  WAREHOUSE = WH_HOL_SETICAP TARGET_LAG = '1 hour'\n  AS SELECT ENTIDAD_NOMBRE, ENTIDAD_SIGLA, ENTIDAD_CLASE, ENTIDAD_TIPO, ENTIDAD_CIUDAD FROM ENTIDAD;\n\nSHOW CORTEX SEARCH SERVICES;""") + "</pre></div>")
 
 STEP11 = ("15 min", "Snowflake CoWork: agente conversacional",
           "<p>En Snowsight → AI &amp; ML → <strong>Snowflake CoWork</strong> → + Crear agente. Conecta las <strong>tres herramientas</strong> de la Parte 10 y define las instrucciones (todo el razonamiento en español).</p>"

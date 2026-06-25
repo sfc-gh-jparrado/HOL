@@ -455,11 +455,13 @@ FROM t;
     drill-down con SQL directo; NO entra a la tabla plana para no romper el grano.)
 ******************************************************************************************** */
 
--- 8.1 La tabla plana OPERACIONES (1 fila por operación, todas las tablas unidas)
+-- 8.1 La tabla plana OPERACIONES (1 fila por operación, todas las tablas unidas).
+--     Subimos a X-LARGE para construir la unión (120M × 240M) en segundos.
+ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'X-LARGE';
 CREATE OR REPLACE DYNAMIC TABLE OPERACIONES
   TARGET_LAG   = '1 hour'          -- se puede bajar (p. ej. '1 minute') para más frescura
   WAREHOUSE    = WH_HOL_SETICAP
-  REFRESH_MODE = AUTO              -- Snowflake elige incremental cuando es posible (ver 8.2)
+  REFRESH_MODE = AUTO              -- Snowflake elige el modo de refresh automáticamente
 AS
 SELECT
   o.ID, o.FECHA, o.HORA, o.ANULADA, o.REGISTRO,
@@ -485,30 +487,23 @@ SELECT
   uv.USUARIO_NOMBRE AS VENDEDOR_TRADER, suv.SUCURSAL_NOMBRE AS VENDEDOR_SUCURSAL,
   cmv.NOMBRE AS VENDEDOR_COMITENTE, cmv.SECTOR AS VENDEDOR_COMITENTE_SECTOR,
   o.TEXTO_TERM
-FROM OPERATION_SET_FX o
-JOIN MERCADO m              ON o.MERCADO = m.MERCADO_ID
-LEFT JOIN SUB_MERCADO sm    ON o.SUB_MERCADO = sm.SUB_MERCADO_ID
-JOIN PARIDAD_MONEDA p       ON o.PARIDAD_ID = p.PARIDAD_ID
-LEFT JOIN CURRENCY cur      ON o.MONEDA_UNO = cur.CURR_ID
-JOIN ENTIDAD ec             ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
-JOIN ENTIDAD ev             ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID
-LEFT JOIN OPERATION_SET_FX_CONTRAPARTE cpc ON cpc.OPER_ID = o.ID AND cpc.OPER_LADO = 'C'
-LEFT JOIN USUARIO   uc      ON cpc.TRADER_ID   = uc.USUARIO_ID
-LEFT JOIN SUCURSAL  suc     ON cpc.SUCURSAL_ID = suc.SUCURSAL_ID
-LEFT JOIN COMITENTE cmc     ON cpc.COMITENTE_ID = cmc.OFFSHORE_ID
-LEFT JOIN OPERATION_SET_FX_CONTRAPARTE cpv ON cpv.OPER_ID = o.ID AND cpv.OPER_LADO = 'V'
-LEFT JOIN USUARIO   uv      ON cpv.TRADER_ID   = uv.USUARIO_ID
-LEFT JOIN SUCURSAL  suv     ON cpv.SUCURSAL_ID = suv.SUCURSAL_ID
-LEFT JOIN COMITENTE cmv     ON cpv.COMITENTE_ID = cmv.OFFSHORE_ID;
+FROM OPERATION_SET_FX o                                                     -- 120.000.000 registros
+JOIN MERCADO m              ON o.MERCADO = m.MERCADO_ID                      -- catálogo
+LEFT JOIN SUB_MERCADO sm    ON o.SUB_MERCADO = sm.SUB_MERCADO_ID             -- catálogo
+JOIN PARIDAD_MONEDA p       ON o.PARIDAD_ID = p.PARIDAD_ID                   -- catálogo
+LEFT JOIN CURRENCY cur      ON o.MONEDA_UNO = cur.CURR_ID                    -- catálogo
+JOIN ENTIDAD ec             ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID          -- 50 entidades
+JOIN ENTIDAD ev             ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID          -- 50 entidades
+LEFT JOIN OPERATION_SET_FX_CONTRAPARTE cpc ON cpc.OPER_ID = o.ID AND cpc.OPER_LADO = 'C'  -- 240.000.000 registros
+LEFT JOIN USUARIO   uc      ON cpc.TRADER_ID   = uc.USUARIO_ID              -- catálogo
+LEFT JOIN SUCURSAL  suc     ON cpc.SUCURSAL_ID = suc.SUCURSAL_ID            -- catálogo
+LEFT JOIN COMITENTE cmc     ON cpc.COMITENTE_ID = cmc.OFFSHORE_ID           -- 5.000 comitentes
+LEFT JOIN OPERATION_SET_FX_CONTRAPARTE cpv ON cpv.OPER_ID = o.ID AND cpv.OPER_LADO = 'V'  -- 240.000.000 registros
+LEFT JOIN USUARIO   uv      ON cpv.TRADER_ID   = uv.USUARIO_ID              -- catálogo
+LEFT JOIN SUCURSAL  suv     ON cpv.SUCURSAL_ID = suv.SUCURSAL_ID            -- catálogo
+LEFT JOIN COMITENTE cmv     ON cpv.COMITENTE_ID = cmv.OFFSHORE_ID;          -- 5.000 comitentes
 
--- 8.2 Verifica el modo de refresh y que NO haya fan-out (1 fila por operación):
-SHOW DYNAMIC TABLES LIKE 'OPERACIONES';   -- columna refresh_mode debe decir INCREMENTAL
-SELECT
-  (SELECT COUNT(*) FROM OPERACIONES)        AS filas_operaciones,
-  (SELECT COUNT(*) FROM OPERATION_SET_FX)   AS filas_base,
-  (SELECT COUNT(*) FROM OPERACIONES) = (SELECT COUNT(*) FROM OPERATION_SET_FX) AS sin_fan_out;
-
--- 8.3 Métricas de mercado directamente sobre la tabla plana (sin DTs adicionales).
+-- 8.2 Métricas de mercado directamente sobre la tabla plana (sin DTs adicionales).
 --     VWAP diario (Volume-Weighted Average Price) del USD/COP:
 SELECT FECHA,
   ROUND(SUM(PRECIO * MONTO_USD) / NULLIF(SUM(MONTO_USD),0), 2) AS VWAP,
@@ -537,43 +532,33 @@ LIMIT 15;
    database DB_HOL_SETICAP, schema PUBLIC). Pega el siguiente código.
 ******************************************************************************************** */
 /* Genera el dashboard con un PROMPT en Cortex Code (CoCo) — sin escribir código a mano.
-   Abre Cortex Code en tu cuenta, pega el prompt de abajo y CoCo crea el app.py completo,
-   conectado a los objetos del HOL, listo para desplegar como Streamlit-in-Snowflake.
+   Abre Cortex Code, pega el prompt de abajo y CoCo crea el app.py listo para Streamlit-in-Snowflake.
 
    ----------------------------- PROMPT PARA CORTEX CODE -----------------------------
-   Crea una app de Streamlit-in-Snowflake VISUALMENTE POTENTE para el mercado de divisas
-   SET-FX de SET-ICAP (Colombia). Úsala con get_active_session() y SIN dependencias de red
-   externas (solo Streamlit nativo + altair/plotly disponibles en SiS).
+   Crea una app de Streamlit-in-Snowflake SENCILLA pero VISUALMENTE BONITA para el mercado de
+   divisas SET-FX de SET-ICAP (Colombia). PRIORIDAD: que funcione a la PRIMERA, sin errores.
+   Usa get_active_session() y SOLO componentes nativos de Streamlit (st.metric, st.line_chart,
+   st.bar_chart, st.dataframe). NO uses altair, plotly ni librerías externas.
 
-   Base de datos: DB_HOL_SETICAP, schema PUBLIC. Fuente principal: la Dynamic Table OPERACIONES
-   (1 fila por operación, ya denormalizada). Columnas relevantes:
-   - FECHA, HORA, ANULADA, MERCADO, MERCADO_NOMBRE, SUBMERCADO_NOMBRE, PARIDAD_NOMBRE, PLAZO_CURVA
-   - MONTO_USD, MONTO_COP, PRECIO (TRM), PRECIO_SPOT, POINTS_FORWARD
-   - COMPRADOR_SIGLA / COMPRADOR_NOMBRE / COMPRADOR_CLASE / COMPRADOR_CIUDAD
-   - VENDEDOR_SIGLA / VENDEDOR_NOMBRE / VENDEDOR_CLASE / VENDEDOR_CIUDAD
-   - COMPRADOR_TRADER, VENDEDOR_TRADER, COMPRADOR_COMITENTE, VENDEDOR_COMITENTE
-   No hay tablas pre-agregadas: calcula todo con agregaciones SQL sobre OPERACIONES. Ejemplo:
-   VWAP diario = SUM(PRECIO*MONTO_USD)/NULLIF(SUM(MONTO_USD),0) por FECHA, con ANULADA=FALSE y MERCADO=76.
+   Fuente: tabla DB_HOL_SETICAP.PUBLIC.OPERACIONES. Columnas: FECHA, HORA, ANULADA,
+   MERCADO_NOMBRE, PLAZO_CURVA, MONTO_USD, PRECIO (TRM), COMPRADOR_SIGLA, COMPRADOR_CLASE.
 
-   Diseño (estilo fintech profesional, TEMA OSCURO, branding Snowflake #29B5E8 / #11567F):
-   1. Hero con título "SET-FX · Mercado de Divisas", subtítulo y selector de rango de fechas.
-   2. Fila de KPI cards grandes con delta/flechas y color: TRM (VWAP) más reciente, variación %
-      vs día anterior, volumen del día (M USD), número de operaciones, % anuladas.
-   3. Gráfico principal: evolución de la TRM (VWAP diario) tipo línea, con banda min–max sombreada
-      (MIN/MAX de PRECIO por día) y tooltip rico.
-   4. Barras horizontales: Top 10 entidades compradoras por volumen, coloreadas por COMPRADOR_CLASE.
-   5. Profundidad de mercado: compra vs venta por clase de entidad (barras divergentes).
-   6. Mapa de calor de actividad por HORA del día vs día de la semana (número de operaciones).
-   7. Donut: distribución de volumen por PLAZO_CURVA (T+0, T+1, 3M…).
-   8. Tabla de las 50 operaciones más recientes (ORDER BY FECHA, HORA desc) con formato de moneda
-      y badges por clase de entidad.
-   9. Layout responsive con st.columns y st.container(border=True), tipografía clara, tema oscuro
-      elegante con acentos en #29B5E8. Usa @st.cache_data(ttl=300) en todas las consultas y maneja
-      el caso de DataFrame vacío.
+   Haz TODAS las agregaciones en SQL (no en Python) y cachea con @st.cache_data(ttl=600).
+   Mantén la UI ligera: una consulta por sección, sin cálculos pesados en el cliente.
 
-   Hazlo realmente atractivo: paleta coherente, espaciado generoso, títulos de sección claros y que
-   parezca un terminal de trading profesional. Genera el app.py COMPLETO, listo para pegar en
-   Snowsight -> Streamlit.
+   Diseño (tema oscuro, acento Snowflake #29B5E8):
+   1. Título "SET-FX · Mercado de Divisas" y un st.caption descriptivo.
+   2. Tres KPI con st.metric en st.columns(3): VWAP del último día, volumen total (M USD)
+      y total de operaciones.
+   3. st.line_chart del VWAP diario:
+        SELECT FECHA, SUM(PRECIO*MONTO_USD)/NULLIF(SUM(MONTO_USD),0) AS VWAP
+        FROM OPERACIONES WHERE ANULADA = FALSE GROUP BY FECHA ORDER BY FECHA.
+   4. st.bar_chart del Top 10 de entidades compradoras por volumen (COMPRADOR_SIGLA).
+   5. st.dataframe con las 50 operaciones más recientes (ORDER BY FECHA, HORA DESC).
+
+   Robustez (para que NO falle): convierte FECHA con pd.to_datetime, usa df.set_index('FECHA')
+   antes de st.line_chart, y si algún DataFrame viene vacío muestra st.info(...) y termina con
+   st.stop(). Genera el app.py COMPLETO, listo para pegar en Snowsight -> Streamlit.
    ----------------------------------------------------------------------------------- */
 
 
@@ -594,15 +579,22 @@ LIMIT 15;
 --   O simplemente importa HOL_SET_ICAP_semantic_model.yaml (nombre del modelo: SV_SET_FX).
 
 -- 10.2 CORTEX SEARCH sobre las NOTAS de mercado (texto libre de los traders).
+--   Se construye sobre las TABLAS BASE (no sobre la DT OPERACIONES): Cortex Search necesita
+--   change tracking, y una Dynamic Table en modo FULL no lo soporta. Las tablas base sí.
 CREATE OR REPLACE CORTEX SEARCH SERVICE CS_NOTAS_MERCADO
   ON TEXTO_TERM                                            -- campo de búsqueda semántica
   ATTRIBUTES FECHA, MERCADO_NOMBRE, COMPRADOR_SIGLA, VENDEDOR_SIGLA, PLAZO_CURVA
   WAREHOUSE = WH_HOL_SETICAP
   TARGET_LAG = '1 hour'
   AS
-  SELECT TEXTO_TERM, FECHA, MERCADO_NOMBRE, COMPRADOR_SIGLA, VENDEDOR_SIGLA, PLAZO_CURVA
-  FROM OPERACIONES
-  WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> '';
+  SELECT o.TEXTO_TERM, o.FECHA, m.MERCADO_NOMBRE,
+         ec.ENTIDAD_SIGLA AS COMPRADOR_SIGLA, ev.ENTIDAD_SIGLA AS VENDEDOR_SIGLA,
+         o.PLAZO_CURVA
+  FROM OPERATION_SET_FX o
+  JOIN MERCADO m  ON o.MERCADO = m.MERCADO_ID
+  JOIN ENTIDAD ec ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
+  JOIN ENTIDAD ev ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID
+  WHERE o.TEXTO_TERM IS NOT NULL AND o.TEXTO_TERM <> '';
 
 -- 10.3 CORTEX SEARCH sobre el catálogo de ENTIDADES (descubrir/desambiguar contrapartes).
 CREATE OR REPLACE CORTEX SEARCH SERVICE CS_ENTIDADES
