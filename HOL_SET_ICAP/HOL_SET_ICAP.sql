@@ -246,9 +246,9 @@ CREATE OR REPLACE TABLE OPERATION_SET_FX_CONTRAP_COMITENTE (
    mismo S3, cambias el tamaño del warehouse y la carga se acelera. Pagas por segundo.
 
    Dimensionamiento de archivos (clave para el paralelismo):
-   - operation_set_fx: 30 archivos × ~150 MB (120M filas)
-   - operation_set_fx_contraparte: 8 archivos × ~130 MB (240M filas)
-   - operation_set_fx_contrap_comitente: 2 archivos × ~130 MB (40M filas)
+   - operation_set_fx: ~150 MB (120M filas)
+   - operation_set_fx_contraparte: ~130 MB (240M filas)
+   - operation_set_fx_contrap_comitente: ~130 MB (40M filas)
    Todos en el rango óptimo 100-250 MB que recomienda Snowflake.
 ******************************************************************************************** */
 
@@ -263,24 +263,19 @@ COPY INTO SUCURSAL        FROM @STG_SETICAP/hist/sucursal/;
 COPY INTO USUARIO         FROM @STG_SETICAP/hist/usuario/;
 COPY INTO COMITENTE       FROM @STG_SETICAP/hist/comitente/;
 
--- DEMO DE SCALING: cargamos 120 MILLONES de operaciones (30 archivos) con SMALL
-ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
+-- DEMO DE SCALING:
 COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
+
+SELECT COUNT(1) FROM OPERATION_SET_FX;
 
 -- Vaciamos y recargamos lo mismo con XLARGE para comparar
 TRUNCATE TABLE OPERATION_SET_FX;
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';
 COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
 
-/* EXPERIMENTO OPCIONAL — prueba con un 2XLARGE y compara los tiempos tú mismo:
-     TRUNCATE TABLE OPERATION_SET_FX;
-     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = '2XLARGE';
-     COPY INTO OPERATION_SET_FX FROM @STG_SETICAP/hist/operation_set_fx/;
-     ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'XLARGE';    -- vuelve a XLARGE */
-
 -- Cargamos las otras 2 tablas grandes (seguimos en XLARGE)
-COPY INTO OPERATION_SET_FX_CONTRAPARTE          FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;          -- 240M, 8 archivos
-COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE    FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;    -- 40M, 2 archivos
+COPY INTO OPERATION_SET_FX_CONTRAPARTE          FROM @STG_SETICAP/hist/operation_set_fx_contraparte/;          -- 240M
+COPY INTO OPERATION_SET_FX_CONTRAP_COMITENTE    FROM @STG_SETICAP/hist/operation_set_fx_contrap_comitente/;    -- 40M
 
 -- Volvemos a SMALL para el resto del HOL (consultas, AI, DT). ¡SMALL es suficiente!
 ALTER WAREHOUSE WH_HOL_SETICAP SET WAREHOUSE_SIZE = 'SMALL';
