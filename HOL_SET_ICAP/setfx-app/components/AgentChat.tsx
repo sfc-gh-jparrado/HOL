@@ -1,13 +1,46 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, Component, type ReactNode } from "react"
 import { Sparkles, Send, X, Minus, GripVertical, MessageSquare, FileText } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import dynamic from "next/dynamic"
 import { theme } from "@/lib/theme"
 
-const VegaLite = dynamic(() => import("react-vega").then((m) => m.VegaLite), { ssr: false })
+// Resilient dynamic import: if the react-vega chunk fails to load in SPCS, render nothing
+// instead of throwing a ChunkLoadError that would crash the whole page.
+const VegaLite = dynamic(
+  () => import("react-vega").then((m) => m.VegaLite).catch(() => () => null),
+  { ssr: false, loading: () => null },
+)
+
+/** Local error boundary so a markdown/chart render failure degrades gracefully
+ *  inside the chat bubble instead of bubbling to the app-level error page. */
+class ChatErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  componentDidCatch(err: unknown) {
+    console.error("[AgentChat] render error", err)
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? <div style={{ fontSize: 12, color: "#8FA0C2" }}>No se pudo mostrar parte de la respuesta.</div>
+    }
+    return this.props.children
+  }
+}
+
+/** Only render a Vega chart when the spec looks like a usable Vega-Lite object. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isValidVegaSpec(spec: any): boolean {
+  return !!spec && typeof spec === "object" &&
+    (spec.mark || spec.layer || spec.encoding || spec.facet || spec.hconcat || spec.vconcat || spec.spec)
+}
 
 type ContentItem = { type: "text"; text: string }
 type ApiMessage = { role: "user" | "assistant"; content: ContentItem[] }
@@ -203,16 +236,19 @@ export function AgentChat() {
                 <div key={i} style={{ display: "flex", justifyContent: "flex-start" }}>
                   <div style={{ maxWidth: "85%", padding: "9px 12px", borderRadius: 12, fontSize: 13, lineHeight: 1.5,
                     color: theme.text, background: theme.bgPanelSoft, border: `1px solid ${theme.border}`, overflow: "hidden" }}>
+                    <ChatErrorBoundary>
                     <div className="agent-md">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
                     </div>
-                    {m.chartSpec && (
+                    {isValidVegaSpec(m.chartSpec) && (
                       <div style={{ marginTop: 8 }}>
-                        <VegaLite
-                          spec={{ ...m.chartSpec, width: 360, background: "transparent",
-                            config: { ...m.chartSpec.config, axis: { labelColor: "#8FA0C2", titleColor: "#8FA0C2", gridColor: "#23304D" } } }}
-                          actions={false}
-                        />
+                        <ChatErrorBoundary fallback={<div style={{ fontSize: 11, color: theme.textFaint }}>Gráfico no disponible.</div>}>
+                          <VegaLite
+                            spec={{ ...m.chartSpec, width: 360, background: "transparent",
+                              config: { ...m.chartSpec.config, axis: { labelColor: "#8FA0C2", titleColor: "#8FA0C2", gridColor: "#23304D" } } }}
+                            actions={false}
+                          />
+                        </ChatErrorBoundary>
                       </div>
                     )}
                     {m.tables && m.tables.length > 0 && <DataTable table={m.tables[0]} />}
@@ -235,6 +271,7 @@ export function AgentChat() {
                         ))}
                       </div>
                     )}
+                    </ChatErrorBoundary>
                   </div>
                 </div>
               )
