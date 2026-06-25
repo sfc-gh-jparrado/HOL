@@ -652,6 +652,18 @@ export function getServiceToken(): string {
   }
 }
 
+/**
+ * Resolve the account REST host (no protocol), e.g. "abc123.us-west-2.aws.snowflakecomputing.com".
+ * In SPCS, SNOWFLAKE_HOST is injected. Falls back to SNOWFLAKE_ACCOUNT_URL or the account name.
+ */
+export function getAccountHost(): string {
+  if (process.env.SNOWFLAKE_HOST) return process.env.SNOWFLAKE_HOST.replace(/^https?:\/\//, "")
+  if (process.env.SNOWFLAKE_ACCOUNT_URL) return process.env.SNOWFLAKE_ACCOUNT_URL.replace(/^https?:\/\//, "")
+  const acct = process.env.SNOWFLAKE_ACCOUNT
+  if (acct) return `${acct.toLowerCase().replace(/_/g, "-")}.snowflakecomputing.com`
+  return ""
+}
+
 export function buildCallerRightsToken(callerUserToken: string): string {
   const serviceToken = getServiceToken()
   if (!serviceToken) {

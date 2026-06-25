@@ -1,5 +1,6 @@
 import { APP_TITLE, LOGO_SRC } from "@/lib/constants"
 import { Dashboard } from "@/components/Dashboard"
+import { AgentChat } from "@/components/AgentChat"
 
 export const dynamic = "force-dynamic"
 
@@ -33,6 +34,9 @@ export default function Home() {
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-8">
         <Dashboard />
       </div>
+
+      {/* Agente flotante (Cortex Agent API) */}
+      <AgentChat />
     </main>
   )
 }
