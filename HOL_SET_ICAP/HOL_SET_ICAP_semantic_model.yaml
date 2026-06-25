@@ -33,6 +33,11 @@ tables:
         expr: COMPRADOR_SIGLA
         data_type: VARCHAR
         synonyms: [sigla comprador, código comprador]
+      - name: entidad_compradora
+        expr: ENTIDAD_COMPRADORA
+        data_type: NUMBER
+        synonyms: [codigo entidad compradora, id entidad compradora, identificador del comprador]
+        description: Código numérico de la entidad compradora. Enmascarado (999999) para roles no-admin por política de gobierno de datos.
       - name: comprador_nombre
         expr: COMPRADOR_NOMBRE
         data_type: VARCHAR

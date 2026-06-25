@@ -303,38 +303,37 @@ ORDER BY 1;
    (Ejecuta en el mismo worksheet para que la variable de sesión persista.)
 ******************************************************************************************** */
 
--- Tabla de demostración pequeña (clon del catálogo MERCADO), para no tocar las tablas grandes.
-CREATE OR REPLACE TABLE T_DEMO_TT AS SELECT * FROM MERCADO;
-SELECT COUNT(*) AS filas FROM T_DEMO_TT;
-
--- 5.1 DROP y UNDROP: recuperar una tabla borrada por error, al instante.
-DROP TABLE T_DEMO_TT;                   -- borrada por accidente
-UNDROP TABLE T_DEMO_TT;                 -- recuperada al instante (sin restaurar backups)
-SELECT COUNT(*) AS filas_tras_undrop FROM T_DEMO_TT;
+-- 5.1 DROP y UNDROP sobre una tabla REAL (MERCADO): recuperación instantánea, sin backups.
+SELECT COUNT(*) AS filas FROM MERCADO;
+DROP TABLE MERCADO;                     -- borrada por accidente
+UNDROP TABLE MERCADO;                   -- recuperada al instante
+SELECT COUNT(*) AS filas_tras_undrop FROM MERCADO;
 
 -- 5.2 UPDATE SIN WHERE (daño masivo) y recuperación con Time Travel.
 -- Estado bueno (los nombres reales de cada mercado):
-SELECT MERCADO_ID, MERCADO_NOMBRE FROM T_DEMO_TT ORDER BY MERCADO_ID;
+SELECT MERCADO_ID, MERCADO_NOMBRE FROM MERCADO ORDER BY MERCADO_ID;
 
 -- El clásico accidente: un UPDATE SIN WHERE sobrescribe TODAS las filas.
-UPDATE T_DEMO_TT SET MERCADO_NOMBRE = 'CORRUPTO';
+UPDATE MERCADO SET MERCADO_NOMBRE = 'CORRUPTO';
 SET bad_qid = LAST_QUERY_ID();          -- id del UPDATE dañino (para el BEFORE)
-SELECT MERCADO_ID, MERCADO_NOMBRE FROM T_DEMO_TT ORDER BY MERCADO_ID;   -- todo 'CORRUPTO'
+SELECT MERCADO_ID, MERCADO_NOMBRE FROM MERCADO ORDER BY MERCADO_ID;   -- todo 'CORRUPTO'
 
--- Recuperación con un BEFORE de ~3 minutos (estado previo al UPDATE):
+-- Ver el estado previo al UPDATE con un BEFORE de ~3 minutos:
 --   Forma por tiempo — "hace 3 minutos" (requiere que la tabla tenga ≥3 min de historia):
 SELECT MERCADO_ID, MERCADO_NOMBRE
-FROM T_DEMO_TT AT(OFFSET => -180)       -- 180 s = 3 minutos atrás
+FROM MERCADO AT(OFFSET => -180)         -- 180 s = 3 minutos atrás
 ORDER BY MERCADO_ID;
 --   Forma a prueba de tiempo — justo ANTES del UPDATE por su query_id (siempre funciona):
 SELECT MERCADO_ID, MERCADO_NOMBRE
-FROM T_DEMO_TT BEFORE(STATEMENT => $bad_qid)
+FROM MERCADO BEFORE(STATEMENT => $bad_qid)
 ORDER BY MERCADO_ID;
 
--- Restauramos la tabla al estado bueno (antes del UPDATE):
-CREATE OR REPLACE TABLE T_DEMO_TT AS
-  SELECT * FROM T_DEMO_TT BEFORE(STATEMENT => $bad_qid);
-SELECT MERCADO_ID, MERCADO_NOMBRE FROM T_DEMO_TT ORDER BY MERCADO_ID;   -- recuperado
+-- Restauramos los datos EN LA MISMA TABLA (sin crear una nueva) con INSERT OVERWRITE:
+INSERT OVERWRITE INTO MERCADO SELECT * FROM MERCADO BEFORE(STATEMENT => $bad_qid);
+SELECT MERCADO_ID, MERCADO_NOMBRE FROM MERCADO ORDER BY MERCADO_ID;   -- recuperado
+
+-- 5.3 Zero-Copy Cloning: crea un ambiente DEV completo en segundos, sin duplicar almacenamiento.
+CREATE OR REPLACE DATABASE DB_HOL_SETICAP_DEV CLONE DB_HOL_SETICAP;
 
 
 /* ************************************ PARTE 6 ************************************************
@@ -503,6 +502,11 @@ LEFT JOIN USUARIO   uv      ON cpv.TRADER_ID   = uv.USUARIO_ID              -- c
 LEFT JOIN SUCURSAL  suv     ON cpv.SUCURSAL_ID = suv.SUCURSAL_ID            -- catálogo
 LEFT JOIN COMITENTE cmv     ON cpv.COMITENTE_ID = cmv.OFFSHORE_ID;          -- 5.000 comitentes
 
+-- Gobernanza: aplicamos la política de la Parte 6 también a la tabla de consumo, para que
+-- Cortex Analyst / Snowflake CoWork enmascaren la identidad de la contraparte a roles no-admin.
+ALTER DYNAMIC TABLE OPERACIONES MODIFY COLUMN ENTIDAD_COMPRADORA SET MASKING POLICY MP_ENTIDAD;
+ALTER DYNAMIC TABLE OPERACIONES MODIFY COLUMN ENTIDAD_VENDEDORA  SET MASKING POLICY MP_ENTIDAD;
+
 -- 8.2 Métricas de mercado directamente sobre la tabla plana (sin DTs adicionales).
 --     VWAP diario (Volume-Weighted Average Price) del USD/COP:
 SELECT FECHA,
@@ -655,12 +659,17 @@ SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
         - (Search notas) Busca notas que mencionen intervención del Banco de la República.
         - (Search entidades) ¿Qué comisionistas de bolsa hay en Medellín?
         - (Encadenado) ¿Cuánto volumen compró la entidad cuya sigla se parece a 'BBVA'?
+        - (Gobernanza/Masking) Muéstrame el código de entidad compradora de las últimas 5 operaciones.
+          → Con un rol no-admin (p. ej. ANALISTA_MERCADO) la identidad aparece ENMASCARADA (999999),
+            gracias a la política de la Parte 6 aplicada también a la tabla OPERACIONES (Parte 8).
+            Pruébalo abriendo CoWork con el rol ANALISTA_MERCADO.
 ******************************************************************************************** */
 
 
 /* ************************************ PARTE 12 **********************************************
    Limpieza: eliminamos los objetos del HOL.
 ******************************************************************************************** */
+DROP DATABASE IF EXISTS DB_HOL_SETICAP_DEV;
 DROP DATABASE IF EXISTS DB_HOL_SETICAP;
 DROP WAREHOUSE IF EXISTS WH_HOL_SETICAP;
 DROP ROLE IF EXISTS ANALISTA_MERCADO;
