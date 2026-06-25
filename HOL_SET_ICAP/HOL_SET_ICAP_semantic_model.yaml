@@ -55,6 +55,22 @@ tables:
         data_type: VARCHAR
         synonyms: [tipo vendedor, clase vendedor, tipo de entidad vendedora]
         sample_values: ['Banco', 'Comisionista', 'Corporación Financiera', 'Banco Central']
+      - name: vendedor_nombre
+        expr: VENDEDOR_NOMBRE
+        data_type: VARCHAR
+        synonyms: [vendedor, entidad vendedora, banco vendedor, quien vende]
+      - name: submercado_nombre
+        expr: SUBMERCADO_NOMBRE
+        data_type: VARCHAR
+        synonyms: [submercado, sub-mercado, segmento, interbancario]
+      - name: comprador_comitente
+        expr: COMPRADOR_COMITENTE
+        data_type: VARCHAR
+        synonyms: [comitente comprador, cliente final comprador, cliente del comprador]
+      - name: comprador_comitente_sector
+        expr: COMPRADOR_COMITENTE_SECTOR
+        data_type: VARCHAR
+        synonyms: [sector del comitente comprador, sector economico comprador]
       - name: anulada
         expr: ANULADA
         data_type: BOOLEAN

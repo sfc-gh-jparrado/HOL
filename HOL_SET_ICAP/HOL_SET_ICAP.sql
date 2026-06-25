@@ -1,6 +1,6 @@
 /* ********************************************************************************************
                    HANDS ON LAB - SET-ICAP | Mercado de Divisas SET-FX
-                   "De S3 a Snowflake Intelligence"
+                   "De S3 a Snowflake CoWork"
 ********************************************************************************************
  SET-ICAP es la compañía líder en negociación y registro de divisas y valores OTC en Colombia.
  Filial de la Bolsa de Valores de Colombia (BVC) y de TP ICAP Group. Opera el sistema
@@ -11,7 +11,7 @@
 
  Recorrido: cargas 400M filas desde S3 a velocidad de warehouse, construyes una capa de
  consumo viva con Dynamic Tables, analizas el mercado con Cortex AI y expones todo a un
- agente de Snowflake Intelligence.
+ agente de Snowflake CoWork.
 
  Datos 100% SINTÉTICOS para fines demostrativos en s3://demosjparrado/set_icap_hol/
  (12 tablas, csv.gz, delimitador ';', ~400M filas totales — 5 años de historia).
@@ -321,23 +321,42 @@ ORDER BY 1;
 
 
 /* ************************************ PARTE 5 ************************************************
-   Time Travel y Zero-Copy Cloning.
+   Time Travel: consultar el PASADO sin modificar nada (operador BEFORE).
+   Snowflake guarda el historial de cada tabla, así que podemos "viajar en el tiempo" y ver
+   cómo estaba antes de un cambio — SIN UPDATE ni DELETE. Aquí comparamos el estado de la
+   tabla ANTES de la carga de la Parte 4 contra el estado ACTUAL, en una sola consulta.
+   (Ejecuta todo en el mismo worksheet para que la variable de sesión persista.)
 ******************************************************************************************** */
 
--- TRM promedio de hace 7 días vs hoy (Time Travel sobre el histórico)
-SELECT 'hoy'  AS momento, ROUND(AVG(PRECIO),2) AS trm FROM OPERATION_SET_FX
-WHERE FECHA = (SELECT MAX(FECHA) FROM OPERATION_SET_FX)
+-- 5.1 Captura el query_id del COPY INTO que cargó OPERATION_SET_FX en la Parte 4.
+SET copy_qid = (
+  SELECT QUERY_ID
+  FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())
+  WHERE QUERY_TEXT ILIKE 'COPY INTO OPERATION_SET_FX %'
+    AND EXECUTION_STATUS = 'SUCCESS'
+  ORDER BY START_TIME DESC
+  LIMIT 1
+);
+SELECT $copy_qid AS query_id_del_copy;
+
+-- 5.2 Compara en UNA consulta el ANTES (Time Travel, justo antes de la carga) vs AHORA.
+--     BEFORE(STATEMENT => ...) devuelve la tabla tal como estaba ANTES de ese statement.
+SELECT 'antes de la carga' AS momento, COUNT(*) AS filas, ROUND(AVG(PRECIO),2) AS trm_promedio
+FROM OPERATION_SET_FX BEFORE(STATEMENT => $copy_qid)
 UNION ALL
-SELECT 'inicio', ROUND(AVG(PRECIO),2) FROM OPERATION_SET_FX
-WHERE FECHA = (SELECT MIN(FECHA) FROM OPERATION_SET_FX);
+SELECT 'ahora' AS momento, COUNT(*) AS filas, ROUND(AVG(PRECIO),2) AS trm_promedio
+FROM OPERATION_SET_FX;
+-- Resultado esperado: 'antes de la carga' = 0 filas; 'ahora' = 120M filas. ¡Viajaste en el tiempo!
 
--- Clonado instantáneo de toda la base para un ambiente de análisis (sin duplicar storage)
+-- 5.3 Otras formas de viajar en el tiempo (solo lectura):
+--     -- A un momento relativo (hace 60 segundos):
+--     SELECT COUNT(*) FROM OPERATION_SET_FX AT(OFFSET => -60);
+--     -- A un timestamp exacto:
+--     SELECT COUNT(*) FROM OPERATION_SET_FX AT(TIMESTAMP => '2026-06-19 09:00:00'::TIMESTAMP_LTZ);
+
+-- 5.4 Zero-Copy Cloning: una copia instantánea de toda la base para análisis, sin duplicar
+--     almacenamiento (no modifica la base original).
 CREATE OR REPLACE DATABASE DB_HOL_SETICAP_DEV CLONE DB_HOL_SETICAP;
-
--- Simular un borrado accidental y recuperarlo
-DROP TABLE OPERATION_SET_FX;
-UNDROP TABLE OPERATION_SET_FX;
-SELECT COUNT(*) AS sigue_disponible FROM OPERATION_SET_FX;
 
 
 /* ************************************ PARTE 6 ************************************************
@@ -408,14 +427,17 @@ GROUP BY FECHA
 ORDER BY FECHA DESC
 LIMIT 7;
 
--- 7.3 Sentimiento de las notas de los traders (SENTIMENT retorna FLOAT -1..1)
+-- 7.3 Perspectiva de mercado a partir de las notas de los traders.
+--     IMPORTANTE: SENTIMENT mide el TONO emocional del texto, NO la dirección del mercado
+--     (una nota "alcista" puede tener tono negativo). Para clasificar la dirección usamos
+--     COMPLETE (semánticamente correcto) y mostramos SENTIMENT aparte solo como tono.
 SELECT ID, TEXTO_TERM,
-  ROUND(SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM), 2) AS score,
-  CASE
-    WHEN SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM) > 0.3 THEN 'Alcista'
-    WHEN SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM) < -0.3 THEN 'Bajista'
-    ELSE 'Neutral'
-  END AS sentimiento_mercado
+  TRIM(SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
+    'Eres analista FX. Según esta nota de un trader del mercado USD/COP colombiano, clasifica la ' ||
+    'PERSPECTIVA del peso en UNA palabra sin markdown: Alcista (TRM sube / peso se deprecia), ' ||
+    'Bajista (TRM baja / peso se aprecia) o Neutral. Nota: ' || TEXTO_TERM || '. Responde solo la palabra.'
+  )) AS perspectiva_mercado,
+  ROUND(SNOWFLAKE.CORTEX.SENTIMENT(TEXTO_TERM), 2) AS tono_nota
 FROM OPERATION_SET_FX
 WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
 LIMIT 25;
@@ -429,86 +451,134 @@ WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> ''
   AND FECHA >= DATEADD(MONTH, -1, (SELECT MAX(FECHA) FROM OPERATION_SET_FX));
 
 
-/* ************************************ PARTE 8 ⭐ *********************************************
-   Dynamic Tables: la capa analítica que se refresca SOLA (sin ETL, sin tareas).
-   OPERACIONES deja de ser un CTAS manual y se vuelve una Dynamic Table: se mantiene
-   al día de forma INCREMENTAL sobre el histórico (solo procesa filas nuevas o cambiadas,
-   no reconstruye los 120M). Cuando el cliente conecte su ingesta real, la capa de consumo
-   y sus métricas se actualizan solas. Sobre ella encadenamos las métricas de mercado,
-   que la siguen automáticamente (TARGET_LAG=DOWNSTREAM).
-   Cadena: OPERATION_SET_FX -> OPERACIONES (DT) -> DT_VWAP_DIARIO / DT_RANKING_ENTIDADES
+/* ************************************ PARTE 7B **********************************************
+   Datos NO estructurados con Cortex AI: imágenes y audio del mercado FX.
+   Bucket: s3://demosjparrado/set_icap_hol/archivos/  (assets sintéticos demostrativos)
+   - grafico_trm.png   : gráfico de la TRM USD/COP (análisis de imagen / visión)
+   - llamada_mesa.mp3  : llamada de una mesa de dinero cerrando una operación (audio)
 ******************************************************************************************** */
 
--- 8.1 CAPA DE CONSUMO como Dynamic Table denormalizada (la que usa Cortex Analyst).
--- Resuelve nombres de entidad (compradora/vendedora), mercado y paridad en UNA sola tabla
--- plana. Todos los joins son N:1 (cada operación tiene exactamente un comprador, un vendedor,
--- un mercado) => refresh INCREMENTAL + CERO fan-out => agregaciones siempre correctas en
--- Cortex Analyst y Snowflake CoWork. Es la ÚNICA tabla del semantic view.
--- TARGET_LAG = DOWNSTREAM: se refresca tan seguido como lo necesiten sus DT derivadas (5 min).
+-- Stage dedicado a los archivos no estructurados (DIRECTORY ENABLE para LIST y TO_FILE)
+CREATE OR REPLACE STAGE STG_ARCHIVOS_SETICAP
+  URL = 's3://demosjparrado/set_icap_hol/archivos/'
+  CREDENTIALS = (AWS_KEY_ID='<SOLICITAR_AL_INSTRUCTOR>' AWS_SECRET_KEY='<SOLICITAR_AL_INSTRUCTOR>')
+  DIRECTORY = (ENABLE = TRUE);
+
+LIST @STG_ARCHIVOS_SETICAP;
+
+-- 7B.1 Análisis de IMAGEN (visión): leer un gráfico de la TRM e interpretarlo.
+SELECT SNOWFLAKE.CORTEX.COMPLETE(
+  'pixtral-large',
+  PROMPT('Eres analista del mercado cambiario colombiano. Analiza este gráfico de la TRM USD/COP: ' ||
+         'describe la tendencia, identifica niveles de soporte y resistencia aproximados y resume ' ||
+         'en 3 frases qué le dirías a un trader. {0}',
+         TO_FILE('@STG_ARCHIVOS_SETICAP', 'grafico_trm.png'))
+) AS lectura_grafico;
+
+-- 7B.2 Análisis de AUDIO: transcribir una llamada de mesa de dinero...
+SELECT TO_VARCHAR(AI_TRANSCRIBE(
+  TO_FILE('@STG_ARCHIVOS_SETICAP', 'llamada_mesa.mp3')
+)) AS transcripcion_llamada;
+
+-- 7B.3 ...y extraer la operación negociada (monto, precio, plazo, contrapartes) de la llamada.
+WITH t AS (
+  SELECT AI_TRANSCRIBE(TO_FILE('@STG_ARCHIVOS_SETICAP', 'llamada_mesa.mp3')) AS r
+)
+SELECT
+  r:text::STRING AS transcripcion,
+  SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5',
+    'De esta llamada de una mesa de dinero FX, extrae en JSON sin markdown los campos ' ||
+    'monto_usd, precio_trm, plazo, entidad_compradora, entidad_vendedora. Llamada: ' || r:text::STRING
+  ) AS operacion_extraida
+FROM t;
+
+
+/* ************************************ PARTE 8 ⭐ *********************************************
+   Dynamic Table: UNA sola tabla de consumo que replica el query del cliente (la "vista plana"
+   de Tableau) — uniendo TODAS las tablas del modelo, pero con grano 1 FILA POR OPERACIÓN.
+   La contraparte se aplana POR LADO (comprador / vendedor) con LEFT JOIN filtrados por
+   OPER_LADO ('C'/'V'), de modo que NO se genera fan-out (cada operación = 1 fila).
+   Se refresca de forma AUTOMÁTICA (incremental cuando aplica) sin ETL ni tareas: cuando el
+   cliente conecte su ingesta real, la capa de consumo y todas sus métricas se actualizan solas.
+   Es la ÚNICA tabla del semantic view de Cortex Analyst => agregaciones siempre correctas.
+   (La tabla OPERATION_SET_FX_CONTRAP_COMITENTE —varios comitentes por operación— queda para
+    drill-down con SQL directo; NO entra a la tabla plana para no romper el grano.)
+******************************************************************************************** */
+
+-- 8.1 La tabla plana OPERACIONES (1 fila por operación, todas las tablas unidas)
 CREATE OR REPLACE DYNAMIC TABLE OPERACIONES
-  TARGET_LAG   = DOWNSTREAM
+  TARGET_LAG   = '1 hour'          -- se puede bajar (p. ej. '1 minute') para más frescura
   WAREHOUSE    = WH_HOL_SETICAP
-  REFRESH_MODE = INCREMENTAL
+  REFRESH_MODE = AUTO              -- Snowflake elige incremental cuando es posible (ver 8.2)
 AS
 SELECT
-  o.ID, o.FECHA, o.HORA, o.ANULADA,
+  o.ID, o.FECHA, o.HORA, o.ANULADA, o.REGISTRO,
+  -- Mercado / sub-mercado / paridad / moneda
   o.MERCADO, m.MERCADO_NOMBRE,
-  o.SUB_MERCADO,
+  o.SUB_MERCADO, sm.SUBMERCADO_NOMBRE,
+  o.PARIDAD_ID, p.NOMBRE AS PARIDAD_NOMBRE,
+  cur.CURR_CURRENCY AS MONEDA_UNO_NOMBRE,
+  -- Plazos y montos
   o.PLAZO_CURVA, o.DIAS, o.FECHA_VALOR,
   o.MONTO_USD, o.MONTO_MONEDA_DOS AS MONTO_COP,
   o.PRECIO, o.PRECIO_SPOT, o.POINTS_FORWARD,
-  o.PARIDAD_ID, p.NOMBRE AS PARIDAD_NOMBRE,
-  o.ENTIDAD_COMPRADORA, ec.ENTIDAD_SIGLA AS COMPRADOR_SIGLA, ec.ENTIDAD_NOMBRE AS COMPRADOR_NOMBRE, ec.ENTIDAD_CLASE AS COMPRADOR_CLASE, ec.ENTIDAD_CIUDAD AS COMPRADOR_CIUDAD,
-  o.ENTIDAD_VENDEDORA,  ev.ENTIDAD_SIGLA AS VENDEDOR_SIGLA,  ev.ENTIDAD_NOMBRE AS VENDEDOR_NOMBRE,  ev.ENTIDAD_CLASE AS VENDEDOR_CLASE,  ev.ENTIDAD_CIUDAD AS VENDEDOR_CIUDAD,
-  o.REGISTRO, o.ENVIADA_CAMARA, o.BANDERA_FISICO_COMPENSACION,
+  o.ENVIADA_CAMARA, o.BANDERA_FISICO_COMPENSACION,
+  -- Entidad compradora / vendedora (N:1)
+  o.ENTIDAD_COMPRADORA, ec.ENTIDAD_SIGLA AS COMPRADOR_SIGLA, ec.ENTIDAD_NOMBRE AS COMPRADOR_NOMBRE,
+  ec.ENTIDAD_CLASE AS COMPRADOR_CLASE, ec.ENTIDAD_CIUDAD AS COMPRADOR_CIUDAD,
+  o.ENTIDAD_VENDEDORA, ev.ENTIDAD_SIGLA AS VENDEDOR_SIGLA, ev.ENTIDAD_NOMBRE AS VENDEDOR_NOMBRE,
+  ev.ENTIDAD_CLASE AS VENDEDOR_CLASE, ev.ENTIDAD_CIUDAD AS VENDEDOR_CIUDAD,
+  -- Contraparte lado COMPRADOR (aplanada por OPER_LADO='C', sin fan-out)
+  uc.USUARIO_NOMBRE AS COMPRADOR_TRADER, suc.SUCURSAL_NOMBRE AS COMPRADOR_SUCURSAL,
+  cmc.NOMBRE AS COMPRADOR_COMITENTE, cmc.SECTOR AS COMPRADOR_COMITENTE_SECTOR,
+  -- Contraparte lado VENDEDOR (aplanada por OPER_LADO='V', sin fan-out)
+  uv.USUARIO_NOMBRE AS VENDEDOR_TRADER, suv.SUCURSAL_NOMBRE AS VENDEDOR_SUCURSAL,
+  cmv.NOMBRE AS VENDEDOR_COMITENTE, cmv.SECTOR AS VENDEDOR_COMITENTE_SECTOR,
   o.TEXTO_TERM
 FROM OPERATION_SET_FX o
-JOIN MERCADO m         ON o.MERCADO = m.MERCADO_ID
-JOIN PARIDAD_MONEDA p  ON o.PARIDAD_ID = p.PARIDAD_ID
-JOIN ENTIDAD ec        ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
-JOIN ENTIDAD ev        ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID;
+JOIN MERCADO m              ON o.MERCADO = m.MERCADO_ID
+LEFT JOIN SUB_MERCADO sm    ON o.SUB_MERCADO = sm.SUB_MERCADO_ID
+JOIN PARIDAD_MONEDA p       ON o.PARIDAD_ID = p.PARIDAD_ID
+LEFT JOIN CURRENCY cur      ON o.MONEDA_UNO = cur.CURR_ID
+JOIN ENTIDAD ec             ON o.ENTIDAD_COMPRADORA = ec.ENTIDAD_ID
+JOIN ENTIDAD ev             ON o.ENTIDAD_VENDEDORA  = ev.ENTIDAD_ID
+LEFT JOIN OPERATION_SET_FX_CONTRAPARTE cpc ON cpc.OPER_ID = o.ID AND cpc.OPER_LADO = 'C'
+LEFT JOIN USUARIO   uc      ON cpc.TRADER_ID   = uc.USUARIO_ID
+LEFT JOIN SUCURSAL  suc     ON cpc.SUCURSAL_ID = suc.SUCURSAL_ID
+LEFT JOIN COMITENTE cmc     ON cpc.COMITENTE_ID = cmc.OFFSHORE_ID
+LEFT JOIN OPERATION_SET_FX_CONTRAPARTE cpv ON cpv.OPER_ID = o.ID AND cpv.OPER_LADO = 'V'
+LEFT JOIN USUARIO   uv      ON cpv.TRADER_ID   = uv.USUARIO_ID
+LEFT JOIN SUCURSAL  suv     ON cpv.SUCURSAL_ID = suv.SUCURSAL_ID
+LEFT JOIN COMITENTE cmv     ON cpv.COMITENTE_ID = cmv.OFFSHORE_ID;
 
--- Verifica el refresh y que sea INCREMENTAL (no FULL):
-SHOW DYNAMIC TABLES LIKE 'OPERACIONES';
-SELECT COUNT(*) AS filas_operaciones, COUNT(DISTINCT COMPRADOR_SIGLA) AS entidades FROM OPERACIONES;
+-- 8.2 Verifica el modo de refresh y que NO haya fan-out (1 fila por operación):
+SHOW DYNAMIC TABLES LIKE 'OPERACIONES';   -- columna refresh_mode debe decir INCREMENTAL
+SELECT
+  (SELECT COUNT(*) FROM OPERACIONES)        AS filas_operaciones,
+  (SELECT COUNT(*) FROM OPERATION_SET_FX)   AS filas_base,
+  (SELECT COUNT(*) FROM OPERACIONES) = (SELECT COUNT(*) FROM OPERATION_SET_FX) AS sin_fan_out;
 
--- 8.2 VWAP diario (Volume-Weighted Average Price) del USD/COP
-CREATE OR REPLACE DYNAMIC TABLE DT_VWAP_DIARIO
-  TARGET_LAG = '5 minutes'
-  WAREHOUSE  = WH_HOL_SETICAP
-AS
-  SELECT
-    FECHA,
-    ROUND(SUM(PRECIO * MONTO_USD) / NULLIF(SUM(MONTO_USD),0), 2) AS VWAP,
-    ROUND(SUM(MONTO_USD)/1e6, 2) AS VOLUMEN_MUSD,
-    COUNT(*) AS NUM_OPERACIONES,
-    MIN(PRECIO) AS PRECIO_MIN,
-    MAX(PRECIO) AS PRECIO_MAX,
-    ROUND(MAX(PRECIO) - MIN(PRECIO), 2) AS RANGO
-  FROM OPERACIONES
-  WHERE ANULADA = FALSE AND MERCADO = 76
-  GROUP BY FECHA;
+-- 8.3 Métricas de mercado directamente sobre la tabla plana (sin DTs adicionales).
+--     VWAP diario (Volume-Weighted Average Price) del USD/COP:
+SELECT FECHA,
+  ROUND(SUM(PRECIO * MONTO_USD) / NULLIF(SUM(MONTO_USD),0), 2) AS VWAP,
+  ROUND(SUM(MONTO_USD)/1e6, 2) AS VOLUMEN_MUSD,
+  COUNT(*) AS NUM_OPERACIONES
+FROM OPERACIONES
+WHERE ANULADA = FALSE AND MERCADO = 76
+GROUP BY FECHA
+ORDER BY FECHA DESC
+LIMIT 15;
 
-SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA DESC LIMIT 15;
-
--- 8.3 Ranking de entidades más activas (volumen comprado)
--- OPERACIONES ya tiene el nombre/clase resuelto (sin fan-out): agregación directa.
-CREATE OR REPLACE DYNAMIC TABLE DT_RANKING_ENTIDADES
-  TARGET_LAG = '5 minutes'
-  WAREHOUSE  = WH_HOL_SETICAP
-AS
-  SELECT
-    COMPRADOR_SIGLA AS ENTIDAD_SIGLA,
-    COMPRADOR_NOMBRE AS ENTIDAD_NOMBRE,
-    COMPRADOR_CLASE AS ENTIDAD_CLASE,
-    COUNT(*) AS NUM_OPERACIONES,
-    ROUND(SUM(MONTO_USD)/1e6, 1) AS VOLUMEN_COMPRA_MUSD
-  FROM OPERACIONES
-  WHERE ANULADA = FALSE
-  GROUP BY COMPRADOR_SIGLA, COMPRADOR_NOMBRE, COMPRADOR_CLASE
-  ORDER BY VOLUMEN_COMPRA_MUSD DESC;
-
-SELECT * FROM DT_RANKING_ENTIDADES LIMIT 15;
+--     Ranking de entidades compradoras por volumen (sin fan-out -> conteo correcto):
+SELECT COMPRADOR_SIGLA, COMPRADOR_NOMBRE, COMPRADOR_CLASE,
+  COUNT(*) AS NUM_OPERACIONES,
+  ROUND(SUM(MONTO_USD)/1e6, 1) AS VOLUMEN_COMPRA_MUSD
+FROM OPERACIONES
+WHERE ANULADA = FALSE
+GROUP BY COMPRADOR_SIGLA, COMPRADOR_NOMBRE, COMPRADOR_CLASE
+ORDER BY VOLUMEN_COMPRA_MUSD DESC
+LIMIT 15;
 
 
 /* ************************************ PARTE 9 ************************************************
@@ -516,117 +586,133 @@ SELECT * FROM DT_RANKING_ENTIDADES LIMIT 15;
    Snowsight -> Projects -> Streamlit -> + Streamlit App (warehouse WH_HOL_SETICAP,
    database DB_HOL_SETICAP, schema PUBLIC). Pega el siguiente código.
 ******************************************************************************************** */
-/*
-import streamlit as st
-import pandas as pd
-import altair as alt
-from snowflake.snowpark.context import get_active_session
-
-st.set_page_config(page_title="SET-FX | Mercado de Divisas", layout="wide")
-session = get_active_session()
-
-st.title("SET-FX · Tablero del Mercado de Divisas")
-st.caption("SET-ICAP · Datos sintéticos demostrativos")
-
-@st.cache_data(ttl=300)
-def q(sql):
-    return session.sql(sql).to_pandas()
-
-vwap = q("SELECT * FROM DT_VWAP_DIARIO ORDER BY FECHA")
-rank = q("SELECT * FROM DT_RANKING_ENTIDADES LIMIT 10")
-
-c1, c2, c3 = st.columns(3)
-c1.metric("TRM más reciente (VWAP)", f"{vwap['VWAP'].iloc[-1]:,.2f}")
-c2.metric("Volumen último día (M USD)", f"{vwap['VOLUMEN_MUSD'].iloc[-1]:,.1f}")
-c3.metric("Operaciones último día", f"{int(vwap['NUM_OPERACIONES'].iloc[-1]):,}")
-
-st.subheader("Evolución de la TRM (VWAP diario)")
-st.altair_chart(
-    alt.Chart(vwap).mark_line(point=True).encode(
-        x="FECHA:T", y=alt.Y("VWAP:Q", scale=alt.Scale(zero=False)),
-        tooltip=["FECHA","VWAP","VOLUMEN_MUSD"]
-    ).properties(height=320), use_container_width=True)
-
-st.subheader("Top 10 entidades por volumen comprado")
-st.altair_chart(
-    alt.Chart(rank).mark_bar().encode(
-        x="VOLUMEN_COMPRA_MUSD:Q", y=alt.Y("ENTIDAD_SIGLA:N", sort="-x"),
-        tooltip=["ENTIDAD_NOMBRE","VOLUMEN_COMPRA_MUSD","NUM_OPERACIONES"]
-    ).properties(height=320), use_container_width=True)
-*/
-
-/* --- OPCIÓN B: genera un dashboard visualmente potente con Cortex Code (CoCo) ---
-   En lugar del código base de arriba, abre Cortex Code en tu cuenta y pega este
-   prompt. CoCo genera el app.py completo conectado a los objetos del HOL.
+/* Genera el dashboard con un PROMPT en Cortex Code (CoCo) — sin escribir código a mano.
+   Abre Cortex Code en tu cuenta, pega el prompt de abajo y CoCo crea el app.py completo,
+   conectado a los objetos del HOL, listo para desplegar como Streamlit-in-Snowflake.
 
    ----------------------------- PROMPT PARA CORTEX CODE -----------------------------
-   Crea una app de Streamlit-in-Snowflake visualmente potente para el mercado de
-   divisas SET-FX de SET-ICAP (Colombia). Úsala con get_active_session() y SIN
-   dependencias de red externas (solo altair/plotly nativos).
+   Crea una app de Streamlit-in-Snowflake VISUALMENTE POTENTE para el mercado de divisas
+   SET-FX de SET-ICAP (Colombia). Úsala con get_active_session() y SIN dependencias de red
+   externas (solo Streamlit nativo + altair/plotly disponibles en SiS).
 
-   Base de datos: DB_HOL_SETICAP, schema PUBLIC. Objetos disponibles:
-   - DT_VWAP_DIARIO (FECHA, VWAP, VOLUMEN_MUSD, NUM_OPERACIONES, PRECIO_MIN, PRECIO_MAX, RANGO)
-   - DT_RANKING_ENTIDADES (ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE, NUM_OPERACIONES, VOLUMEN_COMPRA_MUSD)
-   - OPERATION_SET_FX (ID, FECHA, HORA, ANULADA, MERCADO, MONTO_USD, MONTO_MONEDA_DOS, PRECIO, PLAZO_CURVA, ENTIDAD_COMPRADORA, ENTIDAD_VENDEDORA, TEXTO_TERM)
-   - OPERACIONES (Dynamic Table denormalizada: + COMPRADOR_NOMBRE/CLASE, VENDEDOR_NOMBRE/CLASE, MERCADO_NOMBRE, PARIDAD_NOMBRE)
-   - ENTIDAD (ENTIDAD_ID, ENTIDAD_SIGLA, ENTIDAD_NOMBRE, ENTIDAD_CLASE)
-   - MERCADO (MERCADO_ID, MERCADO_NOMBRE)
+   Base de datos: DB_HOL_SETICAP, schema PUBLIC. Fuente principal: la Dynamic Table OPERACIONES
+   (1 fila por operación, ya denormalizada). Columnas relevantes:
+   - FECHA, HORA, ANULADA, MERCADO, MERCADO_NOMBRE, SUBMERCADO_NOMBRE, PARIDAD_NOMBRE, PLAZO_CURVA
+   - MONTO_USD, MONTO_COP, PRECIO (TRM), PRECIO_SPOT, POINTS_FORWARD
+   - COMPRADOR_SIGLA / COMPRADOR_NOMBRE / COMPRADOR_CLASE / COMPRADOR_CIUDAD
+   - VENDEDOR_SIGLA / VENDEDOR_NOMBRE / VENDEDOR_CLASE / VENDEDOR_CIUDAD
+   - COMPRADOR_TRADER, VENDEDOR_TRADER, COMPRADOR_COMITENTE, VENDEDOR_COMITENTE
+   No hay tablas pre-agregadas: calcula todo con agregaciones SQL sobre OPERACIONES. Ejemplo:
+   VWAP diario = SUM(PRECIO*MONTO_USD)/NULLIF(SUM(MONTO_USD),0) por FECHA, con ANULADA=FALSE y MERCADO=76.
 
-   Requisitos visuales (estilo fintech profesional, branding Snowflake #29B5E8 / #11567F):
-   1. Encabezado con título "SET-FX - Mercado de Divisas" y selector de rango de fechas.
-   2. Fila de KPI cards: TRM más reciente (VWAP), variación % vs día anterior,
-      volumen del día (M USD), núm operaciones, % anuladas. Con flechas de tendencia y color.
-   3. Gráfico principal: evolución de la TRM (VWAP diario) tipo línea con banda min-max
-      (área sombreada PRECIO_MIN-PRECIO_MAX) y tooltip rico.
-   4. Barras horizontales: Top 10 entidades por volumen comprado, coloreadas por ENTIDAD_CLASE.
-   5. Profundidad de mercado: comparativo compra vs venta por entidad (barras divergentes).
-   6. Mapa de calor de actividad por hora del día vs día de la semana (núm operaciones).
-   7. Donut: distribución de volumen por PLAZO_CURVA (T+1, 3M, etc.).
-   8. Tabla de operaciones más recientes (OPERACIONES ordenado por FECHA y HORA desc, top 50)
-      con formato de moneda y badges por ENTIDAD_CLASE.
-   9. Layout responsive con st.columns, st.container(border=True), métricas grandes,
-      tema oscuro elegante y tipografía clara. Usa @st.cache_data(ttl=300) en las consultas.
+   Diseño (estilo fintech profesional, TEMA OSCURO, branding Snowflake #29B5E8 / #11567F):
+   1. Hero con título "SET-FX · Mercado de Divisas", subtítulo y selector de rango de fechas.
+   2. Fila de KPI cards grandes con delta/flechas y color: TRM (VWAP) más reciente, variación %
+      vs día anterior, volumen del día (M USD), número de operaciones, % anuladas.
+   3. Gráfico principal: evolución de la TRM (VWAP diario) tipo línea, con banda min–max sombreada
+      (MIN/MAX de PRECIO por día) y tooltip rico.
+   4. Barras horizontales: Top 10 entidades compradoras por volumen, coloreadas por COMPRADOR_CLASE.
+   5. Profundidad de mercado: compra vs venta por clase de entidad (barras divergentes).
+   6. Mapa de calor de actividad por HORA del día vs día de la semana (número de operaciones).
+   7. Donut: distribución de volumen por PLAZO_CURVA (T+0, T+1, 3M…).
+   8. Tabla de las 50 operaciones más recientes (ORDER BY FECHA, HORA desc) con formato de moneda
+      y badges por clase de entidad.
+   9. Layout responsive con st.columns y st.container(border=True), tipografía clara, tema oscuro
+      elegante con acentos en #29B5E8. Usa @st.cache_data(ttl=300) en todas las consultas y maneja
+      el caso de DataFrame vacío.
 
-   Genera el app.py completo, listo para pegar en Snowsight -> Streamlit. No uses
-   librerías que requieran instalación externa más allá de las disponibles en SiS.
+   Hazlo realmente atractivo: paleta coherente, espaciado generoso, títulos de sección claros y que
+   parezca un terminal de trading profesional. Genera el app.py COMPLETO, listo para pegar en
+   Snowsight -> Streamlit.
    ----------------------------------------------------------------------------------- */
 
 
-/* ************************************ PARTE 10 ***********************************************
-   Semantic View para Cortex Analyst (creación asistida en Snowsight UI).
-   Snowsight -> AI & ML -> Cortex Analyst -> Create -> Semantic View. Selecciona:
-     Tabla ÚNICA: OPERACIONES (Dynamic Table plana denormalizada de la Parte 8)
-       → Una sola tabla, SIN relaciones que definir, SIN riesgo de fan-out.
-         Esto garantiza agregaciones correctas en Cortex Analyst y Snowflake CoWork.
-         Al ser Dynamic Table, el modelo semántico se mantiene al día automáticamente.
-     Métricas: total_volumen_usd = SUM(MONTO_USD), num_operaciones = COUNT(ID),
-               vwap = SUM(PRECIO*MONTO_USD)/SUM(MONTO_USD), trm_promedio = AVG(PRECIO)
-     Dimensiones: FECHA, PLAZO_CURVA, MERCADO_NOMBRE, PARIDAD_NOMBRE,
-                  COMPRADOR_SIGLA, COMPRADOR_NOMBRE, COMPRADOR_CLASE,
-                  VENDEDOR_SIGLA, VENDEDOR_CLASE
-   (También puedes importar el archivo HOL_SET_ICAP_semantic_model.yaml de este repositorio.)
-   NOTA: las tablas de detalle (CONTRAPARTE 240M, COMITENTE 40M) NO se incluyen en el
-   modelo semántico — tienen múltiples filas por operación y causarían doble conteo.
-   Quedan disponibles para drill-down con SQL directo cuando se requiera.
+/* ************************************ PARTE 10 **********************************************
+   Capa de IA conversacional: Cortex Analyst (datos estructurados) + Cortex Search (texto).
+   - Cortex Analyst responde con cifras/SQL sobre la tabla plana OPERACIONES.
+   - Cortex Search permite buscar en texto libre: notas de mercado y catálogo de entidades.
+   Ambos alimentan al agente de la Parte 11.
 ******************************************************************************************** */
+
+-- 10.1 CORTEX ANALYST — Semantic View sobre la tabla ÚNICA OPERACIONES (text-to-SQL).
+--   Snowsight -> AI & ML -> Cortex Analyst -> Create -> Semantic View:
+--     Tabla ÚNICA: OPERACIONES (Dynamic Table plana de la Parte 8) — SIN relaciones, SIN fan-out.
+--     Métricas: volumen_usd=SUM(MONTO_USD), num_operaciones=COUNT(ID),
+--               vwap=SUM(PRECIO*MONTO_USD)/SUM(MONTO_USD), trm_promedio=AVG(PRECIO)
+--     Dimensiones: FECHA, PLAZO_CURVA, MERCADO_NOMBRE, PARIDAD_NOMBRE,
+--                  COMPRADOR_SIGLA/NOMBRE/CLASE, VENDEDOR_SIGLA/CLASE
+--   O simplemente importa HOL_SET_ICAP_semantic_model.yaml (nombre del modelo: SV_SET_FX).
+
+-- 10.2 CORTEX SEARCH sobre las NOTAS de mercado (texto libre de los traders).
+CREATE OR REPLACE CORTEX SEARCH SERVICE CS_NOTAS_MERCADO
+  ON TEXTO_TERM                                            -- campo de búsqueda semántica
+  ATTRIBUTES FECHA, MERCADO_NOMBRE, COMPRADOR_SIGLA, VENDEDOR_SIGLA, PLAZO_CURVA
+  WAREHOUSE = WH_HOL_SETICAP
+  TARGET_LAG = '1 hour'
+  AS
+  SELECT TEXTO_TERM, FECHA, MERCADO_NOMBRE, COMPRADOR_SIGLA, VENDEDOR_SIGLA, PLAZO_CURVA
+  FROM OPERACIONES
+  WHERE TEXTO_TERM IS NOT NULL AND TEXTO_TERM <> '';
+
+-- 10.3 CORTEX SEARCH sobre el catálogo de ENTIDADES (descubrir/desambiguar contrapartes).
+CREATE OR REPLACE CORTEX SEARCH SERVICE CS_ENTIDADES
+  ON ENTIDAD_NOMBRE
+  ATTRIBUTES ENTIDAD_SIGLA, ENTIDAD_CLASE, ENTIDAD_TIPO, ENTIDAD_CIUDAD
+  WAREHOUSE = WH_HOL_SETICAP
+  TARGET_LAG = '1 hour'
+  AS
+  SELECT ENTIDAD_NOMBRE, ENTIDAD_SIGLA, ENTIDAD_CLASE, ENTIDAD_TIPO, ENTIDAD_CIUDAD
+  FROM ENTIDAD;
+
+-- Verifica el estado de los servicios
+SHOW CORTEX SEARCH SERVICES;
+
+-- Demo de búsqueda semántica: notas que mencionen intervención del emisor
+SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+  'CS_NOTAS_MERCADO',
+  '{ "query": "intervención del Banco de la República en el mercado", "columns": ["TEXTO_TERM","FECHA","MERCADO_NOMBRE"], "limit": 5 }'
+))['results'] AS notas;
+
+-- Demo: descubrir entidades por nombre/atributo en lenguaje natural
+SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+  'CS_ENTIDADES',
+  '{ "query": "comisionistas de bolsa en Medellín", "columns": ["ENTIDAD_NOMBRE","ENTIDAD_SIGLA","ENTIDAD_CLASE","ENTIDAD_CIUDAD"], "limit": 5 }'
+))['results'] AS entidades;
 
 
 /* ************************************ PARTE 11 **********************************************
-   Snowflake Intelligence: un Agente Cortex que responde en lenguaje natural.
-   Snowsight -> AI & ML -> Agents (Snowflake Intelligence) -> Create agent.
-     Nombre: AGT_SETICAP
-     Herramientas:
-       - Cortex Analyst -> Semantic View SV_SET_FX (creada en la Parte 10)
-       - Cortex Search (opcional) sobre TEXTO_TERM para notas de mercado
-     Instrucciones (system prompt):
-       "Eres un analista experto del mercado cambiario colombiano SET-FX de SET-ICAP.
-        Respondes en español, con cifras claras (TRM, volumen en millones de USD) y
-        contexto del mercado OTC. Usa la Semantic View para todas las consultas de datos."
-     Preguntas demo:
-       - ¿Cuál fue el VWAP del USD/COP la última semana?
-       - ¿Qué entidad negoció el mayor volumen el último mes?
-       - ¿Cuántas operaciones forward se hicieron a plazo 3M?
-       - Compara el volumen de bancos vs comisionistas.
+   Snowflake CoWork: un Agente Cortex que responde en lenguaje natural combinando las tres
+   herramientas de la Parte 10. Se crea en la UI (no por SQL):
+   Snowsight -> AI & ML -> Snowflake CoWork -> + Crear agente.
+   --------------------------------------------------------------------------------------------
+   1. Datos del agente
+        Nombre: AGT_SETICAP
+        DB/Schema: DB_HOL_SETICAP.PUBLIC
+   2. Tools -> Add tool (las tres herramientas de la Parte 10):
+        - Cortex Analyst -> Semantic View SV_SET_FX   (métricas / text-to-SQL sobre OPERACIONES)
+        - Cortex Search   -> CS_NOTAS_MERCADO          (buscar en notas de los traders)
+        - Cortex Search   -> CS_ENTIDADES              (descubrir / desambiguar contrapartes)
+   3. Orchestration instructions (instrucciones de orquestación):
+        "Eres un analista experto del mercado cambiario colombiano SET-FX de SET-ICAP.
+         Decide la herramienta según la intención del usuario:
+         - Si piden CIFRAS, métricas, rankings, volúmenes, TRM, VWAP, comparaciones o tendencias,
+           usa Cortex Analyst (SV_SET_FX).
+         - Si piden buscar, citar o resumir NOTAS de mercado / comentarios de traders,
+           usa Cortex Search CS_NOTAS_MERCADO.
+         - Si mencionan una ENTIDAD por nombre parcial, sigla o atributo (clase, ciudad, tipo) y
+           hay que identificarla o listarla, usa Cortex Search CS_ENTIDADES; si luego piden cifras
+           de esa entidad, encadena con Cortex Analyst usando la sigla/nombre encontrado.
+         Cita siempre las dimensiones o los identificadores usados. Razona y responde SIEMPRE en español."
+   4. Response instructions (instrucciones de respuesta):
+        "Responde en español, con cifras claras (TRM en COP/USD, volumen en millones de USD) y
+         contexto del mercado OTC. Al final, propón 2 o 3 preguntas de seguimiento para profundizar.
+         TODO el contenido generado, INCLUIDO el razonamiento paso a paso, debe estar en español."
+   5. Preguntas demo (cubren las tres herramientas):
+        - (Analyst)  ¿Cuál fue el VWAP del USD/COP la última semana?
+        - (Analyst)  Compara el volumen negociado entre bancos y comisionistas el último mes.
+        - (Search notas) Busca notas que mencionen intervención del Banco de la República.
+        - (Search entidades) ¿Qué comisionistas de bolsa hay en Medellín?
+        - (Encadenado) ¿Cuánto volumen compró la entidad cuya sigla se parece a 'BBVA'?
 ******************************************************************************************** */
 
 
@@ -639,4 +725,4 @@ DROP WAREHOUSE IF EXISTS WH_HOL_SETICAP;
 DROP ROLE IF EXISTS ANALISTA_MERCADO;
 
 -- ¡Felicitaciones! Completaste el HOL de SET-ICAP: carga masiva desde S3, Cortex AI,
--- Dynamic Tables y Snowflake Intelligence sobre el mercado de divisas SET-FX.
+-- Dynamic Tables y Snowflake CoWork sobre el mercado de divisas SET-FX.
