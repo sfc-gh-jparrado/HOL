@@ -34,3 +34,5 @@ export const CATEGORICAL = [
 export function catColor(i: number): string {
   return CATEGORICAL[i % CATEGORICAL.length]
 }
+
+export const CHORO_RAMP = ["#0F1B3A", "#16336E", "#1E54B8", "#2E6BFF", "#22D3EE", "#7BE8FF"]

@@ -37,3 +37,24 @@ export interface OpReciente {
   MONTO_USD: number
   PRECIO: number
 }
+
+export interface HoraPunto {
+  dia_semana: number
+  dia: string
+  hora: number
+  num_tx: number
+  monto: number
+}
+
+export interface ClasePunto {
+  familia: string
+  propio: number
+  sector: number
+}
+
+export interface FiltrosData {
+  mercados: string[]
+  plazos: string[]
+  min_fecha: string | null
+  max_fecha: string | null
+}
