@@ -1,0 +1,3414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOL Olimpica — From S3 to CoWork | Snowflake Hands-On Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-blue.svg">
+    <style>
+:root {
+    --sf-blue-primary: #29B5E8;
+    --sf-blue-dark: #11567F;
+    --sf-blue-light: #E3F2FD;
+    --sf-green: #51cf66;
+    --sf-red: #ff6b6b;
+    --sf-yellow: #ffd43b;
+    --sf-orange: #ff922b;
+    --olimpica-red: #E30613;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    --color-success: var(--sf-green);
+    --color-warning: var(--sf-yellow);
+    --color-error: var(--sf-red);
+    --color-info: var(--sf-blue-primary);
+    --font-heading: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+    --header-height: 64px;
+    --sidebar-width: 280px;
+    --content-max-width: 900px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + var(--space-lg)); }
+body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--gray-800);
+    background-color: var(--gray-50);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+img { max-width: 100%; height: auto; }
+a { color: var(--sf-blue-primary); text-decoration: none; transition: color var(--transition-fast); }
+a:hover { color: var(--sf-blue-dark); }
+
+/* Header */
+.hol-header {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--header-height);
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+.header-container {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 var(--space-xl);
+}
+.logo-section { display: flex; align-items: center; gap: var(--space-md); }
+.snowflake-logo { height: 40px; width: auto; }
+.logo-divider { width: 1px; height: 24px; background: var(--gray-300); }
+.hol-badge {
+    background: linear-gradient(135deg, var(--sf-blue-primary), var(--sf-blue-dark));
+    color: white; padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm); font-size: 0.75rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    font-family: var(--font-heading);
+}
+.header-nav { display: flex; gap: var(--space-lg); }
+.header-nav a {
+    color: var(--gray-600); font-weight: 500; font-size: 0.875rem;
+    padding: var(--space-sm); border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+.header-nav a:hover { color: var(--sf-blue-primary); background: var(--sf-blue-light); }
+
+/* Hero Section */
+.hero-section {
+    margin-top: var(--header-height);
+    background: linear-gradient(135deg, #11567F 0%, #0a3a5c 100%);
+    padding: var(--space-3xl) 0;
+    color: white;
+}
+.hero-container {
+    max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl);
+    display: grid; grid-template-columns: 1fr; gap: var(--space-2xl); align-items: center;
+}
+.hero-logos {
+    display: flex; align-items: center; gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+.hero-logos .separator {
+    color: rgba(255,255,255,0.3); font-size: 1.5rem; font-weight: 300;
+}
+.hero-logos .client-name {
+    font-family: var(--font-heading); font-weight: 800;
+    font-size: 1.5rem; color: white; letter-spacing: 0;
+    text-transform: none;
+}
+.industry-tag {
+    display: inline-block;
+    background: rgba(41, 181, 232, 0.2);
+    color: var(--sf-blue-primary);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem; font-weight: 500;
+    margin-bottom: var(--space-md);
+    font-family: var(--font-heading);
+}
+.hero-title {
+    font-size: 2.5rem; font-weight: 700; line-height: 1.2;
+    margin-bottom: var(--space-md); text-transform: none; letter-spacing: 0;
+}
+.hero-subtitle {
+    font-size: 1.125rem; color: var(--gray-300);
+    margin-bottom: var(--space-xl); line-height: 1.7;
+}
+.hero-meta { display: flex; gap: var(--space-xl); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+.meta-item {
+    display: flex; align-items: center; gap: var(--space-sm);
+    color: var(--gray-400); font-size: 0.875rem;
+}
+.meta-icon { width: 18px; height: 18px; fill: currentColor; }
+.hero-cta {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    background: var(--sf-blue-primary); color: white;
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md); font-weight: 600;
+    transition: all var(--transition-fast);
+    font-family: var(--font-heading);
+}
+.hero-cta:hover {
+    background: #1a8ab5; color: white; transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(41, 181, 232, 0.4);
+}
+
+/* Content Sections */
+.content-section { padding: var(--space-3xl) 0; }
+.content-section.alt-bg { background: white; }
+.section-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); }
+.section-title {
+    font-size: 1.75rem; font-weight: 700; color: var(--gray-900);
+    margin-bottom: var(--space-xl); position: relative;
+    padding-bottom: var(--space-md);
+}
+.section-title::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 60px; height: 4px;
+    background: linear-gradient(90deg, var(--sf-blue-primary), var(--sf-blue-dark));
+    border-radius: var(--radius-full);
+}
+
+/* Overview Grid */
+.overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.overview-card {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); padding: var(--space-xl);
+    transition: all var(--transition-fast);
+}
+.overview-card:hover { border-color: var(--sf-blue-primary); box-shadow: var(--shadow-md); }
+.overview-card.highlight {
+    background: linear-gradient(135deg, var(--sf-blue-light), white);
+    border-color: var(--sf-blue-primary);
+}
+.overview-card h3 {
+    font-size: 1rem; font-weight: 600; color: var(--gray-700);
+    margin-bottom: var(--space-md);
+}
+.learning-list { list-style: none; }
+.learning-list li {
+    position: relative; padding-left: var(--space-lg);
+    margin-bottom: var(--space-sm); color: var(--gray-600);
+}
+.learning-list li::before {
+    content: ''; position: absolute; left: 0; top: 8px;
+    width: 8px; height: 8px; background: var(--sf-blue-primary); border-radius: 50%;
+}
+.tech-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.tech-tag {
+    display: inline-flex; align-items: center; gap: var(--space-xs);
+    background: var(--gray-100); padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm); font-size: 0.8125rem; color: var(--gray-700);
+}
+
+/* Progress Tracker / Sidebar */
+.progress-tracker {
+    position: fixed; left: 0; top: var(--header-height); bottom: 0;
+    width: var(--sidebar-width); background: white;
+    border-right: 1px solid var(--gray-200);
+    padding: var(--space-xl); overflow-y: auto; z-index: 50;
+}
+.progress-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: var(--space-md); font-weight: 600; color: var(--gray-700);
+    font-family: var(--font-heading);
+}
+.progress-percent { color: var(--sf-blue-primary); }
+.progress-bar {
+    height: 6px; background: var(--gray-200);
+    border-radius: var(--radius-full); margin-bottom: var(--space-xl); overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sf-blue-primary), var(--sf-green));
+    border-radius: var(--radius-full); width: 0%;
+    transition: width var(--transition-normal);
+}
+.steps-nav { display: flex; flex-direction: column; gap: var(--space-xs); }
+.step-nav-item {
+    display: flex; align-items: center; gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md); color: var(--gray-600);
+    font-size: 0.8rem; transition: all var(--transition-fast);
+    text-decoration: none; cursor: pointer;
+}
+.step-nav-item:hover { background: var(--gray-100); color: var(--gray-800); }
+.step-nav-item.active { background: var(--sf-blue-light); color: var(--sf-blue-dark); font-weight: 500; }
+.step-nav-item.completed { color: var(--sf-green); }
+.step-nav-item .step-indicator {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 600; flex-shrink: 0;
+}
+.step-nav-item.completed .step-indicator {
+    background: var(--sf-green); border-color: var(--sf-green); color: white;
+}
+.nav-time { font-size: 0.7rem; color: var(--gray-400); margin-left: auto; }
+
+/* Steps Container */
+.steps-container {
+    margin-left: var(--sidebar-width); padding: var(--space-2xl);
+    max-width: calc(var(--content-max-width) + var(--sidebar-width) + var(--space-3xl) * 2);
+}
+.step-card {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); margin-bottom: var(--space-xl);
+    overflow: hidden; transition: all var(--transition-fast);
+    animation: fadeIn 0.3s ease;
+}
+.step-card:hover { box-shadow: var(--shadow-md); }
+.step-card.completed { border-color: var(--sf-green); }
+.step-card.completed .step-number { background: var(--sf-green); }
+.step-header {
+    display: flex; align-items: center; gap: var(--space-md);
+    padding: var(--space-lg); background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200); cursor: pointer;
+}
+.step-number {
+    width: 40px; height: 40px; background: var(--sf-blue-primary);
+    color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.125rem; flex-shrink: 0;
+    font-family: var(--font-heading);
+}
+.step-info { flex: 1; }
+.step-title { font-size: 1.125rem; font-weight: 600; color: var(--gray-800); margin: 0; text-transform: none; }
+.step-duration { font-size: 0.8125rem; color: var(--gray-500); }
+.step-toggle {
+    background: none; border: none; padding: var(--space-sm);
+    cursor: pointer; color: var(--gray-400); transition: transform var(--transition-fast);
+}
+.step-toggle[aria-expanded="false"] { transform: rotate(-90deg); }
+.step-toggle svg { width: 24px; height: 24px; fill: currentColor; }
+.step-content { padding: var(--space-xl); }
+.step-content.collapsed { display: none; }
+.step-description { color: var(--gray-600); margin-bottom: var(--space-xl); line-height: 1.7; }
+.step-actions {
+    display: flex; justify-content: flex-end;
+    padding-top: var(--space-lg); border-top: 1px solid var(--gray-200);
+    margin-top: var(--space-xl);
+}
+.btn-check {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    background: var(--gray-100); color: var(--gray-700); border: none;
+    padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md);
+    font-weight: 500; cursor: pointer; transition: all var(--transition-fast);
+    font-family: var(--font-heading);
+}
+.btn-check:hover { background: var(--sf-green); color: white; }
+.btn-check svg { width: 18px; height: 18px; fill: currentColor; }
+.btn-check:active { animation: pulse 0.2s ease; }
+
+/* Code Blocks */
+.code-block {
+    background: var(--gray-900); border-radius: var(--radius-md);
+    margin: var(--space-lg) 0; overflow: hidden;
+}
+.code-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--gray-800); border-bottom: 1px solid var(--gray-700);
+}
+.code-language {
+    color: var(--gray-400); font-size: 0.75rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+.code-actions { display: flex; gap: var(--space-xs); }
+.code-actions button {
+    background: transparent; border: none; padding: var(--space-xs);
+    cursor: pointer; color: var(--gray-400); border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+.code-actions button:hover { background: var(--gray-700); color: var(--sf-blue-primary); }
+.code-actions button svg { width: 18px; height: 18px; fill: currentColor; }
+.btn-copy { background: transparent; border: none; padding: var(--space-xs); cursor: pointer; color: var(--gray-400); border-radius: var(--radius-sm); transition: all var(--transition-fast); }
+.btn-copy:hover { background: var(--gray-700); color: var(--sf-blue-primary); }
+.code-block pre { margin: 0; padding: var(--space-lg); overflow-x: auto; }
+.code-block code {
+    font-family: var(--font-mono); font-size: 0.875rem;
+    line-height: 1.6; color: var(--gray-100);
+}
+.code-block[data-language="sql"] .keyword { color: var(--sf-blue-primary); font-weight: 500; }
+.code-block[data-language="sql"] .function { color: var(--sf-yellow); }
+.code-block[data-language="sql"] .string { color: var(--sf-green); }
+.code-block[data-language="sql"] .number { color: var(--sf-orange); }
+.code-block[data-language="sql"] .comment { color: var(--gray-500); font-style: italic; }
+
+/* Callouts */
+.callout {
+    display: flex; gap: var(--space-md); padding: var(--space-lg);
+    border-radius: var(--radius-md); margin: var(--space-lg) 0;
+}
+.callout-icon { flex-shrink: 0; width: 24px; height: 24px; }
+.callout-icon svg { width: 100%; height: 100%; }
+.callout-content { flex: 1; }
+.callout-title { display: block; margin-bottom: var(--space-xs); font-family: var(--font-heading); }
+.callout-content p { margin: 0; font-size: 0.9375rem; }
+.callout-info { background: var(--sf-blue-light); border-left: 4px solid var(--sf-blue-primary); }
+.callout-info .callout-icon { color: var(--sf-blue-primary); }
+.callout-warning { background: #fff9e6; border-left: 4px solid var(--sf-yellow); }
+.callout-warning .callout-icon { color: var(--sf-orange); }
+.callout-success { background: #e6fff2; border-left: 4px solid var(--sf-green); }
+.callout-success .callout-icon { color: var(--sf-green); }
+.callout-tip { background: #f0fff0; border-left: 4px solid var(--sf-green); }
+.callout-tip .callout-icon { color: var(--sf-green); }
+.callout-danger { background: #fff0f0; border-left: 4px solid var(--sf-red); }
+.callout-danger .callout-icon { color: var(--sf-red); }
+
+/* Info-box warning (synthetic data banner) */
+.info-box { padding: var(--space-lg); border-radius: var(--radius-md); margin: var(--space-lg) 0; }
+.info-box.warning {
+    background: #fff9e6; border-left: 4px solid var(--sf-orange);
+    display: flex; align-items: flex-start; gap: var(--space-md);
+}
+.info-box.warning .icon { color: var(--sf-orange); font-size: 1.5rem; flex-shrink: 0; }
+
+/* Tables */
+.table-wrapper { overflow-x: auto; margin: var(--space-lg) 0; border-radius: var(--radius-md); border: 1px solid var(--gray-200); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.data-table th { background: var(--gray-100); padding: var(--space-md); text-align: left; font-weight: 600; color: var(--gray-700); border-bottom: 2px solid var(--gray-300); white-space: nowrap; }
+.data-table td { padding: var(--space-md); border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.data-table tbody tr:hover { background: var(--gray-50); }
+
+/* Completion Section */
+.completion-section {
+    display: none; background: linear-gradient(135deg, var(--sf-green), #38a169);
+    color: white; padding: var(--space-3xl) 0; text-align: center;
+    margin-left: var(--sidebar-width);
+}
+.completion-section.visible { display: block; }
+.completion-container { max-width: 600px; margin: 0 auto; padding: 0 var(--space-xl); }
+.completion-icon {
+    width: 80px; height: 80px; background: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto var(--space-xl);
+}
+.completion-icon svg { width: 48px; height: 48px; fill: var(--sf-green); }
+.completion-section h2 { font-size: 2rem; margin-bottom: var(--space-md); }
+.completion-summary { display: flex; justify-content: center; gap: var(--space-2xl); margin: var(--space-xl) 0; }
+.summary-item { text-align: center; }
+.summary-label { display: block; font-size: 0.875rem; opacity: 0.9; margin-bottom: var(--space-xs); }
+.summary-value { font-size: 1.5rem; font-weight: 700; }
+.next-actions { background: rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: var(--space-xl); margin-top: var(--space-xl); }
+.next-actions h3 { margin-bottom: var(--space-md); }
+
+/* CTA Card */
+.cta-card {
+    background: linear-gradient(135deg, var(--sf-blue-primary), var(--sf-blue-dark));
+    border-radius: var(--radius-lg); padding: var(--space-2xl);
+    color: white; text-align: center; margin: var(--space-2xl) 0;
+}
+.cta-card h3 { margin-bottom: var(--space-md); font-size: 1.25rem; }
+.cta-card p { margin-bottom: var(--space-lg); opacity: 0.9; }
+.cta-card a {
+    display: inline-block; background: white; color: var(--sf-blue-dark);
+    padding: var(--space-md) var(--space-xl); border-radius: var(--radius-md);
+    font-weight: 600; transition: all var(--transition-fast);
+    font-family: var(--font-heading);
+}
+.cta-card a:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+/* Footer */
+.hol-footer {
+    background: var(--gray-900); color: var(--gray-400);
+    padding: var(--space-2xl) 0; margin-left: var(--sidebar-width);
+}
+.footer-container {
+    max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.footer-brand { display: flex; align-items: center; gap: var(--space-md); }
+.footer-logo { height: 32px; width: auto; filter: brightness(0) invert(1); }
+.footer-links { display: flex; gap: var(--space-xl); }
+.footer-links a { color: var(--gray-400); transition: color var(--transition-fast); }
+.footer-links a:hover { color: white; }
+.footer-meta { text-align: right; font-size: 0.8125rem; }
+
+/* Resources Grid */
+.resources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg); }
+.resource-card {
+    display: flex; align-items: center; gap: var(--space-md);
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); padding: var(--space-lg);
+    transition: all var(--transition-fast); text-decoration: none;
+}
+.resource-card:hover { border-color: var(--sf-blue-primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.resource-card .resource-icon { width: 40px; height: 40px; flex-shrink: 0; color: var(--sf-blue-primary); }
+.resource-card .resource-info h4 { color: var(--gray-800); font-size: 0.9rem; margin-bottom: 4px; }
+.resource-card .resource-info p { color: var(--gray-500); font-size: 0.8rem; margin: 0; }
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .hero-container { grid-template-columns: 1fr; }
+}
+@media (max-width: 992px) {
+    .progress-tracker { display: none; }
+    .steps-container, .hol-footer, .completion-section { margin-left: 0; }
+    .overview-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .header-nav { display: none; }
+    .hero-title { font-size: 1.75rem; }
+    .hero-meta { flex-wrap: wrap; gap: var(--space-md); }
+    .completion-summary { flex-direction: column; gap: var(--space-md); }
+    .footer-container { flex-direction: column; gap: var(--space-xl); text-align: center; }
+}
+@media (max-width: 480px) {
+    .section-container, .steps-container { padding: var(--space-md); }
+    .step-header { flex-wrap: wrap; }
+}
+@media print {
+    .progress-tracker, .header-nav, .step-toggle, .step-actions, .code-actions, .hero-cta { display: none !important; }
+    .steps-container, .hol-footer { margin-left: 0; }
+    .step-content.collapsed { display: block !important; }
+    .step-card { break-inside: avoid; page-break-inside: avoid; }
+    .code-block { background: white !important; border: 1px solid #ccc; }
+    .code-block code { color: black !important; }
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes checkmark { 0% { stroke-dashoffset: 50; } 100% { stroke-dashoffset: 0; } }
+.completion-icon svg path { stroke-dasharray: 50; animation: checkmark 0.5s ease forwards; }
+    </style>
+</head>
+<body data-hol-id="hol-olimpica-s3-intelligence">
+
+    <!-- Header -->
+    <header class="hol-header">
+        <div class="header-container">
+            <div class="logo-section">
+                <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-blue.svg" alt="Snowflake" class="snowflake-logo">
+                <span class="logo-divider"></span>
+                <span class="hol-badge">Hands-On Lab</span>
+            </div>
+            <nav class="header-nav">
+                <a href="#overview">Vision General</a>
+                <a href="#steps">Pasos</a>
+                <a href="#resources">Recursos</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-logos">
+                    <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-white.svg" alt="Snowflake" style="height:36px;">
+                    <span class="separator">&times;</span>
+                    <span class="client-name" style="color: white; font-family: var(--font-heading); font-weight: 800; font-size: 1.5rem;">Ol&iacute;mpica</span>
+                </div>
+                <span class="industry-tag">Retail &mdash; Colombia</span>
+                <h1 class="hero-title" style="text-transform:none;letter-spacing:0;">De S3 a Snowflake CoWork</h1>
+                <p class="hero-subtitle">Retail analytics e Inteligencia Artificial para <span style="color:var(--olimpica-red);font-weight:700;">Ol&iacute;mpica</span>: Supertiendas, Superalmacenes SAO y Superdroguer&iacute;as. Carga masiva, gobierno de datos, Cortex AI y Snowflake CoWork sobre datos sint&eacute;ticos de una cadena retail colombiana.</p>
+                <div class="hero-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/></svg>
+                        <span>~100 minutos</span>
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z"/></svg>
+                        <span>Intermedio</span>
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>
+                        <span>12 pasos</span>
+                    </div>
+                </div>
+                <div class="hero-actions" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+                    <a href="#step-1" class="hero-cta">Comenzar Lab</a>
+                    <button type="button" class="hero-cta" onclick="downloadSQL()" style="background:transparent;border:2px solid rgba(255,255,255,0.7);cursor:pointer;display:inline-flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>Descargar SQL</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="content-section">
+        <div class="section-container">
+            <h2 class="section-title">Vision General</h2>
+            <div class="overview-grid">
+                <div class="overview-card">
+                    <h3>Lo que aprenderas</h3>
+                    <ul class="learning-list">
+                        <li>Carga masiva de 347M filas desde Amazon S3 con COPY INTO</li>
+                        <li>Gobierno de datos con Dynamic Masking por rol</li>
+                        <li>Cortex AI Functions sobre observaciones de auditoria</li>
+                        <li>Cortex Search para busqueda semantica</li>
+                        <li>Cortex Analyst con Semantic Views</li>
+                        <li>Dynamic Tables para pipelines declarativos</li>
+                        <li>Snowflake CoWork como agente conversacional</li>
+                    </ul>
+                </div>
+                <div class="overview-card">
+                    <h3>Tecnologias utilizadas</h3>
+                    <div class="tech-tags">
+                        <span class="tech-tag">COPY INTO</span>
+                        <span class="tech-tag">Warehouse Scaling</span>
+                        <span class="tech-tag">Time Travel</span>
+                        <span class="tech-tag">Zero-Copy Clone</span>
+                        <span class="tech-tag">Dynamic Masking</span>
+                        <span class="tech-tag">Cortex AI</span>
+                        <span class="tech-tag">Cortex Search</span>
+                        <span class="tech-tag">Cortex Analyst</span>
+                        <span class="tech-tag">Dynamic Tables</span>
+                        <span class="tech-tag">Semantic View</span>
+                        <span class="tech-tag">Snowflake CoWork</span>
+                    </div>
+                </div>
+                <div class="overview-card highlight">
+                    <h3>Caso de uso</h3>
+                    <p>Simular el flujo completo de una cadena retail colombiana (<span style="color:var(--olimpica-red);font-weight:700;">Ol&iacute;mpica</span>): desde la ingesta masiva de transacciones en S3 hasta un agente de inteligencia conversacional que responde preguntas de negocio en lenguaje natural, pasando por gobierno, AI y pipelines declarativos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress Tracker / Sidebar -->
+    <aside class="progress-tracker" id="progressTracker">
+        <div class="progress-header">
+            <span>Progreso</span>
+            <span class="progress-percent">0%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <nav class="steps-nav" id="stepsNav">
+            <a class="step-nav-item" data-step="1" onclick="scrollToStep(1)">
+                <span class="step-indicator">1</span>
+                <span>Setup del ambiente</span>
+                <span class="nav-time">4 min</span>
+            </a>
+            <a class="step-nav-item" data-step="2" onclick="scrollToStep(2)">
+                <span class="step-indicator">2</span>
+                <span>Stage S3 + COPY INTO</span>
+                <span class="nav-time">10 min</span>
+            </a>
+            <a class="step-nav-item" data-step="3" onclick="scrollToStep(3)">
+                <span class="step-indicator">3</span>
+                <span>Performance & Scaling</span>
+                <span class="nav-time">8 min</span>
+            </a>
+            <a class="step-nav-item" data-step="4" onclick="scrollToStep(4)">
+                <span class="step-indicator">4</span>
+                <span>Time Travel & Clone</span>
+                <span class="nav-time">6 min</span>
+            </a>
+            <a class="step-nav-item" data-step="5" onclick="scrollToStep(5)">
+                <span class="step-indicator">5</span>
+                <span>Masking Dinamico</span>
+                <span class="nav-time">8 min</span>
+            </a>
+            <a class="step-nav-item" data-step="6" onclick="scrollToStep(6)">
+                <span class="step-indicator">6</span>
+                <span>Cortex AI Functions</span>
+                <span class="nav-time">12 min</span>
+            </a>
+            <a class="step-nav-item" data-step="7" onclick="scrollToStep(7)">
+                <span class="step-indicator">7</span>
+                <span>Cortex AI Multimodal</span>
+                <span class="nav-time">10 min</span>
+            </a>
+            <a class="step-nav-item" data-step="8" onclick="scrollToStep(8)">
+                <span class="step-indicator">8</span>
+                <span>Cortex Search</span>
+                <span class="nav-time">10 min</span>
+            </a>
+            <a class="step-nav-item" data-step="9" onclick="scrollToStep(9)">
+                <span class="step-indicator">9</span>
+                <span>Dynamic Tables</span>
+                <span class="nav-time">8 min</span>
+            </a>
+            <a class="step-nav-item" data-step="10" onclick="scrollToStep(10)">
+                <span class="step-indicator">10</span>
+                <span>Semantic View + Analyst</span>
+                <span class="nav-time">8 min</span>
+            </a>
+            <a class="step-nav-item" data-step="11" onclick="scrollToStep(11)">
+                <span class="step-indicator">11</span>
+                <span>Snowflake CoWork</span>
+                <span class="nav-time">12 min</span>
+            </a>
+            <a class="step-nav-item" data-step="12" onclick="scrollToStep(12)">
+                <span class="step-indicator">12</span>
+                <span>Recursos & Cleanup</span>
+                <span class="nav-time">4 min</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Steps Container -->
+    <main class="steps-container" id="steps">
+
+        <!-- Synthetic Data Warning -->
+        <div class="info-box warning">
+            <span class="icon">&#9888;</span>
+            <div>
+                <strong>Datos sinteticos / demo</strong>
+                <p style="margin:4px 0 0;">Todos los datos utilizados en este laboratorio son <strong>sinteticos y ficticios</strong>, generados exclusivamente con fines educativos. No representan informacion real de Olimpica ni de ninguna otra empresa.</p>
+            </div>
+        </div>
+
+<article class="step-card" id="step-1" data-step="1">
+    <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-info">
+            <h2 class="step-title">Setup del ambiente</h2>
+            <span class="step-duration">~4 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>En este primer paso configuramos el entorno de trabajo en Snowflake: base de datos, warehouse y esquema. Todos los objetos del HOL vivirán dentro de <strong>DB_HOL_OLIMPICA.PUBLIC</strong>.</p>
+            <p>Olímpica es una de las cadenas de retail más grandes de Colombia con más de 1,800 puntos de venta. En este laboratorio trabajaremos con datos sintéticos que replican sus 3 fuentes principales: ventas POS, sell-out de proveedores y checklists de auditoría operativa.</p>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Rol requerido</strong>
+                <p>Este HOL requiere el rol <code>ACCOUNTADMIN</code>. La habilitación de Cortex cross-region permite usar modelos de IA en cualquier región disponible.</p>
+            </div>
+        </div>
+
+        <p>Ejecuta el siguiente bloque SQL para crear la base de datos y el warehouse:</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
+ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';
+
+CREATE OR REPLACE DATABASE DB_HOL_OLIMPICA
+  COMMENT='HOL Olímpica - retail Colombia (datos sintéticos)';
+
+CREATE OR REPLACE WAREHOUSE WH_HOL_OLIMPICA
+WITH
+  WAREHOUSE_SIZE='SMALL'
+  AUTO_SUSPEND=60
+  AUTO_RESUME=TRUE
+  MIN_CLUSTER_COUNT=1
+  MAX_CLUSTER_COUNT=2
+  SCALING_POLICY='STANDARD';
+
+USE WAREHOUSE WH_HOL_OLIMPICA;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Tip</strong>
+                <p>El warehouse se crea como <code>SMALL</code> con multi-cluster (1-2). Más adelante lo escalaremos a <code>LARGE</code> para la carga masiva y luego lo reduciremos a <code>XSMALL</code> para ahorrar créditos.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(1)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-2" data-step="2">
+    <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-info">
+            <h2 class="step-title">Stage S3 + Carga COPY INTO (~347M filas)</h2>
+            <span class="step-duration">~10 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>Cargaremos ~347 millones de filas desde S3 hacia Snowflake. El dataset consta de <strong>8 tablas</strong> que cubren 3 dominios de datos del negocio:</p>
+            <ul>
+                <li><strong>Ventas POS:</strong> DIM_TIENDA → FACT_TICKET → FACT_VENTA_LINEA (con DIM_PRODUCTO y DIM_PROMO)</li>
+                <li><strong>Sell-out proveedor:</strong> FACT_SELLOUT_INV (inventario/ventas por proveedor y tienda)</li>
+                <li><strong>Auditoría operativa:</strong> FACT_CHECKLIST (evaluaciones de calidad por tienda)</li>
+            </ul>
+            <p>Las 3 fuentes comparten la dimensión <strong>DIM_TIENDA</strong> como punto de integración, lo que permite análisis cruzados entre ventas, inventario y cumplimiento operativo.</p>
+
+            <div class="callout callout-info">
+                <div class="callout-icon">
+                    <svg viewBox="0 0 24 24"><path d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+                </div>
+                <div class="callout-content">
+                    <strong class="callout-title">Nota: cómo se relacionaron los 3 archivos del cliente</strong>
+                    <p>Los 3 archivos originales (Ventas POS, Sell-out de proveedor y Checklist de auditoría) llegaban como tablas planas con <strong>códigos, sin descripciones y sin llaves comunes entre sí</strong>. Para integrarlos se hizo lo siguiente:</p>
+                    <ul>
+                        <li><strong>Modelo dimensional:</strong> se normalizaron en 4 dimensiones + 4 hechos (esquema estrella) para poder relacionarlos con integridad referencial (FKs sin huérfanos).</li>
+                        <li><strong>Dimensión TIENDA compartida:</strong> el código de tienda de POS (<code>PDV</code>) y el del checklist (<code>CODIGO</code>) se unificaron en <code>DIM_TIENDA</code>, conectando ventas ↔ auditorías.</li>
+                        <li><strong>Crosswalk de PRODUCTO:</strong> POS identifica el producto por <code>PLU_SAP</code> y el sell-out por <code>GTIN</code> (códigos distintos); se creó un catálogo único <code>DIM_PRODUCTO</code> con ambos códigos para conectar ventas ↔ inventario del proveedor.</li>
+                        <li><strong>Enriquecimiento:</strong> como los archivos solo traían códigos, se añadieron atributos descriptivos (nombres de producto/tienda/proveedor/promoción, marca, ciudad) y una columna de <code>Observaciones</code> de auditoría en texto libre, que sirve de corpus para Cortex AI y Cortex Search.</li>
+                    </ul>
+                    <p>Los datos son sintéticos, generados a partir de la muestra del cliente respetando esa integridad referencial.</p>
+                </div>
+            </div>
+        </div>
+
+        <h3>2.1 — File Format y Stage externo</h3>
+        <p>Creamos el formato CSV (delimitador <code>;</code>, gzip) y el stage apuntando al bucket S3 con storage integration:</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">CREATE OR REPLACE FILE FORMAT FF_CSV_GZ
+  TYPE=CSV
+  FIELD_DELIMITER=';'
+  FIELD_OPTIONALLY_ENCLOSED_BY='"'
+  COMPRESSION=GZIP
+  NULL_IF=('NULL','')
+  EMPTY_FIELD_AS_NULL=TRUE
+  SKIP_HEADER=1
+  TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS.FF3';
+
+CREATE OR REPLACE STAGE STG_OLIMPICA
+  URL='s3://demosjparrado/olimpica_hol/'
+  STORAGE_INTEGRATION=SI_FCV_S3
+  FILE_FORMAT=FF_CSV_GZ;
+
+-- Verificamos que los archivos son accesibles
+LIST @STG_OLIMPICA/fact_venta_linea/;</code></pre>
+        </div>
+
+        <h3>2.2 — DDL de las 8 tablas</h3>
+        <p>Creamos las tablas con los tipos y el orden exacto de columnas. La jerarquía de integridad referencial es:</p>
+        <ul>
+            <li><code>DIM_TIENDA (1) → (N) FACT_TICKET (1) → (N) FACT_VENTA_LINEA</code></li>
+            <li><code>DIM_PRODUCTO (PLU_SAP / GTIN)</code> y <code>DIM_PROVEEDOR (GLN_Proveedor)</code> alimentan <code>FACT_SELLOUT_INV</code></li>
+            <li><code>DIM_TIENDA (1) → (N) FACT_CHECKLIST</code></li>
+        </ul>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- ========== DIMENSIONES ==========
+
+CREATE OR REPLACE TABLE DIM_TIENDA (
+    IdTienda        NUMBER          COMMENT 'Identificador único de la tienda/sucursal',
+    TipoSucursal    VARCHAR         COMMENT 'Tipo de sucursal: SAO, Superalmacén, Droguerías, etc.',
+    Formato         VARCHAR         COMMENT 'Formato comercial de la tienda',
+    Zona            VARCHAR         COMMENT 'Zona geográfica asignada',
+    Departamento    VARCHAR         COMMENT 'Departamento (división administrativa)',
+    Ciudad          VARCHAR         COMMENT 'Ciudad donde se ubica la tienda',
+    Gerencia        VARCHAR         COMMENT 'Gerencia regional responsable',
+    EncargadoZona   VARCHAR         COMMENT 'Encargado de la zona',
+    DirectorGeneral VARCHAR         COMMENT 'Director general asignado'
+) COMMENT='Dimensión de tiendas Olímpica - 1,800 puntos de venta';
+
+CREATE OR REPLACE TABLE DIM_PRODUCTO (
+    PLU_SAP         NUMBER          COMMENT 'Código PLU interno SAP del producto',
+    GTIN            VARCHAR         COMMENT 'Código de barras GTIN/EAN',
+    NomProducto     VARCHAR         COMMENT 'Nombre comercial del producto',
+    Categoria       NUMBER          COMMENT 'Código numérico de categoría',
+    NomCategoria    VARCHAR         COMMENT 'Nombre de la categoría del producto',
+    GrupoComercial  NUMBER          COMMENT 'Código del grupo comercial',
+    Marca           VARCHAR         COMMENT 'Marca del producto'
+) COMMENT='Dimensión de productos - 50,000 SKUs';
+
+CREATE OR REPLACE TABLE DIM_PROVEEDOR (
+    GLN_Proveedor   VARCHAR         COMMENT 'Código GLN único del proveedor',
+    NomProveedor    VARCHAR         COMMENT 'Razón social del proveedor',
+    Categoria       VARCHAR         COMMENT 'Categoría comercial del proveedor'
+) COMMENT='Dimensión de proveedores - 2,000 proveedores';
+
+CREATE OR REPLACE TABLE DIM_PROMO (
+    OFERTA_ID       NUMBER          COMMENT 'Identificador de la oferta (0 = sin promoción)',
+    NomPromo        VARCHAR         COMMENT 'Nombre de la promoción',
+    TipoDescuento   VARCHAR         COMMENT 'Tipo de descuento aplicado',
+    PctDescuento    VARCHAR         COMMENT 'Porcentaje o valor del descuento'
+) COMMENT='Dimensión de promociones - 20,001 (incluye ID 0 = sin promo)';
+
+-- ========== HECHOS ==========
+
+CREATE OR REPLACE TABLE FACT_TICKET (
+    FACTURA         NUMBER          COMMENT 'Número de factura / ticket',
+    IdTienda        NUMBER          COMMENT 'FK a DIM_TIENDA.IdTienda',
+    FECHA           DATE            COMMENT 'Fecha de la transacción',
+    Estrato         VARCHAR         COMMENT 'Estrato socioeconómico del cliente',
+    MontoTotal      NUMBER(14,2)    COMMENT 'Monto total de la factura en COP',
+    NumLineas       NUMBER          COMMENT 'Cantidad de líneas/ítems en el ticket'
+) COMMENT='Tickets de venta POS - 39M transacciones';
+
+CREATE OR REPLACE TABLE FACT_VENTA_LINEA (
+    NroReg          NUMBER          COMMENT 'Número de registro único de la línea',
+    FACTURA         NUMBER          COMMENT 'FK a FACT_TICKET.FACTURA',
+    FECHA           DATE            COMMENT 'Fecha de la venta',
+    IdTienda        NUMBER          COMMENT 'FK a DIM_TIENDA.IdTienda',
+    Estrato         VARCHAR         COMMENT 'Estrato socioeconómico',
+    OFERTA_ID       NUMBER          COMMENT 'FK a DIM_PROMO.OFERTA_ID',
+    PLU_SAP         NUMBER          COMMENT 'FK a DIM_PRODUCTO.PLU_SAP',
+    Categoria       NUMBER          COMMENT 'Código de categoría del producto',
+    GrupoComercial  NUMBER          COMMENT 'Grupo comercial del producto',
+    Cantidad        NUMBER(12,3)    COMMENT 'Cantidad vendida (permite decimales para peso)',
+    Venta           NUMBER(14,2)    COMMENT 'Valor de la venta en COP',
+    Descuento       NUMBER(14,2)    COMMENT 'Valor del descuento aplicado en COP'
+) COMMENT='Detalle de venta por línea - 150M registros';
+
+CREATE OR REPLACE TABLE FACT_SELLOUT_INV (
+    FecMovimiento       DATE            COMMENT 'Fecha del movimiento de inventario',
+    GLN_Proveedor       VARCHAR         COMMENT 'FK a DIM_PROVEEDOR.GLN_Proveedor',
+    GLN_Localizacion    VARCHAR         COMMENT 'GLN de la localización/bodega',
+    IdTienda            NUMBER          COMMENT 'FK a DIM_TIENDA.IdTienda',
+    GTIN_Producto       VARCHAR         COMMENT 'Código GTIN del producto',
+    PLU_SAP             NUMBER          COMMENT 'FK a DIM_PRODUCTO.PLU_SAP',
+    InventarioUnidades  NUMBER          COMMENT 'Unidades en inventario',
+    CostoProducto       NUMBER(14,2)    COMMENT 'Costo unitario del producto',
+    VentasUnidades      NUMBER          COMMENT 'Unidades vendidas en el período',
+    PrecioVenta         NUMBER(14,2)    COMMENT 'Precio de venta unitario',
+    EstadoProducto      VARCHAR         COMMENT 'Estado del producto: Activo, Descontinuado, etc.'
+) COMMENT='Sell-out e inventario por proveedor - 150M registros';
+
+CREATE OR REPLACE TABLE FACT_CHECKLIST (
+    ANO                 NUMBER          COMMENT 'Año de la auditoría',
+    MES                 NUMBER          COMMENT 'Mes de la auditoría',
+    DIA                 NUMBER          COMMENT 'Día de la auditoría',
+    IdTienda            NUMBER          COMMENT 'FK a DIM_TIENDA.IdTienda',
+    TipoSucursal        VARCHAR         COMMENT 'Tipo de sucursal evaluada',
+    CheckId             NUMBER          COMMENT 'Identificador del checklist',
+    Checklist           VARCHAR         COMMENT 'Nombre del checklist aplicado',
+    EstadoChecklist     VARCHAR         COMMENT 'Estado: Completo, Pendiente, etc.',
+    NotaChecklist       NUMBER(5,2)     COMMENT 'Nota global del checklist (0-100)',
+    FechaRealizacion    TIMESTAMP_NTZ   COMMENT 'Fecha y hora de realización',
+    Gerencia            VARCHAR         COMMENT 'Gerencia responsable',
+    Zona                VARCHAR         COMMENT 'Zona geográfica',
+    Departamento        VARCHAR         COMMENT 'Departamento',
+    EncargadoZona       VARCHAR         COMMENT 'Encargado de zona',
+    DirectorGeneral     VARCHAR         COMMENT 'Director general',
+    JefeOperacionesVisita VARCHAR      COMMENT 'Jefe de operaciones que realizó la visita',
+    Almacen             NUMBER(5,2)     COMMENT 'Nota sección Almacén',
+    Auditoria           NUMBER(5,2)     COMMENT 'Nota sección Auditoría',
+    Bodegas             NUMBER(5,2)     COMMENT 'Nota sección Bodegas',
+    Cafeteria           NUMBER(5,2)     COMMENT 'Nota sección Cafetería',
+    Carnes              NUMBER(5,2)     COMMENT 'Nota sección Carnes',
+    Clientes            NUMBER(5,2)     COMMENT 'Nota sección Clientes',
+    DatosPersonales     NUMBER(5,2)     COMMENT 'Nota sección Datos Personales',
+    Deli                NUMBER(5,2)     COMMENT 'Nota sección Deli',
+    DocumentacionLegal  NUMBER(5,2)     COMMENT 'Nota sección Documentación Legal',
+    Droguerias          NUMBER(5,2)     COMMENT 'Nota sección Droguerías',
+    Fruver              NUMBER(5,2)     COMMENT 'Nota sección Fruver',
+    Indicadores         NUMBER(5,2)     COMMENT 'Nota sección Indicadores',
+    IngresoAlmacen      NUMBER(5,2)     COMMENT 'Nota sección Ingreso Almacén',
+    Panaderia           NUMBER(5,2)     COMMENT 'Nota sección Panadería',
+    PuestosDePago       NUMBER(5,2)     COMMENT 'Nota sección Puestos de Pago',
+    Recibo              NUMBER(5,2)     COMMENT 'Nota sección Recibo',
+    Supermercado        NUMBER(5,2)     COMMENT 'Nota sección Supermercado',
+    Tesoreria           NUMBER(5,2)     COMMENT 'Nota sección Tesorería',
+    Observaciones       VARCHAR         COMMENT 'Observaciones de texto libre del auditor'
+) COMMENT='Checklists de auditoría operativa - 8M registros';</code></pre>
+        </div>
+
+        <h3>2.3 — Carga masiva con COPY INTO</h3>
+        <p>Escalamos el warehouse a <code>LARGE</code> para acelerar la ingesta de ~347M filas y al finalizar lo reducimos a <code>XSMALL</code>:</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='LARGE';
+
+COPY INTO DIM_TIENDA       FROM @STG_OLIMPICA/dim_tienda/;
+COPY INTO DIM_PRODUCTO     FROM @STG_OLIMPICA/dim_producto/;
+COPY INTO DIM_PROVEEDOR    FROM @STG_OLIMPICA/dim_proveedor/;
+COPY INTO DIM_PROMO        FROM @STG_OLIMPICA/dim_promo/;
+COPY INTO FACT_TICKET      FROM @STG_OLIMPICA/fact_ticket/;
+COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
+COPY INTO FACT_SELLOUT_INV FROM @STG_OLIMPICA/fact_sellout_inv/;
+COPY INTO FACT_CHECKLIST   FROM @STG_OLIMPICA/fact_checklist/;
+
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XSMALL';</code></pre>
+        </div>
+
+        <div class="callout callout-warning">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Tiempo de carga</strong>
+                <p>La carga de las 3 tablas de hechos (150M + 150M + 39M + 8M filas) puede tomar entre 3-6 minutos con warehouse LARGE. El escalado elástico de Snowflake permite pagar solo por el tiempo efectivo de cómputo.</p>
+            </div>
+        </div>
+
+        <h3>2.4 — Validación de conteos</h3>
+        <p>Verificamos que todas las tablas se cargaron correctamente con un UNION ALL de conteos:</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">SELECT 'DIM_TIENDA'       AS tabla, COUNT(*) AS registros FROM DIM_TIENDA       UNION ALL
+SELECT 'DIM_PRODUCTO',            COUNT(*)            FROM DIM_PRODUCTO     UNION ALL
+SELECT 'DIM_PROVEEDOR',           COUNT(*)            FROM DIM_PROVEEDOR    UNION ALL
+SELECT 'DIM_PROMO',               COUNT(*)            FROM DIM_PROMO        UNION ALL
+SELECT 'FACT_TICKET',             COUNT(*)            FROM FACT_TICKET      UNION ALL
+SELECT 'FACT_VENTA_LINEA',        COUNT(*)            FROM FACT_VENTA_LINEA UNION ALL
+SELECT 'FACT_SELLOUT_INV',        COUNT(*)            FROM FACT_SELLOUT_INV UNION ALL
+SELECT 'FACT_CHECKLIST',          COUNT(*)            FROM FACT_CHECKLIST
+ORDER BY registros DESC;</code></pre>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Resultado esperado</strong>
+                <p>Deberías ver aproximadamente: FACT_VENTA_LINEA 150M, FACT_SELLOUT_INV 150M, FACT_TICKET 39M, FACT_CHECKLIST 8M, DIM_PRODUCTO 50K, DIM_PROMO 20K, DIM_PROVEEDOR 2K, DIM_TIENDA 1.8K. Total ~347M filas.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(2)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-3" data-step="3">
+    <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-info">
+            <h2 class="step-title">Performance &amp; Warehouse Scaling</h2>
+            <span class="step-duration">~8 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>En este paso ejecutaremos queries analíticas sobre el volumen completo (~347M filas) y demostraremos cómo el <strong>escalado elástico</strong> del warehouse de Snowflake reduce drásticamente los tiempos de ejecución sin modificar las queries ni los datos.</p>
+            <p>Comenzaremos con un warehouse <code>SMALL</code>, ejecutaremos queries complejas, y luego escalaremos a <code>XLARGE</code> para comparar los tiempos.</p>
+        </div>
+
+        <h3>3.1 — Top 10 productos más vendidos</h3>
+        <p>Consultamos las 150M filas de <code>FACT_VENTA_LINEA</code> unidas con <code>DIM_PRODUCTO</code> para encontrar los productos con mayor volumen de venta:</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Aseguramos warehouse SMALL para la primera ejecución
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='SMALL';
+
+-- Top 10 productos más vendidos (150M filas + JOIN dimensión)
+SELECT
+    p.NomProducto,
+    p.NomCategoria,
+    p.Marca,
+    SUM(v.Cantidad)     AS unidades_vendidas,
+    SUM(v.Venta)        AS venta_total_cop,
+    COUNT(*)            AS lineas_venta
+FROM FACT_VENTA_LINEA v
+JOIN DIM_PRODUCTO p ON p.PLU_SAP = v.PLU_SAP
+GROUP BY 1, 2, 3
+ORDER BY unidades_vendidas DESC
+LIMIT 10;</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Anota el tiempo</strong>
+                <p>Observa el tiempo de ejecución en la pestaña <strong>Query Profile</strong> de Snowsight. Lo compararás al final con un warehouse más grande.</p>
+            </div>
+        </div>
+
+        <h3>3.2 — Análisis cruzado: Ventas por Gerencia/Zona x Categoría x Promoción</h3>
+        <p>Esta query une 4 tablas (DIM_TIENDA → FACT_TICKET → FACT_VENTA_LINEA → DIM_PROMO) y filtra los últimos 6 meses. Es un escenario típico de reporting gerencial:</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Análisis cruzado: Gerencia/Zona x Categoría x Promoción (últimos 6 meses)
+SELECT
+    t.Gerencia,
+    t.Zona,
+    pr.NomCategoria,
+    pm.NomPromo,
+    COUNT(DISTINCT ft.FACTURA)  AS tickets,
+    SUM(vl.Cantidad)            AS unidades,
+    SUM(vl.Venta)               AS ventas_cop,
+    SUM(vl.Descuento)           AS descuento_cop
+FROM DIM_TIENDA t
+JOIN FACT_TICKET ft         ON ft.IdTienda  = t.IdTienda
+JOIN FACT_VENTA_LINEA vl    ON vl.FACTURA   = ft.FACTURA
+JOIN DIM_PROMO pm           ON pm.OFERTA_ID = vl.OFERTA_ID
+JOIN DIM_PRODUCTO pr        ON pr.PLU_SAP   = vl.PLU_SAP
+WHERE ft.FECHA >= DATEADD(month, -6, CURRENT_DATE())
+GROUP BY 1, 2, 3, 4
+ORDER BY ventas_cop DESC
+LIMIT 20;</code></pre>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Complejidad de la query</strong>
+                <p>Esta query realiza un JOIN de 5 tablas sobre cientos de millones de filas con agregaciones y filtro temporal. Anota el tiempo de ejecución con warehouse SMALL.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(3)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-4" data-step="4">
+    <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-info">
+            <h2 class="step-title">Time Travel &amp; Zero-Copy Cloning</h2>
+            <span class="step-duration">~6 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>Snowflake permite clonar objetos (tablas, esquemas, bases de datos completas) de forma <strong>instantánea sin duplicar almacenamiento</strong> gracias a Zero-Copy Cloning. Además, <strong>Time Travel</strong> nos da la capacidad de consultar y restaurar datos tal como estaban en un punto anterior en el tiempo — sin backups manuales ni llamadas al DBA.</p>
+        </div>
+
+        <!-- 4.1 Clone de tabla -->
+        <h3>4.1 — Zero-Copy Clone de una tabla</h3>
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Zero-Copy Cloning</strong>
+                <p>El clone no copia físicamente los datos — usa punteros a los mismos micro-partitions. Solo se genera almacenamiento adicional cuando los datos divergen (escrituras nuevas en el clone).</p>
+            </div>
+        </div>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Clone instantáneo de la tabla DIM_TIENDA (1,800 registros)
+CREATE OR REPLACE TABLE DIM_TIENDA_DEV CLONE DIM_TIENDA;
+
+-- Verificamos que tiene los mismos datos
+SELECT COUNT(*) AS registros_clone FROM DIM_TIENDA_DEV;</code></pre>
+        </div>
+
+        <!-- 4.2 Clone de base de datos -->
+        <h3>4.2 — Clone de toda la base de datos</h3>
+        <p>Podemos clonar la base de datos completa para tener un ambiente de desarrollo aislado en segundos — sin importar cuántos terabytes tenga.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Clone de toda la BD: ambiente DEV instantáneo
+CREATE OR REPLACE DATABASE DB_HOL_OLIMPICA_DEV CLONE DB_HOL_OLIMPICA;</code></pre>
+        </div>
+
+        <!-- 4.3 DROP + UNDROP -->
+        <h3>4.3 — DROP &amp; UNDROP: recuperación sin DBA</h3>
+        <div class="callout callout-danger">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Simulación de error</strong>
+                <p>Vamos a eliminar la base de datos de producción intencionalmente y restaurarla con UNDROP. En un escenario real, esto toma segundos sin necesidad de escalar a un administrador.</p>
+            </div>
+        </div>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Simulamos un error grave: eliminamos producción
+DROP DATABASE DB_HOL_OLIMPICA;
+
+-- Restauración instantánea con UNDROP
+UNDROP DATABASE DB_HOL_OLIMPICA;
+
+-- Verificamos que todo sigue intacto
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+SELECT COUNT(*) AS registros FROM FACT_CHECKLIST;</code></pre>
+        </div>
+
+        <!-- 4.4 Time Travel -->
+        <h3>4.4 — Time Travel: rollback de un UPDATE masivo por error</h3>
+        <p>Imaginemos que un analista ejecuta por error un UPDATE que destruye la distribución de puntajes de checklist en una zona completa. Con Time Travel podemos <strong>consultar los datos tal como estaban antes del error</strong> y restaurarlos sin pérdida.</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Snapshot ANTES del error: distribución de NotaChecklist por Zona
+SELECT 'antes_update' AS estado, Zona, AVG(NotaChecklist) AS nota_promedio, COUNT(*) AS registros
+FROM FACT_CHECKLIST
+WHERE Zona IN ('Bolivar','Atlantico','Santander')
+GROUP BY 1, 2
+ORDER BY 2;</code></pre>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- UPDATE masivo "por error": ponemos NotaChecklist = 0 en toda la zona Bolívar
+UPDATE FACT_CHECKLIST SET NotaChecklist = 0 WHERE Zona = 'Bolivar';
+
+-- Capturamos el QUERY_ID del UPDATE para el rollback
+SET q = LAST_QUERY_ID();</code></pre>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Confirmamos el daño: la zona Bolívar ahora tiene nota promedio = 0
+SELECT 'despues_update' AS estado, Zona, AVG(NotaChecklist) AS nota_promedio, COUNT(*) AS registros
+FROM FACT_CHECKLIST
+WHERE Zona IN ('Bolivar','Atlantico','Santander')
+GROUP BY 1, 2
+ORDER BY 2;</code></pre>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Time Travel: consultamos la tabla justo ANTES del UPDATE (sin restaurar todavía)
+SELECT 'time_travel_before' AS estado, Zona, AVG(NotaChecklist) AS nota_promedio, COUNT(*) AS registros
+FROM FACT_CHECKLIST BEFORE(STATEMENT => $q)
+WHERE Zona IN ('Bolivar','Atlantico','Santander')
+GROUP BY 1, 2
+ORDER BY 2;</code></pre>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Restauración instantánea: reemplazamos la tabla con el snapshot anterior al UPDATE
+CREATE OR REPLACE TABLE FACT_CHECKLIST AS
+SELECT * FROM FACT_CHECKLIST BEFORE(STATEMENT => $q);
+
+-- Verificamos que la distribución original quedó restaurada
+SELECT 'restaurado' AS estado, Zona, AVG(NotaChecklist) AS nota_promedio, COUNT(*) AS registros
+FROM FACT_CHECKLIST
+WHERE Zona IN ('Bolivar','Atlantico','Santander')
+GROUP BY 1, 2
+ORDER BY 2;</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Alternativa con OFFSET</strong>
+                <p>Si no capturaste el QUERY_ID, puedes usar un offset temporal. Por ejemplo, para restaurar la tabla a como estaba hace 10 minutos:</p>
+                <code>CREATE OR REPLACE TABLE FACT_CHECKLIST AS SELECT * FROM FACT_CHECKLIST AT(OFFSET =&gt; -60*10);</code>
+                <p style="margin-top:0.5rem;">El período máximo de Time Travel depende de la edición de Snowflake (1 día en Standard, hasta 90 días en Enterprise+).</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(4)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-5" data-step="5">
+    <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-info">
+            <h2 class="step-title">Masking Dinámico por Rol</h2>
+            <span class="step-duration">~8 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>El <strong>Dynamic Data Masking</strong> de Snowflake permite proteger datos sensibles de forma condicional según el rol del usuario — sin duplicar tablas ni crear vistas adicionales. Esto es fundamental para el gobierno de datos en Olímpica: los nombres de empleados (EncargadoZona, DirectorGeneral) y las observaciones de auditoría son información confidencial que solo ciertos roles deben ver en claro.</p>
+            <p>Lo más poderoso: cuando conectemos un agente de <strong>Snowflake CoWork</strong>, este heredará automáticamente el rol del usuario que lo consulta. Así, el gobierno se aplica sin código adicional.</p>
+        </div>
+
+        <!-- 5.1 Creación del rol restringido -->
+        <h3>5.1 — Crear rol restringido ANALISTA_OPERACIONES</h3>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+
+-- Rol con acceso de lectura pero sin visibilidad de datos sensibles
+CREATE OR REPLACE ROLE ANALISTA_OPERACIONES;
+
+-- Grants de uso sobre BD, schema y warehouse
+GRANT USAGE ON DATABASE DB_HOL_OLIMPICA              TO ROLE ANALISTA_OPERACIONES;
+GRANT USAGE ON SCHEMA   DB_HOL_OLIMPICA.PUBLIC       TO ROLE ANALISTA_OPERACIONES;
+GRANT SELECT ON ALL TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC TO ROLE ANALISTA_OPERACIONES;
+GRANT USAGE ON WAREHOUSE WH_HOL_OLIMPICA             TO ROLE ANALISTA_OPERACIONES;
+
+-- Asignar el rol a tu usuario
+GRANT ROLE ANALISTA_OPERACIONES TO USER JPARRADO;</code></pre>
+        </div>
+
+        <!-- 5.2 Masking policy para nombres de empleados -->
+        <h3>5.2 — Política de masking para nombres de empleados</h3>
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Datos protegidos</strong>
+                <p>Las columnas <code>EncargadoZona</code> y <code>DirectorGeneral</code> en DIM_TIENDA contienen nombres reales de empleados de Olímpica. Solo ACCOUNTADMIN puede verlos en claro; cualquier otro rol ve <code>****</code>.</p>
+            </div>
+        </div>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Política: enmascara nombres de empleados para todos los roles excepto ACCOUNTADMIN
+CREATE OR REPLACE MASKING POLICY mp_nombre_empleado AS (val STRING) RETURNS STRING ->
+  CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val
+    ELSE '****'
+  END
+  COMMENT = 'Oculta nombres de empleados (EncargadoZona, DirectorGeneral) a roles no privilegiados';</code></pre>
+        </div>
+
+        <!-- 5.3 Masking policy para observaciones con AI_REDACT -->
+        <h3>5.3 — Redacción inteligente de observaciones con AI_REDACT</h3>
+        <p>Las observaciones de auditoría son texto libre que puede contener datos personales (nombres de empleados o clientes, cédulas, teléfonos, correos). En lugar de truncar el texto a ciegas, usamos la función de Cortex <code>AI_REDACT</code> dentro de la masking policy: detecta y reemplaza las entidades sensibles (<code>[NAME]</code>, <code>[NATIONAL_ID]</code>, <code>[PHONE_NUMBER]</code>, <code>[EMAIL]</code>) <strong>conservando el contenido operativo útil</strong> del hallazgo.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Política: ACCOUNTADMIN ve la observación completa;
+-- otros roles ven el texto con la PII redactada por IA (se preserva el hallazgo operativo)
+CREATE OR REPLACE MASKING POLICY mp_texto_observacion AS (val STRING) RETURNS STRING ->
+  CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val
+    ELSE AI_REDACT(val)
+  END
+  COMMENT = 'Redacta datos sensibles (PII) de las observaciones de auditoría con AI_REDACT para roles no privilegiados';</code></pre>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Buenas prácticas de costo</strong>
+                <p><code>AI_REDACT</code> invoca un modelo de Cortex por fila evaluada. En la masking policy es ideal para consultas acotadas (como las de este lab y las de un agente, que devuelven pocas filas). Para escaneos masivos recurrentes, lo recomendado es <strong>pre-redactar</strong> las observaciones una sola vez hacia una vista/tabla gobernada (o una Dynamic Table) y consultar esa versión ya redactada.</p>
+            </div>
+        </div>
+
+        <!-- 5.4 Aplicar policies -->
+        <h3>5.4 — Aplicar las políticas a las columnas</h3>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Asociar mp_nombre_empleado a columnas de DIM_TIENDA
+ALTER TABLE DIM_TIENDA MODIFY COLUMN EncargadoZona    SET MASKING POLICY mp_nombre_empleado;
+ALTER TABLE DIM_TIENDA MODIFY COLUMN DirectorGeneral  SET MASKING POLICY mp_nombre_empleado;
+
+-- Asociar mp_texto_observacion a FACT_CHECKLIST.Observaciones
+ALTER TABLE FACT_CHECKLIST MODIFY COLUMN Observaciones SET MASKING POLICY mp_texto_observacion;</code></pre>
+        </div>
+
+        <!-- 5.5 Demostración -->
+        <h3>5.5 — Demostración: misma query, diferente resultado por rol</h3>
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Gobierno automático para Snowflake CoWork</strong>
+                <p>Cuando un agente de Snowflake CoWork responde preguntas, ejecuta SQL con el rol del usuario que pregunta. Si el usuario tiene el rol <code>ANALISTA_OPERACIONES</code>, verá datos enmascarados — sin que el agente requiera configuración adicional de seguridad.</p>
+            </div>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">----------------------------------------------------------------------
+-- A) Como ACCOUNTADMIN: ve nombres y observaciones en claro
+----------------------------------------------------------------------
+USE ROLE ACCOUNTADMIN;
+
+SELECT
+    t.IdTienda,
+    t.Zona,
+    t.Gerencia,
+    t.EncargadoZona,
+    t.DirectorGeneral,
+    LEFT(c.Observaciones, 120) AS Observaciones_Preview
+FROM DIM_TIENDA t
+JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
+WHERE t.Zona = 'Bolivar'
+LIMIT 5;</code></pre>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">----------------------------------------------------------------------
+-- B) Como ANALISTA_OPERACIONES: misma query, datos enmascarados
+----------------------------------------------------------------------
+USE ROLE ANALISTA_OPERACIONES;
+
+SELECT
+    t.IdTienda,
+    t.Zona,
+    t.Gerencia,
+    t.EncargadoZona,        -- Verá '****'
+    t.DirectorGeneral,      -- Verá '****'
+    LEFT(c.Observaciones, 120) AS Observaciones_Preview  -- Verá el texto con la PII redactada por AI_REDACT
+FROM DIM_TIENDA t
+JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
+WHERE t.Zona = 'Bolivar'
+LIMIT 5;</code></pre>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Volver al rol administrador para continuar el lab
+USE ROLE ACCOUNTADMIN;</code></pre>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Resultado esperado</strong>
+                <p><strong>ACCOUNTADMIN</strong> ve: <code>EncargadoZona = "Carlos Pérez"</code>, <code>Observaciones = "Se encontró producto vencido en góndola 3..."</code><br>
+                <strong>ANALISTA_OPERACIONES</strong> ve: <code>EncargadoZona = "****"</code>, <code>Observaciones = "El encargado [NAME] reportó producto vencido en góndola 3; el cliente [NAME] ([PHONE_NUMBER]) presentó queja."</code> &mdash; los datos personales quedan redactados pero el hallazgo sigue siendo legible.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(5)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-6" data-step="6">
+    <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-info">
+            <h2 class="step-title">Cortex AI Functions</h2>
+            <span class="step-duration">~12 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>En este paso exploraremos las <strong>funciones de Inteligencia Artificial de Snowflake Cortex</strong> aplicadas directamente sobre las observaciones de auditoría de tienda (<code>FACT_CHECKLIST.Observaciones</code>). Sin extraer datos del entorno seguro de Snowflake, podrás resumir, clasificar, traducir y generar insights agregados con una sola sentencia SQL.</p>
+        </div>
+
+        <!-- 6.1 AI_COMPLETE simple -->
+        <h3>6.1 &mdash; AI_COMPLETE: Pregunta de negocio al LLM</h3>
+        <p>Comencemos haciendo una pregunta directa a un modelo de lenguaje grande, sin pasar datos de la tabla &mdash; solo para demostrar la capacidad generativa.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+USE WAREHOUSE WH_HOL_OLIMPICA;
+
+-- Pregunta de negocio directa al LLM
+SELECT AI_COMPLETE(
+    'claude-sonnet-4-5',
+    'Resume en 5 puntos los beneficios de Snowflake Cortex para auditoría operativa de un retail como Olímpica. Responde en español con saltos de línea.'
+) AS respuesta;</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Sin configuración adicional</strong>
+                <p><code>AI_COMPLETE</code> ejecuta modelos LLM directamente dentro de Snowflake. No necesitas APIs externas, keys ni infraestructura adicional.</p>
+            </div>
+        </div>
+
+        <!-- 6.2 Resumen + evaluación multi-aspecto -->
+        <h3>6.2 &mdash; Resumen y evaluación multi-aspecto por observación</h3>
+        <p>Para cada observación de auditoría, generamos un resumen ultra-corto y una evaluación estructurada en JSON con severidad, área afectada y si requiere acción.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Resumen en <=5 palabras + evaluación JSON multi-aspecto
+SELECT
+    IdTienda,
+    LEFT(Observaciones, 80) AS preview,
+
+    AI_COMPLETE(
+        'openai-gpt-4.1',
+        CONCAT('Resume en máximo 5 palabras la siguiente observación de auditoría de tienda: ',
+               Observaciones)
+    ) AS resumen_corto,
+
+    AI_COMPLETE(
+        'openai-gpt-4.1',
+        CONCAT(
+            'Evalúa la siguiente observación de auditoría de tienda. ',
+            'Responde SOLO en JSON con el formato {"severidad":"alta|media|baja","area_afectada":"<área>","requiere_accion":true|false}. ',
+            'Texto: ', Observaciones
+        )
+    ) AS evaluacion_json
+
+FROM FACT_CHECKLIST
+WHERE Observaciones IS NOT NULL
+LIMIT 10;</code></pre>
+        </div>
+
+        <!-- 6.3 AI_SENTIMENT -->
+        <h3>6.3 &mdash; AI_SENTIMENT: Clasificación de sentimiento</h3>
+        <p><code>AI_SENTIMENT</code> retorna un <strong>OBJECT</strong>. Extraemos el label con la notación <code>:categories[0]:sentiment</code> (una sola llamada por fila) para obtener <code>positive</code>, <code>negative</code> o <code>neutral</code>.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Análisis de sentimiento sobre las observaciones de auditoría
+SELECT
+    IdTienda,
+    LEFT(Observaciones, 100) AS preview,
+    AI_SENTIMENT(Observaciones):categories[0]:sentiment::VARCHAR AS sentimiento
+FROM FACT_CHECKLIST
+WHERE Observaciones IS NOT NULL
+LIMIT 10;</code></pre>
+        </div>
+
+        <div class="callout callout-warning">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Importante</strong>
+                <p><code>AI_SENTIMENT</code> retorna un OBJECT, NO un número. Nunca compares con <code>&gt; 0.3</code>. Usa <code>:categories[0]:sentiment::VARCHAR</code> para obtener 'positive', 'negative' o 'neutral'.</p>
+            </div>
+        </div>
+
+        <!-- 6.4 AI_AGG -->
+        <h3>6.4 &mdash; AI_AGG: Insight agregado sobre observaciones recientes</h3>
+        <p><code>AI_AGG</code> recibe múltiples filas de texto y genera un resumen inteligente consolidado &mdash; ideal para reportes ejecutivos.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Insight agregado: top hallazgos, riesgos y oportunidades de mejora
+SELECT
+    AI_AGG(
+        Observaciones,
+        'Resume los principales hallazgos de estas auditorías de tienda. Indica: 1) Top 3 problemas más frecuentes, 2) Riesgos operativos detectados, 3) Oportunidades de mejora. Responde en español con bullets.'
+    ) AS insight_agregado
+FROM (
+    SELECT Observaciones
+    FROM FACT_CHECKLIST
+    WHERE FechaRealizacion = (SELECT MAX(FechaRealizacion) FROM FACT_CHECKLIST)
+      AND Observaciones IS NOT NULL
+    LIMIT 100
+);</code></pre>
+        </div>
+
+        <!-- 6.5 AI_TRANSLATE -->
+        <h3>6.5 &mdash; AI_TRANSLATE: Traducción es &rarr; en</h3>
+        <p>Traduce observaciones del español al inglés para reportes corporativos internacionales.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Traducción de observaciones de español a inglés
+SELECT
+    IdTienda,
+    LEFT(Observaciones, 120) AS observacion_es,
+    AI_TRANSLATE(LEFT(Observaciones, 400), 'es', 'en') AS observacion_en
+FROM FACT_CHECKLIST
+WHERE Observaciones IS NOT NULL
+LIMIT 3;</code></pre>
+        </div>
+
+        <!-- 6.6 AI_CLASSIFY -->
+        <h3>6.6 &mdash; AI_CLASSIFY: Clasificación por categoría operativa</h3>
+        <p>Clasificamos automáticamente cada observación en una de las categorías operativas clave de Olímpica.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Clasificación automática de observaciones en categorías operativas
+SELECT
+    IdTienda,
+    LEFT(Observaciones, 100) AS preview,
+    AI_CLASSIFY(
+        Observaciones,
+        ['Limpieza', 'Inventario', 'Cadena de frío', 'Atención al cliente', 'Documentación legal', 'Seguridad']
+    ):labels[0]::VARCHAR AS categoria_detectada
+FROM FACT_CHECKLIST
+WHERE Observaciones IS NOT NULL
+LIMIT 10;</code></pre>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Resumen del paso</strong>
+                <p>Has utilizado 6 funciones de Cortex AI (AI_COMPLETE, AI_SENTIMENT, AI_AGG, AI_TRANSLATE, AI_CLASSIFY) directamente en SQL sobre datos reales de auditoría &mdash; sin mover datos fuera de Snowflake ni configurar infraestructura externa.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(6)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-7" data-step="7">
+    <div class="step-header">
+        <div class="step-number">7</div>
+        <div class="step-info">
+            <h2 class="step-title">Cortex AI Multimodal</h2>
+            <span class="step-duration">~10 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>Snowflake Cortex AI puede procesar <strong>datos no estructurados</strong>: PDFs, imágenes y audio. En este paso trabajaremos con archivos reales de Olímpica &mdash; facturas, recibos POS, etiquetas de producto, cupones, fotos de góndola y grabaciones de audio &mdash; almacenados en un stage externo S3.</p>
+        </div>
+
+        <!-- 7.1 Stage y listado -->
+        <h3>7.1 &mdash; Reutilizar el stage y listar los archivos</h3>
+        <p>No necesitamos crear un stage nuevo ni volver a autenticarnos: los archivos no estructurados están en la subcarpeta <code>archivos/</code> del <strong>mismo bucket</strong> que ya configuramos en el Paso 2. Reutilizamos el stage <code>STG_OLIMPICA</code> (con su misma <em>storage integration</em> <code>SI_FCV_S3</code>) y solo cambiamos la carpeta que leemos.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+USE WAREHOUSE WH_HOL_OLIMPICA;
+
+-- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (misma storage integration SI_FCV_S3).
+-- Solo apuntamos a la subcarpeta 'archivos/' del mismo bucket para leer los no estructurados.
+LIST @STG_OLIMPICA/archivos/;</code></pre>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Archivos disponibles</strong>
+                <p><code>factura_001.pdf</code>, <code>recibo_pos_001.pdf</code>, <code>etiqueta_producto_001.png</code>, <code>cupon_descuento_001.png</code>, <code>producto_foto_001.jpg</code>, <code>ofreciendo-producto.mp3</code>, <code>problema-servicio.mp3</code></p>
+            </div>
+        </div>
+
+        <!-- 7.3 AI_EXTRACT -->
+        <h3>7.3 &mdash; AI_EXTRACT: Extracción estructurada del recibo POS</h3>
+        <p>Definimos los campos que queremos extraer y el modelo devuelve un JSON estructurado.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Extracción estructurada de campos del recibo POS
+WITH extraccion AS (
+    SELECT AI_EXTRACT(
+        file => TO_FILE('@STG_OLIMPICA', 'archivos/recibo_pos_001.pdf'),
+        responseFormat => [
+            ['transaccion_id', 'ID de la transacción'],
+            ['cajero',         'Nombre o código del cajero'],
+            ['subtotal',       'Subtotal antes de impuestos'],
+            ['iva',            'Valor del IVA'],
+            ['total',          'Valor total pagado'],
+            ['items_count',    'Cantidad total de ítems'],
+            ['descuento',      'Descuento aplicado']
+        ]
+    ) AS resultado
+)
+SELECT
+    resultado:response:transaccion_id::STRING AS transaccion_id,
+    resultado:response:cajero::STRING         AS cajero,
+    resultado:response:subtotal::STRING       AS subtotal,
+    resultado:response:iva::STRING            AS iva,
+    resultado:response:total::STRING          AS total,
+    resultado:response:items_count::STRING    AS items_count,
+    resultado:response:descuento::STRING      AS descuento
+FROM extraccion;</code></pre>
+        </div>
+
+        <!-- 7.4 Multimodal imágenes -->
+        <h3>7.4 &mdash; AI_COMPLETE Multimodal: Etiqueta de producto</h3>
+        <p>Usamos <code>pixtral-large</code> (modelo de visión) para leer la etiqueta de un producto.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Lectura de etiqueta de producto con modelo de visión
+SELECT AI_COMPLETE(
+    'pixtral-large',
+    PROMPT('Extrae la información nutricional y de marca de esta etiqueta de producto: marca, nombre del producto, peso/volumen, calorías por porción, fecha de vencimiento. Responde en español. {0}',
+           TO_FILE('@STG_OLIMPICA', 'archivos/etiqueta_producto_001.png'))
+) AS etiqueta_datos;</code></pre>
+        </div>
+
+        <!-- 7.5 Visual merchandising -->
+        <h3>7.5 &mdash; Análisis de góndola / Visual Merchandising</h3>
+        <p>Caso avanzado: un modelo de visión analiza una foto de la tienda y genera un diagnóstico estructurado con recomendaciones priorizadas.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Análisis de góndola / visual merchandising con IA de visión
+SELECT AI_COMPLETE(
+    'claude-sonnet-4-5',
+    PROMPT('Eres un experto en visual merchandising y trade marketing para retail FMCG. Analiza esta foto de una góndola / exhibición de tienda y devuelve un JSON con: 1) estado_general (ordenado/desordenado), 2) categorias_detectadas, 3) problemas_visuales (lista: producto fuera de lugar, sobre-stock, faltantes, falta de etiquetado, mezcla de categorías, etc.), 4) impacto_estimado_ventas (alto/medio/bajo con justificación), 5) recomendaciones_priorizadas (3 acciones concretas para mejorar la visualización y la experiencia del comprador). Responde solo en JSON y en español. {0}',
+           TO_FILE('@STG_OLIMPICA', 'archivos/producto_foto_001.jpg'))
+) AS analisis_gondola;</code></pre>
+        </div>
+
+        <!-- 7.6 Cupón con Claude Opus -->
+        <h3>7.6 &mdash; Lectura de cupón de descuento (Claude Opus)</h3>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Extracción estructurada de cupón de descuento con Claude Opus
+SELECT AI_COMPLETE(
+    'claude-opus-4-5',
+    PROMPT('Lee este cupón de descuento de Olímpica y devuelve en JSON: codigo_cupon, porcentaje_descuento, fecha_vigencia, condiciones, productos_aplicables. Responde solo en JSON y en español. {0}',
+           TO_FILE('@STG_OLIMPICA', 'archivos/cupon_descuento_001.png'))
+) AS cupon_datos;</code></pre>
+        </div>
+
+        <!-- 7.7 AI_TRANSCRIBE -->
+        <h3>7.7 &mdash; AI_TRANSCRIBE: Transcripción de audio</h3>
+        <p>Transcribimos una grabación de un asesor ofreciendo un producto a un cliente.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Transcripción simple de audio
+SELECT TO_VARCHAR(AI_TRANSCRIBE(
+    TO_FILE('@STG_OLIMPICA', 'archivos/ofreciendo-producto.mp3')
+)) AS transcripcion;</code></pre>
+        </div>
+
+        <!-- 7.8 End-to-end pipeline -->
+        <h3>7.8 &mdash; Caso End-to-End: Transcripción &rarr; Sentimiento &rarr; Extracción &rarr; Coach CX</h3>
+        <p>Pipeline completo sobre 2 audios: transcribimos, analizamos sentimiento, extraemos entidades y generamos un coach de Customer Experience en JSON.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Pipeline end-to-end: AI_TRANSCRIBE → AI_SENTIMENT → AI_EXTRACT → AI_COMPLETE (Coach CX)
+WITH llamadas AS (
+    SELECT 'oferta' AS tipo_llamada,
+           AI_TRANSCRIBE(TO_FILE('@STG_OLIMPICA', 'archivos/ofreciendo-producto.mp3')):text::STRING AS texto
+    UNION ALL
+    SELECT 'queja_servicio',
+           AI_TRANSCRIBE(TO_FILE('@STG_OLIMPICA', 'archivos/problema-servicio.mp3')):text::STRING
+)
+SELECT
+    tipo_llamada,
+    LEFT(texto, 120) AS preview,
+
+    -- Sentimiento por aspectos
+    AI_SENTIMENT(texto, ['producto', 'servicio', 'precio', 'retencion_cliente']) AS sentimiento_aspectos,
+
+    -- Extracción de entidades
+    AI_EXTRACT(
+        text => texto,
+        responseFormat => [
+            ['cliente',          '¿Nombre del cliente?'],
+            ['agente',           '¿Nombre del agente / asesor?'],
+            ['motivo',           '¿Cuál es el motivo principal de la llamada?'],
+            ['monto_o_precio',   '¿Se menciona algún monto, tarifa o precio?'],
+            ['decision_cliente', '¿Cuál es la decisión o siguiente paso pedido por el cliente?']
+        ]
+    ) AS extraccion,
+
+    -- Coach de Customer Experience
+    AI_COMPLETE(
+        'claude-opus-4-5',
+        PROMPT('Eres un coach de Customer Experience para Olímpica (cadena retail colombiana). Lee esta llamada y devuelve un JSON con: clasificacion (oferta_proactiva | reclamo | consulta), prioridad (alta | media | baja), siguiente_accion (1 sola frase concreta), riesgo_churn (0-100). Responde solo en JSON y en español. Texto: {0}', texto)
+    ) AS coach_cx
+
+FROM llamadas
+ORDER BY tipo_llamada;</code></pre>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Resumen del paso</strong>
+                <p>Has procesado PDFs (extracción de campos), imágenes (etiquetas, cupones, góndolas) y audio (transcripción + pipeline completo) &mdash; todo sin salir de Snowflake SQL.</p>
+            </div>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Explora todas las AI Functions de Snowflake</strong>
+                <p>Snowflake Cortex ofrece un catálogo completo de AI Functions para analizar cualquier tipo de dato, no solo lo visto en este paso:</p>
+                <ul>
+                    <li><strong>Texto:</strong> <code>AI_COMPLETE</code>, <code>AI_CLASSIFY</code>, <code>AI_FILTER</code>, <code>AI_AGG</code>, <code>AI_SUMMARIZE_AGG</code>, <code>AI_SENTIMENT</code>, <code>AI_TRANSLATE</code>, <code>AI_EXTRACT</code></li>
+                    <li><strong>Imágenes:</strong> <code>AI_COMPLETE</code> (multimodal), <code>AI_CLASSIFY</code></li>
+                    <li><strong>Audio y video:</strong> <code>AI_TRANSCRIBE</code> (texto, timestamps y hablantes)</li>
+                    <li><strong>Documentos / PDFs:</strong> <code>AI_PARSE_DOCUMENT</code> (OCR y layout), <code>AI_EXTRACT</code></li>
+                    <li><strong>Embeddings y similitud:</strong> <code>AI_EMBED</code>, <code>AI_SIMILARITY</code></li>
+                    <li><strong>Privacidad:</strong> <code>AI_REDACT</code> &mdash; y helpers como <code>TO_FILE</code>, <code>PROMPT</code>, <code>AI_COUNT_TOKENS</code></li>
+                </ul>
+                <p>Referencia oficial completa: <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/aisql" target="_blank" rel="noopener">Snowflake Cortex AI Functions &rarr;</a></p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(7)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-8" data-step="8">
+    <div class="step-header">
+        <div class="step-number">8</div>
+        <div class="step-info">
+            <h2 class="step-title">Cortex Search</h2>
+            <span class="step-duration">~10 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p><strong>Cortex Search</strong> permite realizar búsquedas semánticas sobre texto en lenguaje natural &mdash; sin necesidad de keywords exactos. Indexaremos las observaciones de auditoría de Olímpica para poder buscar hallazgos por concepto (ej. "cadena de frío", "producto vencido") de forma inteligente.</p>
+        </div>
+
+        <!-- 8.1 Tabla enriquecida -->
+        <h3>8.1 &mdash; Crear tabla enriquecida para indexación</h3>
+        <p>Primero escalamos el warehouse y creamos una tabla con las observaciones del último año, enriquecida con datos de tienda.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+
+-- Escalar warehouse para la creación del índice
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'MEDIUM';
+
+-- Tabla enriquecida con contexto de tienda (últimos 12 meses, máx. 50k registros)
+CREATE OR REPLACE TABLE T_OBSERVACIONES_ENRIQUECIDAS AS
+SELECT
+    c.IdTienda,
+    t.Ciudad,
+    t.Zona,
+    t.Gerencia,
+    c.TipoSucursal,
+    c.FechaRealizacion,
+    c.NotaChecklist,
+    c.EstadoChecklist,
+    c.Observaciones AS Texto
+FROM FACT_CHECKLIST c
+JOIN DIM_TIENDA t ON t.IdTienda = c.IdTienda
+WHERE c.FechaRealizacion >= DATEADD(year, -1, CURRENT_DATE())
+  AND c.Observaciones IS NOT NULL
+LIMIT 50000;</code></pre>
+        </div>
+
+        <!-- 8.2 Crear Cortex Search Service -->
+        <h3>8.2 &mdash; Crear el servicio Cortex Search (SQL)</h3>
+        <p>Creamos el servicio de búsqueda semántica sobre la columna <code>Texto</code>, con atributos de filtrado.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Crear servicio de búsqueda semántica sobre observaciones de auditoría
+CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
+    ON Texto
+    ATTRIBUTES IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist
+    WAREHOUSE = WH_HOL_OLIMPICA
+    TARGET_LAG = '1 hour'
+    AS
+    SELECT IdTienda, Ciudad, Zona, Gerencia, TipoSucursal,
+           FechaRealizacion, NotaChecklist, EstadoChecklist, Texto
+    FROM T_OBSERVACIONES_ENRIQUECIDAS;</code></pre>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Tiempo de indexación</strong>
+                <p>La indexación tarda entre 3 y 8 minutos. Puedes continuar con el siguiente sub-paso mientras tanto.</p>
+            </div>
+        </div>
+
+        <!-- 8.3 Verificar -->
+        <h3>8.3 &mdash; Verificar el estado del servicio</h3>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Verificar estado del servicio (esperar a que indexing_state = 'ACTIVE')
+SHOW CORTEX SEARCH SERVICES LIKE 'CSS_AUDITORIAS';</code></pre>
+        </div>
+
+        <!-- 8.4 Demo búsqueda -->
+        <h3>8.4 &mdash; Demo de búsqueda semántica</h3>
+        <p>Una vez activo el servicio, realizamos una búsqueda por concepto. No necesitamos keywords exactos &mdash; Cortex Search entiende la intención semántica. Aplanamos el JSON de resultados a <strong>columnas legibles</strong> para que un usuario de negocio vea directamente ciudad, zona, gerencia, la nota de auditoría y el hallazgo.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Búsqueda semántica: "cadena de frío producto vencido"
+-- Aplanamos el JSON a columnas legibles para negocio
+WITH busqueda AS (
+    SELECT PARSE_JSON(
+        SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+            'DB_HOL_OLIMPICA.PUBLIC.CSS_AUDITORIAS',
+            '{
+                "query": "cadena de frío producto vencido",
+                "columns": ["Ciudad", "Zona", "Gerencia", "NotaChecklist", "Texto"],
+                "limit": 5
+            }'
+        )
+    )['results'] AS resultados
+)
+SELECT
+    r.value:Ciudad::STRING              AS ciudad,
+    r.value:Zona::STRING                AS zona,
+    r.value:Gerencia::STRING            AS gerencia,
+    ROUND(r.value:NotaChecklist::FLOAT, 1) AS nota_auditoria,
+    r.value:Texto::STRING               AS hallazgo
+FROM busqueda, LATERAL FLATTEN(input => busqueda.resultados) r;</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Prueba otras búsquedas</strong>
+                <p>Intenta: <code>"filas largas en cajas de pago"</code>, <code>"producto sin etiqueta de precio"</code>, <code>"limpieza deficiente en baños"</code> &mdash; Cortex Search encontrará observaciones relacionadas aunque no usen esas palabras exactas.</p>
+            </div>
+        </div>
+
+        <!-- 8.5 Opción UI -->
+        <h3>8.5 &mdash; Alternativa por la UI (Snowsight)</h3>
+        <p>También puedes crear el servicio desde la interfaz gráfica:</p>
+        <ol>
+            <li><strong>Snowsight</strong> &rarr; menú lateral &rarr; <strong>AI &amp; ML</strong> &rarr; <strong>Cortex Search</strong>.</li>
+            <li>Botón <strong>+ Create</strong> &rarr; <strong>Cortex Search Service</strong>.</li>
+            <li><strong>Step 1</strong> &mdash; Source data: Database <code>DB_HOL_OLIMPICA</code>, Schema <code>PUBLIC</code>, Table <code>T_OBSERVACIONES_ENRIQUECIDAS</code>.</li>
+            <li><strong>Step 2</strong> &mdash; Search column: <code>Texto</code>.</li>
+            <li><strong>Step 3</strong> &mdash; Attributes: marcar <code>IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist</code>.</li>
+            <li><strong>Step 4</strong> &mdash; Columns in results: dejar todas las columnas seleccionadas.</li>
+            <li><strong>Step 5</strong> &mdash; Configure: Name = <code>CSS_AUDITORIAS</code>, Warehouse = <code>WH_HOL_OLIMPICA</code>, Target lag = <code>1 hour</code>. Click <strong>Create</strong>.</li>
+            <li>Esperar a que <strong>Indexing state</strong> pase a <code>ACTIVE</code>. Luego usar la pestaña <strong>Search Playground</strong> para probar búsquedas.</li>
+        </ol>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Restaurar tamaño del warehouse
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'SMALL';</code></pre>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Resumen del paso</strong>
+                <p>Has creado un servicio de búsqueda semántica sobre 50,000 observaciones de auditoría. Ahora cualquier usuario puede buscar hallazgos por concepto sin necesidad de escribir SQL complejo ni conocer los términos exactos almacenados.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(8)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-9" data-step="9">
+    <div class="step-header">
+        <div class="step-number">9</div>
+        <div class="step-info">
+            <h2 class="step-title">Dynamic Tables</h2>
+            <span class="step-duration">~8 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>Las <strong>Dynamic Tables</strong> son pipelines de datos declarativos: defines la transformaci&oacute;n con un SELECT y Snowflake se encarga de ejecutarla de forma incremental, sin necesidad de orquestar ETLs externos, programar jobs ni manejar dependencias.</p>
+            <p>En este paso crearemos una <strong>Dynamic Table incremental</strong> que consolida un KPI clave de Ol&iacute;mpica: ventas por tienda y mes. Snowflake la mantiene fresca autom&aacute;ticamente a medida que llegan nuevos tickets, sin orquestar ETLs externos.</p>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">TARGET_LAG = '1 hour'</strong>
+                <p>Indica que la tabla se actualizar&aacute; como m&aacute;ximo cada hora. Snowflake detecta cambios en las tablas fuente y refresca de forma incremental solo los datos nuevos o modificados.</p>
+            </div>
+        </div>
+
+        <h3>9.1 &mdash; DT_VENTAS_TIENDA_MES (Ventas agregadas por tienda y mes)</h3>
+        <p>Consolida tickets, ventas y ticket promedio por tienda y mes, agregando desde <code>FACT_TICKET</code> (grano de ticket) y enriqueciendo con dimensiones geogr&aacute;ficas de <code>DIM_TIENDA</code>.</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar c&oacute;digo">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+USE WAREHOUSE WH_HOL_OLIMPICA;
+
+CREATE OR REPLACE DYNAMIC TABLE DT_VENTAS_TIENDA_MES
+    TARGET_LAG   = '1 hour'
+    WAREHOUSE    = WH_HOL_OLIMPICA
+    REFRESH_MODE = INCREMENTAL
+AS
+SELECT
+    DATE_TRUNC('month', ft.FECHA)  AS mes,
+    t.IdTienda,
+    t.Ciudad,
+    t.Gerencia,
+    COUNT(*)            AS tickets,
+    SUM(ft.MontoTotal)  AS ventas,
+    AVG(ft.MontoTotal)  AS ticket_promedio,
+    SUM(ft.NumLineas)   AS lineas
+FROM FACT_TICKET ft
+JOIN DIM_TIENDA t ON t.IdTienda = ft.IdTienda
+GROUP BY 1, 2, 3, 4;</code></pre>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">&iquest;Por qu&eacute; refresca de forma incremental?</strong>
+                <p>Al declarar <code>REFRESH_MODE = INCREMENTAL</code> y usar solo agregaciones soportadas (<code>COUNT(*)</code>, <code>SUM</code>, <code>AVG</code>) sobre <code>FACT_TICKET</code>, Snowflake refresca <strong>solo los tickets nuevos o modificados</strong>, no toda la tabla. Evitamos <code>COUNT(DISTINCT ...)</code> porque forzar&iacute;a un refresh completo (FULL).</p>
+            </div>
+        </div>
+
+        <h3>9.2 &mdash; Verificar la Dynamic Table</h3>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar c&oacute;digo">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Listar Dynamic Tables creadas
+SHOW DYNAMIC TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC;
+
+-- Consultar la Dynamic Table
+SELECT * FROM DT_VENTAS_TIENDA_MES ORDER BY mes DESC LIMIT 10;
+
+-- Historial de refresh
+SELECT NAME, STATE, REFRESH_START_TIME, REFRESH_END_TIME,
+       STATISTICS:numInsertedRows::INT AS filas_insertadas
+FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(
+    NAME => 'DB_HOL_OLIMPICA.PUBLIC.DT_VENTAS_TIENDA_MES'
+))
+ORDER BY REFRESH_START_TIME DESC LIMIT 5;</code></pre>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Pipeline incremental sin ETL externo</strong>
+                <p>Cada vez que lleguen nuevos tickets a <code>FACT_TICKET</code>, Snowflake detectar&aacute; los cambios y refrescar&aacute; la Dynamic Table de forma incremental &mdash; sin Airflow, sin cron, sin c&oacute;digo adicional.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(9)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-10" data-step="10">
+    <div class="step-header">
+        <div class="step-number">10</div>
+        <div class="step-info">
+            <h2 class="step-title">Semantic View + Cortex Analyst</h2>
+            <span class="step-duration">~8 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>Un <strong>Semantic View</strong> es un modelo sem&aacute;ntico que describe tus tablas en t&eacute;rminos de negocio: dimensiones, m&eacute;tricas y relaciones. <strong>Cortex Analyst</strong> lo utiliza para traducir preguntas en lenguaje natural a SQL preciso.</p>
+            <p>Crearemos <code>SV_OLIMPICA</code> sobre las tablas de ventas, tiendas, productos y promociones.</p>
+        </div>
+
+        <h3>10.1 &mdash; Crear el Semantic View desde Snowsight</h3>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Ruta en Snowsight</strong>
+                <p><code>AI &amp; ML &rarr; Studio &rarr; Cortex Analyst &rarr; + Create &rarr; Semantic View &rarr; Create from scratch</code></p>
+            </div>
+        </div>
+
+        <ol>
+            <li><strong>Basic info:</strong>
+                <ul>
+                    <li>Name: <code>SV_OLIMPICA</code></li>
+                    <li>Database: <code>DB_HOL_OLIMPICA</code></li>
+                    <li>Schema: <code>PUBLIC</code></li>
+                    <li>Description: <em>Modelo sem&aacute;ntico de Ol&iacute;mpica &mdash; ventas, tiendas, productos y promociones</em></li>
+                </ul>
+            </li>
+            <li><strong>Logical tables (con PK):</strong>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead><tr><th>Logical Name</th><th>Base Table</th><th>Primary Key</th></tr></thead>
+                        <tbody>
+                            <tr><td>tienda</td><td>DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA</td><td>IdTienda</td></tr>
+                            <tr><td>ticket</td><td>DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET</td><td>FACTURA</td></tr>
+                            <tr><td>linea</td><td>DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA</td><td>NroReg</td></tr>
+                            <tr><td>producto</td><td>DB_HOL_OLIMPICA.PUBLIC.DIM_PRODUCTO</td><td>PLU_SAP</td></tr>
+                            <tr><td>promo</td><td>DB_HOL_OLIMPICA.PUBLIC.DIM_PROMO</td><td>OFERTA_ID</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </li>
+            <li><strong>Relationships (N:1):</strong>
+                <ul>
+                    <li><code>ticket.IdTienda &rarr; tienda.IdTienda</code> (many-to-one)</li>
+                    <li><code>linea.FACTURA &rarr; ticket.FACTURA</code> (many-to-one)</li>
+                    <li><code>linea.PLU_SAP &rarr; producto.PLU_SAP</code> (many-to-one)</li>
+                    <li><code>linea.OFERTA_ID &rarr; promo.OFERTA_ID</code> (many-to-one)</li>
+                </ul>
+            </li>
+            <li><strong>Dimensions:</strong>
+                <ul>
+                    <li><strong>tienda:</strong> Gerencia, Zona, Ciudad, TipoSucursal</li>
+                    <li><strong>producto:</strong> NomCategoria, Marca</li>
+                    <li><strong>promo:</strong> NomPromo</li>
+                    <li><strong>ticket:</strong> anio (YEAR(FECHA)), mes (DATE_TRUNC('month', FECHA))</li>
+                </ul>
+            </li>
+            <li><strong>Measures:</strong>
+                <ul>
+                    <li><code>num_tickets</code> = COUNT(FACTURA)</li>
+                    <li><code>ventas_total</code> = SUM(Venta)</li>
+                    <li><code>ticket_promedio</code> = AVG(MontoTotal)</li>
+                    <li><code>unidades</code> = SUM(Cantidad)</li>
+                </ul>
+            </li>
+            <li><strong>Verified Queries:</strong> (ver secci&oacute;n 10.2)</li>
+            <li>Click <strong>Save and validate</strong>, luego <strong>Create</strong>.</li>
+        </ol>
+
+        <h3>10.2 &mdash; Verified Queries (5 ejemplos)</h3>
+        <p>Agr&eacute;galas en el paso &ldquo;Verified queries&rdquo; del wizard:</p>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Nombre</th><th>Pregunta</th></tr></thead>
+                <tbody>
+                    <tr><td>tickets_por_gerencia_2026</td><td>&iquest;Cu&aacute;ntos tickets por gerencia tuvimos en 2026?</td></tr>
+                    <tr><td>top_10_promociones</td><td>Top 10 promociones m&aacute;s aplicadas</td></tr>
+                    <tr><td>ventas_por_ciudad</td><td>Ventas totales por ciudad</td></tr>
+                    <tr><td>ventas_mensuales_categoria</td><td>Ventas mensuales por categor&iacute;a del &uacute;ltimo a&ntilde;o</td></tr>
+                    <tr><td>ticket_promedio_tienda</td><td>Ticket promedio por tienda</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h4>SQL de cada verified query:</h4>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar c&oacute;digo">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- 1. tickets_por_gerencia_2026
+SELECT t.Gerencia, COUNT(f.FACTURA) AS tickets
+FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
+JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
+WHERE YEAR(f.FECHA) = 2026
+GROUP BY 1 ORDER BY 2 DESC;
+
+-- 2. top_10_promociones
+SELECT p.NomPromo, COUNT(*) AS frecuencia
+FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
+JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_PROMO p ON p.OFERTA_ID = l.OFERTA_ID
+GROUP BY 1 ORDER BY 2 DESC LIMIT 10;
+
+-- 3. ventas_por_ciudad
+SELECT t.Ciudad, SUM(l.Venta) AS ventas_total
+FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
+JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = l.IdTienda
+GROUP BY 1 ORDER BY 2 DESC;
+
+-- 4. ventas_mensuales_categoria
+SELECT DATE_TRUNC('month', l.FECHA) AS mes, l.Categoria,
+       SUM(l.Venta) AS ventas
+FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
+WHERE l.FECHA >= DATEADD(year, -1, CURRENT_DATE())
+GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- 5. ticket_promedio_tienda
+SELECT t.IdTienda, t.Ciudad, AVG(f.MontoTotal) AS ticket_promedio
+FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
+JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
+GROUP BY 1, 2 ORDER BY 3 DESC;</code></pre>
+        </div>
+
+        <h3>10.4 &mdash; Probar en el Chat de Cortex Analyst</h3>
+        <ol>
+            <li>Snowsight &rarr; <code>AI &amp; ML &rarr; Studio &rarr; Cortex Analyst</code> &rarr; seleccionar <strong>SV_OLIMPICA</strong>.</li>
+            <li>En el panel <strong>Chat</strong>, prueba estas preguntas:
+                <ul>
+                    <li>&iquest;Cu&aacute;ntos tickets por gerencia tuvimos en 2026?</li>
+                    <li>Top 10 promociones m&aacute;s aplicadas</li>
+                    <li>Ventas totales por ciudad</li>
+                    <li>Ventas mensuales por categor&iacute;a del &uacute;ltimo a&ntilde;o</li>
+                    <li>Ticket promedio por tienda</li>
+                </ul>
+            </li>
+            <li>Cortex Analyst genera el SQL, lo ejecuta y muestra resultados + visualizaci&oacute;n.</li>
+        </ol>
+
+        <h3>10.5 &mdash; Gobierno autom&aacute;tico con masking</h3>
+        <div class="callout callout-warning">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Prueba con ANALISTA_OPERACIONES</strong>
+                <p>Cambia de rol a <code>ANALISTA_OPERACIONES</code> y repite una pregunta. Las columnas protegidas por masking policies (DirectorGeneral, EncargadoZona) aparecer&aacute;n enmascaradas autom&aacute;ticamente &mdash; sin cambiar el Semantic View ni el agente.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(10)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-11" data-step="11">
+    <div class="step-header">
+        <div class="step-number">11</div>
+        <div class="step-info">
+            <h2 class="step-title">Snowflake CoWork</h2>
+            <span class="step-duration">~12 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p><strong>Snowflake CoWork</strong> permite crear agentes conversacionales que combinan m&uacute;ltiples herramientas: <em>Cortex Analyst</em> (text-to-SQL sobre m&eacute;tricas) y <em>Cortex Search</em> (b&uacute;squeda sem&aacute;ntica sobre texto libre). El agente decide autom&aacute;ticamente qu&eacute; herramienta usar seg&uacute;n la pregunta del usuario.</p>
+            <p>Crearemos <strong>AGT_OLIMPICA</strong>, un asistente de operaciones y comercial para Ol&iacute;mpica.</p>
+        </div>
+
+        <h3>11.1 &mdash; Crear el agente</h3>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Ruta en Snowsight</strong>
+                <p><code>AI &amp; ML &rarr; Snowflake CoWork &rarr; + Crear agente</code></p>
+            </div>
+        </div>
+
+        <ol>
+            <li><strong>Informaci&oacute;n b&aacute;sica:</strong>
+                <ul>
+                    <li>Nombre: <code>AGT_OLIMPICA</code></li>
+                    <li>Database: <code>DB_HOL_OLIMPICA</code></li>
+                    <li>Schema: <code>PUBLIC</code></li>
+                </ul>
+            </li>
+            <li><strong>Tools &rarr; + Add tool:</strong>
+                <ul>
+                    <li><strong>Cortex Search</strong> &rarr; seleccionar <code>CSS_AUDITORIAS</code>
+                        <br><em>(b&uacute;squeda sem&aacute;ntica sobre observaciones de auditor&iacute;as de tienda)</em></li>
+                    <li><strong>Cortex Analyst</strong> &rarr; seleccionar <code>SV_OLIMPICA</code>
+                        <br><em>(m&eacute;tricas de ventas, tickets, tiendas, productos, promociones)</em></li>
+                </ul>
+            </li>
+            <li><strong>Orchestrator instructions:</strong></li>
+        </ol>
+
+        <div class="code-block" data-language="text">
+            <div class="code-header">
+                <span class="code-language">Instrucciones del Orquestador</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar c&oacute;digo">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-text">Eres el asistente de operaciones y comercial de Olimpica (cadena de retail colombiana).
+
+Cuando el usuario pregunte sobre metricas de ventas, tickets, tiendas, productos o promociones, usa la herramienta Cortex Analyst (SV_OLIMPICA).
+
+Cuando el usuario pregunte sobre hallazgos de auditoria, observaciones de tienda, cadena de frio, producto vencido o problemas operativos, usa la herramienta Cortex Search (CSS_AUDITORIAS).
+
+Cita siempre los identificadores relevantes: IdTienda, Zona, NomProducto, Gerencia.
+Responde siempre en espanol.</code></pre>
+        </div>
+
+        <ol start="4">
+            <li><strong>Response instructions (opcional):</strong>
+                <p><em>&ldquo;Genera sugerencias de preguntas de seguimiento para que el usuario profundice el an&aacute;lisis. Todo el contenido debe ser en espa&ntilde;ol.&rdquo;</em></p>
+            </li>
+            <li><strong>Access:</strong>
+                <ul>
+                    <li>Agrega el rol <code>ANALISTA_OPERACIONES</code></li>
+                </ul>
+            </li>
+            <li>Click <strong>Create</strong>.</li>
+        </ol>
+
+        <h3>11.2 &mdash; Probar el agente (rol ACCOUNTADMIN)</h3>
+        <p>Haz clic en <strong>AGT_OLIMPICA</strong> y prueba las siguientes preguntas:</p>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>#</th><th>Pregunta</th><th>Herramienta esperada</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>&iquest;Cu&aacute;les son las ventas por gerencia en 2026?</td><td>Cortex Analyst</td></tr>
+                    <tr><td>2</td><td>Top 5 promociones m&aacute;s aplicadas</td><td>Cortex Analyst</td></tr>
+                    <tr><td>3</td><td>&iquest;Qu&eacute; tiendas tienen peor nota de checklist?</td><td>Cortex Analyst (DT)</td></tr>
+                    <tr><td>4</td><td>Observaciones sobre cadena de fr&iacute;o o producto vencido</td><td>Cortex Search</td></tr>
+                    <tr><td>5</td><td>Resumen de quejas operativas del &uacute;ltimo mes</td><td>Cortex Search</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>11.3 &mdash; Validar gobierno autom&aacute;tico</h3>
+
+        <div class="callout callout-warning">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Prueba con rol restringido</strong>
+                <p>Cambia tu sesi&oacute;n a <code>USE ROLE ANALISTA_OPERACIONES</code> y vuelve al agente. Repite una pregunta que involucre datos sensibles (ej: &ldquo;&iquest;Qui&eacute;n es el director general de la zona Norte?&rdquo;). El agente responder&aacute; con los campos enmascarados (<code>****</code>) &mdash; el gobierno se aplica sin modificar el agente ni el Semantic View.</p>
+            </div>
+        </div>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar c&oacute;digo">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Cambiar de rol para validar masking
+USE ROLE ANALISTA_OPERACIONES;
+
+-- Ahora vuelve al agente AGT_OLIMPICA y pregunta:
+-- "¿Quién es el director general de la zona Norte?"
+-- Los nombres aparecerán enmascarados (****)
+
+-- Volver al rol admin
+USE ROLE ACCOUNTADMIN;</code></pre>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Resultado</strong>
+                <p>Tienes un agente conversacional que combina datos estructurados (ventas, KPIs) con datos no estructurados (observaciones de auditor&iacute;a), responde en espa&ntilde;ol y respeta las pol&iacute;ticas de gobierno autom&aacute;ticamente seg&uacute;n el rol del usuario.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(11)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-12" data-step="12">
+    <div class="step-header">
+        <div class="step-number">12</div>
+        <div class="step-info">
+            <h2 class="step-title">Recursos &amp; Cleanup</h2>
+            <span class="step-duration">~4 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>Recursos de referencia, un ejercicio avanzado sugerido con Cortex Code y el script de limpieza del ambiente.</p>
+        </div>
+
+        <h3>12.1 &mdash; Recursos de referencia</h3>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Recurso</th><th>Enlace</th></tr></thead>
+                <tbody>
+                    <tr><td>Snowflake Cortex AI</td><td><a href="https://docs.snowflake.com/en/guides-overview-ai-features" target="_blank">docs.snowflake.com/cortex</a></td></tr>
+                    <tr><td>Dynamic Tables</td><td><a href="https://docs.snowflake.com/en/user-guide/dynamic-tables-about" target="_blank">docs.snowflake.com/dynamic-tables</a></td></tr>
+                    <tr><td>Cortex Search</td><td><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview" target="_blank">docs.snowflake.com/cortex-search</a></td></tr>
+                    <tr><td>Cortex Analyst (Semantic Views)</td><td><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-analyst" target="_blank">docs.snowflake.com/cortex-analyst</a></td></tr>
+                    <tr><td>Snowflake CoWork</td><td><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/snowflake-cowork" target="_blank">docs.snowflake.com/intelligence</a></td></tr>
+                    <tr><td>Masking Policies</td><td><a href="https://docs.snowflake.com/en/user-guide/security-column-intro" target="_blank">docs.snowflake.com/masking</a></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>12.2 &mdash; Ejercicio sugerido con Cortex Code (CoCo)</h3>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Reto: Forecasting de demanda con ML</strong>
+                <p>Usa Cortex Code para crear un notebook de ML que utilice la Dynamic Table como feature store:</p>
+                <ul>
+                    <li><code>DT_VENTAS_TIENDA_MES</code> &rarr; features de ventas, tickets y ticket promedio por tienda/mes</li>
+                </ul>
+                <p><strong>Objetivo:</strong> Forecast de ventas mensuales por tienda a 3 meses usando <code>SNOWFLAKE.ML.FORECAST</code>. La Dynamic Table se refresca sola &mdash; tu modelo siempre tendr&aacute; features actualizados sin intervenci&oacute;n manual.</p>
+            </div>
+        </div>
+
+        <h3>12.3 &mdash; Limpieza del ambiente</h3>
+        <p>Ejecuta el siguiente script para eliminar todos los objetos creados durante el lab:</p>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar c&oacute;digo">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- =============================================
+-- CLEANUP: Eliminar todos los objetos del HOL
+-- =============================================
+USE ROLE ACCOUNTADMIN;
+
+DROP DATABASE IF EXISTS DB_HOL_OLIMPICA;
+DROP DATABASE IF EXISTS DB_HOL_OLIMPICA_DEV;
+DROP WAREHOUSE IF EXISTS WH_HOL_OLIMPICA;
+DROP ROLE IF EXISTS ANALISTA_OPERACIONES;</code></pre>
+        </div>
+
+        <div class="callout callout-danger">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Acci&oacute;n destructiva</strong>
+                <p>Este script elimina permanentemente todas las bases de datos, el warehouse y el rol creados en el lab. Aseg&uacute;rate de haber terminado todas las pruebas antes de ejecutarlo.</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div style="text-align:center; padding: 2rem 0;">
+            <h2 style="color: #29b5e8;">&#127881; &iexcl;Felicitaciones!</h2>
+            <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                Has completado el Hands-On Lab de <strong>Ol&iacute;mpica</strong> con Snowflake. Ahora tienes un pipeline de datos declarativo con Dynamic Tables, un modelo sem&aacute;ntico con Cortex Analyst y un agente inteligente con Snowflake CoWork &mdash; todo gobernado autom&aacute;ticamente por pol&iacute;ticas de masking.
+            </p>
+            <p style="margin-top: 1rem; color: #666;">
+                <em>Snowflake &mdash; The AI Data Cloud</em>
+            </p>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(12)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+
+    </main>
+
+    <!-- Resources Section -->
+    <section id="resources" class="content-section" style="margin-left:var(--sidebar-width);">
+        <div class="section-container">
+            <h2 class="section-title">Recursos Adicionales</h2>
+            <div class="resources-grid">
+                <a href="https://docs.snowflake.com" class="resource-card" target="_blank">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                    <div class="resource-info">
+                        <h4>Documentacion Snowflake</h4>
+                        <p>Referencia oficial completa</p>
+                    </div>
+                </a>
+                <a href="https://www.snowflake.com/en/developers/guides/" class="resource-card" target="_blank">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="resource-info">
+                        <h4>Quickstarts</h4>
+                        <p>Mas laboratorios guiados</p>
+                    </div>
+                </a>
+                <a href="https://community.snowflake.com" class="resource-card" target="_blank">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <div class="resource-info">
+                        <h4>Comunidad Snowflake</h4>
+                        <p>Foros y discusiones</p>
+                    </div>
+                </a>
+                <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex" class="resource-card" target="_blank">
+                    <div class="resource-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+                    </div>
+                    <div class="resource-info">
+                        <h4>Cortex AI Docs</h4>
+                        <p>AI Functions, Search, Analyst</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- CTA Comunidad Colombia -->
+            <div class="cta-card">
+                <h3 style="text-transform:none;letter-spacing:0;">Comunidad Snowflake Colombia</h3>
+                <p>Conecta con otros profesionales de datos en Colombia. Eventos, webinars y networking.</p>
+                <a href="https://www.snowflake.com/es/webinars/thought-leadership/comunidad-snowflake-colombia/" target="_blank">Unirse a la Comunidad</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Completion Section -->
+    <section class="completion-section" id="completionSection">
+        <div class="completion-container">
+            <div class="completion-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <h2 style="text-transform:none;">Felicitaciones!</h2>
+            <p>Has completado el Hands-On Lab exitosamente.</p>
+            <div class="completion-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Tiempo total</span>
+                    <span class="summary-value" id="totalTime">--</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Pasos completados</span>
+                    <span class="summary-value">12/12</span>
+                </div>
+            </div>
+            <div class="next-actions">
+                <h3 style="text-transform:none;">Proximos pasos recomendados</h3>
+                <ul style="list-style:none;text-align:left;padding:0;">
+                    <li style="margin-bottom:8px;">&#10003; Explorar Cortex AI con datos propios</li>
+                    <li style="margin-bottom:8px;">&#10003; Construir un agente con Snowflake CoWork</li>
+                    <li style="margin-bottom:8px;">&#10003; Unirse a la Comunidad Snowflake Colombia</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="hol-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-white.svg" alt="Snowflake" class="footer-logo">
+                <p>Snowflake Hands-On Labs</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://docs.snowflake.com" target="_blank">Documentacion</a>
+                <a href="https://community.snowflake.com" target="_blank">Comunidad</a>
+                <a href="https://www.snowflake.com/en/developers/guides/" target="_blank">Mas Labs</a>
+            </div>
+            <div class="footer-meta">
+                <p>&copy; 2026 Snowflake Inc. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script SQL completo del HOL (para el botón "Descargar SQL"). No se renderiza. -->
+    <script type="text/plain" id="hol-sql">/* ============================================================================
+   HOL OLÍMPICA — "De S3 a Snowflake CoWork"
+   Script SQL completo. Cópialo en un Worksheet de Snowflake y ejecútalo
+   parte por parte. Datos sintéticos generados para fines demostrativos.
+   ============================================================================ */
+
+
+/* ================= PARTE 1 — Setup del ambiente ================= */
+USE ROLE ACCOUNTADMIN;
+-- Habilita el uso de modelos Cortex desde cualquier región
+ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';
+-- Base de datos y warehouse del laboratorio
+CREATE OR REPLACE DATABASE DB_HOL_OLIMPICA COMMENT='HOL Olímpica - retail Colombia (datos sintéticos)';
+CREATE OR REPLACE WAREHOUSE WH_HOL_OLIMPICA
+  WITH WAREHOUSE_SIZE='SMALL' AUTO_SUSPEND=60 AUTO_RESUME=TRUE
+       MIN_CLUSTER_COUNT=1 MAX_CLUSTER_COUNT=2 SCALING_POLICY='STANDARD';
+USE WAREHOUSE WH_HOL_OLIMPICA;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+
+
+/* ================= PARTE 2 — Stage S3 + carga COPY INTO (~347M filas) ================= */
+-- Formato CSV (delimitador ';', gzip) y stage externo al bucket S3
+CREATE OR REPLACE FILE FORMAT FF_CSV_GZ
+  TYPE=CSV FIELD_DELIMITER=';' FIELD_OPTIONALLY_ENCLOSED_BY='"' COMPRESSION=GZIP
+  NULL_IF=('NULL','') EMPTY_FIELD_AS_NULL=TRUE SKIP_HEADER=1
+  TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS.FF3';
+
+CREATE OR REPLACE STAGE STG_OLIMPICA
+  URL='s3://demosjparrado/olimpica_hol/'
+  STORAGE_INTEGRATION=SI_FCV_S3
+  FILE_FORMAT=FF_CSV_GZ;
+
+-- Verifica el acceso al stage
+LIST @STG_OLIMPICA/fact_venta_linea/;
+
+-- Dimensiones compartidas
+CREATE OR REPLACE TABLE DIM_TIENDA (
+  IdTienda NUMBER, TipoSucursal VARCHAR, Formato VARCHAR, Zona VARCHAR,
+  Departamento VARCHAR, Ciudad VARCHAR, Gerencia VARCHAR,
+  EncargadoZona VARCHAR, DirectorGeneral VARCHAR);
+
+CREATE OR REPLACE TABLE DIM_PRODUCTO (
+  PLU_SAP NUMBER, GTIN VARCHAR, NomProducto VARCHAR, Categoria NUMBER,
+  NomCategoria VARCHAR, GrupoComercial NUMBER, Marca VARCHAR);
+
+CREATE OR REPLACE TABLE DIM_PROVEEDOR (
+  GLN_Proveedor VARCHAR, NomProveedor VARCHAR, Categoria VARCHAR);
+
+CREATE OR REPLACE TABLE DIM_PROMO (
+  OFERTA_ID NUMBER, NomPromo VARCHAR, TipoDescuento VARCHAR, PctDescuento NUMBER(5,2));
+
+-- Hechos
+CREATE OR REPLACE TABLE FACT_TICKET (
+  FACTURA NUMBER, IdTienda NUMBER, FECHA DATE, Estrato NUMBER,
+  MontoTotal NUMBER(14,2), NumLineas NUMBER);
+
+CREATE OR REPLACE TABLE FACT_VENTA_LINEA (
+  NroReg NUMBER, FACTURA NUMBER, FECHA DATE, IdTienda NUMBER, Estrato NUMBER,
+  OFERTA_ID NUMBER, PLU_SAP NUMBER, Categoria NUMBER, GrupoComercial NUMBER,
+  Cantidad NUMBER(12,3), Venta NUMBER(14,2), Descuento NUMBER(14,2));
+
+CREATE OR REPLACE TABLE FACT_SELLOUT_INV (
+  FecMovimiento DATE, GLN_Proveedor VARCHAR, GLN_Localizacion VARCHAR, IdTienda NUMBER,
+  GTIN_Producto VARCHAR, PLU_SAP NUMBER, InventarioUnidades NUMBER,
+  CostoProducto NUMBER(14,2), VentasUnidades NUMBER, PrecioVenta NUMBER(14,2),
+  EstadoProducto VARCHAR);
+
+CREATE OR REPLACE TABLE FACT_CHECKLIST (
+  ANO NUMBER, MES NUMBER, DIA NUMBER, IdTienda NUMBER, TipoSucursal VARCHAR,
+  CheckId NUMBER, Checklist VARCHAR, EstadoChecklist VARCHAR, NotaChecklist NUMBER(5,2),
+  FechaRealizacion TIMESTAMP_NTZ, Gerencia VARCHAR, Zona VARCHAR, Departamento VARCHAR,
+  EncargadoZona VARCHAR, DirectorGeneral VARCHAR, JefeOperacionesVisita VARCHAR,
+  Almacen NUMBER(5,2), Auditoria NUMBER(5,2), Bodegas NUMBER(5,2), Cafeteria NUMBER(5,2),
+  Carnes NUMBER(5,2), Clientes NUMBER(5,2), DatosPersonales NUMBER(5,2), Deli NUMBER(5,2),
+  DocumentacionLegal NUMBER(5,2), Droguerias NUMBER(5,2), Fruver NUMBER(5,2),
+  Indicadores NUMBER(5,2), IngresoAlmacen NUMBER(5,2), Panaderia NUMBER(5,2),
+  PuestosDePago NUMBER(5,2), Recibo NUMBER(5,2), Supermercado NUMBER(5,2),
+  Tesoreria NUMBER(5,2), Observaciones VARCHAR);
+
+-- Carga masiva desde S3 (escala el warehouse para acelerar y luego reduce)
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='LARGE';
+COPY INTO DIM_TIENDA        FROM @STG_OLIMPICA/dim_tienda/;
+COPY INTO DIM_PRODUCTO      FROM @STG_OLIMPICA/dim_producto/;
+COPY INTO DIM_PROVEEDOR     FROM @STG_OLIMPICA/dim_proveedor/;
+COPY INTO DIM_PROMO         FROM @STG_OLIMPICA/dim_promo/;
+COPY INTO FACT_TICKET       FROM @STG_OLIMPICA/fact_ticket/;
+COPY INTO FACT_VENTA_LINEA  FROM @STG_OLIMPICA/fact_venta_linea/;
+COPY INTO FACT_SELLOUT_INV  FROM @STG_OLIMPICA/fact_sellout_inv/;
+COPY INTO FACT_CHECKLIST    FROM @STG_OLIMPICA/fact_checklist/;
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XSMALL';
+
+-- Conteos por tabla
+SELECT 'DIM_TIENDA' tabla, COUNT(*) registros FROM DIM_TIENDA
+UNION ALL SELECT 'DIM_PRODUCTO', COUNT(*) FROM DIM_PRODUCTO
+UNION ALL SELECT 'DIM_PROVEEDOR', COUNT(*) FROM DIM_PROVEEDOR
+UNION ALL SELECT 'DIM_PROMO', COUNT(*) FROM DIM_PROMO
+UNION ALL SELECT 'FACT_TICKET', COUNT(*) FROM FACT_TICKET
+UNION ALL SELECT 'FACT_VENTA_LINEA', COUNT(*) FROM FACT_VENTA_LINEA
+UNION ALL SELECT 'FACT_SELLOUT_INV', COUNT(*) FROM FACT_SELLOUT_INV
+UNION ALL SELECT 'FACT_CHECKLIST', COUNT(*) FROM FACT_CHECKLIST
+ORDER BY registros DESC;
+
+
+/* ================= PARTE 3 — Performance & análisis cruzado ================= */
+-- Top 10 productos más vendidos (150M líneas + join a la dimensión)
+SELECT p.NomProducto, p.NomCategoria, p.Marca,
+       SUM(v.Cantidad) AS unidades_vendidas, SUM(v.Venta) AS venta_total_cop, COUNT(*) AS lineas
+FROM FACT_VENTA_LINEA v JOIN DIM_PRODUCTO p ON p.PLU_SAP = v.PLU_SAP
+GROUP BY 1,2,3 ORDER BY unidades_vendidas DESC LIMIT 10;
+
+-- Cruce tienda -> ticket -> línea -> promo (últimos 6 meses)
+SELECT t.Gerencia, t.Zona, pr.NomCategoria, pm.NomPromo,
+       COUNT(DISTINCT ft.FACTURA) AS tickets, SUM(vl.Cantidad) AS unidades,
+       SUM(vl.Venta) AS ventas_cop, SUM(vl.Descuento) AS descuento_cop
+FROM DIM_TIENDA t
+JOIN FACT_TICKET ft      ON ft.IdTienda  = t.IdTienda
+JOIN FACT_VENTA_LINEA vl ON vl.FACTURA   = ft.FACTURA
+JOIN DIM_PROMO pm        ON pm.OFERTA_ID = vl.OFERTA_ID
+JOIN DIM_PRODUCTO pr     ON pr.PLU_SAP   = vl.PLU_SAP
+WHERE ft.FECHA >= DATEADD(month, -6, CURRENT_DATE())
+GROUP BY 1,2,3,4 ORDER BY ventas_cop DESC LIMIT 20;
+
+
+/* ================= PARTE 4 — Time Travel & Zero-Copy Cloning ================= */
+-- Clone instantáneo de una tabla y de toda la base de datos (ambiente DEV)
+CREATE OR REPLACE TABLE DIM_TIENDA_DEV CLONE DIM_TIENDA;
+CREATE OR REPLACE DATABASE DB_HOL_OLIMPICA_DEV CLONE DB_HOL_OLIMPICA;
+
+-- Simular un error y recuperar con UNDROP
+DROP DATABASE DB_HOL_OLIMPICA;
+UNDROP DATABASE DB_HOL_OLIMPICA;
+USE DATABASE DB_HOL_OLIMPICA; USE SCHEMA PUBLIC;
+
+-- Rollback de un UPDATE por error usando Time Travel
+UPDATE FACT_CHECKLIST SET NotaChecklist = 0 WHERE Zona = 'Bolivar';
+SET q = LAST_QUERY_ID();
+-- Consultar el estado ANTES del update (sin restaurar todavía)
+SELECT Zona, AVG(NotaChecklist) FROM FACT_CHECKLIST BEFORE(STATEMENT => $q)
+WHERE Zona='Bolivar' GROUP BY 1;
+-- Restaurar la tabla al snapshot previo
+CREATE OR REPLACE TABLE FACT_CHECKLIST AS SELECT * FROM FACT_CHECKLIST BEFORE(STATEMENT => $q);
+
+
+/* ================= PARTE 5 — Masking dinámico por rol (con AI_REDACT) ================= */
+USE ROLE ACCOUNTADMIN; USE DATABASE DB_HOL_OLIMPICA; USE SCHEMA PUBLIC;
+-- Rol restringido con acceso de lectura
+CREATE OR REPLACE ROLE ANALISTA_OPERACIONES;
+GRANT USAGE ON DATABASE DB_HOL_OLIMPICA TO ROLE ANALISTA_OPERACIONES;
+GRANT USAGE ON SCHEMA DB_HOL_OLIMPICA.PUBLIC TO ROLE ANALISTA_OPERACIONES;
+GRANT SELECT ON ALL TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC TO ROLE ANALISTA_OPERACIONES;
+GRANT USAGE ON WAREHOUSE WH_HOL_OLIMPICA TO ROLE ANALISTA_OPERACIONES;
+GRANT ROLE ANALISTA_OPERACIONES TO USER JPARRADO;  -- reemplaza por tu usuario
+
+-- Enmascara nombres de empleados excepto para ACCOUNTADMIN
+CREATE OR REPLACE MASKING POLICY mp_nombre_empleado AS (val STRING) RETURNS STRING ->
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val ELSE '****' END;
+
+-- Redacta la PII del texto de observaciones con IA (conserva el hallazgo operativo)
+CREATE OR REPLACE MASKING POLICY mp_texto_observacion AS (val STRING) RETURNS STRING ->
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN val ELSE AI_REDACT(val) END;
+
+-- Asocia las políticas a las columnas
+ALTER TABLE DIM_TIENDA MODIFY COLUMN EncargadoZona   SET MASKING POLICY mp_nombre_empleado;
+ALTER TABLE DIM_TIENDA MODIFY COLUMN DirectorGeneral SET MASKING POLICY mp_nombre_empleado;
+ALTER TABLE FACT_CHECKLIST MODIFY COLUMN Observaciones SET MASKING POLICY mp_texto_observacion;
+
+-- Demo: misma consulta, distinto resultado por rol
+SELECT t.IdTienda, t.Zona, t.EncargadoZona, t.DirectorGeneral, LEFT(c.Observaciones,120) AS obs
+FROM DIM_TIENDA t JOIN FACT_CHECKLIST c ON c.IdTienda=t.IdTienda WHERE t.Zona='Bolivar' LIMIT 5;
+-- Cambia de rol y repite la consulta anterior para ver el enmascaramiento
+-- USE ROLE ANALISTA_OPERACIONES;  (luego vuelve con USE ROLE ACCOUNTADMIN;)
+
+
+/* ================= PARTE 6 — Cortex AI Functions (sobre observaciones) ================= */
+USE ROLE ACCOUNTADMIN; USE WAREHOUSE WH_HOL_OLIMPICA; USE DATABASE DB_HOL_OLIMPICA; USE SCHEMA PUBLIC;
+
+-- 6.1 Pregunta de negocio directa a un LLM
+SELECT AI_COMPLETE('claude-sonnet-4-5',
+  'Resume en 5 puntos los beneficios de Snowflake Cortex para auditoría operativa de un retail como Olímpica. Responde en español con saltos de línea.') AS respuesta;
+
+-- 6.2 Resumen corto + evaluación estructurada en JSON
+SELECT IdTienda, LEFT(Observaciones,80) AS preview,
+  AI_COMPLETE('openai-gpt-4.1', CONCAT('Resume en máximo 5 palabras la siguiente observación de auditoría de tienda: ', Observaciones)) AS resumen_corto,
+  AI_COMPLETE('openai-gpt-4.1', CONCAT('Evalúa la siguiente observación de auditoría de tienda. Responde SOLO en JSON con el formato {"severidad":"alta|media|baja","area_afectada":"<área>","requiere_accion":true|false}. Texto: ', Observaciones)) AS evaluacion_json
+FROM FACT_CHECKLIST WHERE Observaciones IS NOT NULL LIMIT 10;
+
+-- 6.3 Sentimiento (AI_SENTIMENT devuelve OBJECT; extraemos el label)
+SELECT IdTienda, LEFT(Observaciones,100) AS preview,
+  AI_SENTIMENT(Observaciones):categories[0]:sentiment::VARCHAR AS sentimiento
+FROM FACT_CHECKLIST WHERE Observaciones IS NOT NULL LIMIT 10;
+
+-- 6.4 Insight agregado sobre múltiples observaciones
+SELECT AI_AGG(Observaciones,
+  'Resume los principales hallazgos de estas auditorías de tienda. Indica: 1) Top 3 problemas más frecuentes, 2) Riesgos operativos, 3) Oportunidades de mejora. Responde en español con bullets.') AS insight
+FROM (SELECT Observaciones FROM FACT_CHECKLIST
+      WHERE FechaRealizacion = (SELECT MAX(FechaRealizacion) FROM FACT_CHECKLIST)
+        AND Observaciones IS NOT NULL LIMIT 100);
+
+-- 6.5 Traducción es -> en
+SELECT IdTienda, AI_TRANSLATE(LEFT(Observaciones,400), 'es', 'en') AS observacion_en
+FROM FACT_CHECKLIST WHERE Observaciones IS NOT NULL LIMIT 3;
+
+-- 6.6 Clasificación automática en categorías operativas
+SELECT IdTienda, LEFT(Observaciones,100) AS preview,
+  AI_CLASSIFY(Observaciones, ['Limpieza','Inventario','Cadena de frío','Atención al cliente','Documentación legal','Seguridad']):labels[0]::VARCHAR AS categoria
+FROM FACT_CHECKLIST WHERE Observaciones IS NOT NULL LIMIT 10;
+
+
+/* ================= PARTE 7 — Cortex AI Multimodal (PDF / imagen / audio) ================= */
+-- Reutiliza el stage STG_OLIMPICA; los archivos están en la subcarpeta archivos/
+LIST @STG_OLIMPICA/archivos/;
+
+-- 7.1 Extracción estructurada de un recibo POS (PDF)
+WITH e AS (
+  SELECT AI_EXTRACT(file => TO_FILE('@STG_OLIMPICA','archivos/recibo_pos_001.pdf'),
+    responseFormat => [['transaccion_id','ID de la transacción'],['cajero','Nombre o código del cajero'],
+      ['subtotal','Subtotal antes de impuestos'],['iva','Valor del IVA'],['total','Valor total pagado'],
+      ['items_count','Cantidad total de ítems'],['descuento','Descuento aplicado']]) AS r)
+SELECT r:response:transaccion_id::STRING, r:response:total::STRING, r:response:iva::STRING FROM e;
+
+-- 7.2 Lectura de etiqueta de producto (visión, pixtral-large)
+SELECT AI_COMPLETE('pixtral-large',
+  PROMPT('Extrae la información nutricional y de marca de esta etiqueta: marca, nombre, peso/volumen, calorías, fecha de vencimiento. Responde en español. {0}',
+         TO_FILE('@STG_OLIMPICA','archivos/etiqueta_producto_001.png'))) AS etiqueta;
+
+-- 7.3 Análisis de góndola / visual merchandising (claude-sonnet-4-5)
+SELECT AI_COMPLETE('claude-sonnet-4-5',
+  PROMPT('Eres experto en visual merchandising para retail FMCG. Analiza esta góndola y devuelve JSON con estado_general, categorias_detectadas, problemas_visuales, impacto_estimado_ventas y recomendaciones_priorizadas. Responde solo en JSON y en español. {0}',
+         TO_FILE('@STG_OLIMPICA','archivos/producto_foto_001.jpg'))) AS analisis_gondola;
+
+-- 7.4 Lectura de cupón de descuento (claude-opus-4-5)
+SELECT AI_COMPLETE('claude-opus-4-5',
+  PROMPT('Lee este cupón de Olímpica y devuelve en JSON: codigo_cupon, porcentaje_descuento, fecha_vigencia, condiciones, productos_aplicables. Responde solo en JSON y en español. {0}',
+         TO_FILE('@STG_OLIMPICA','archivos/cupon_descuento_001.png'))) AS cupon;
+
+-- 7.5 Transcripción de audio (llamada de call center)
+SELECT TO_VARCHAR(AI_TRANSCRIBE(TO_FILE('@STG_OLIMPICA','archivos/ofreciendo-producto.mp3'))) AS transcripcion;
+
+-- 7.6 Pipeline end-to-end: transcribir -> sentimiento -> extraer -> coach CX
+WITH llamadas AS (
+  SELECT 'oferta' AS tipo, AI_TRANSCRIBE(TO_FILE('@STG_OLIMPICA','archivos/ofreciendo-producto.mp3')):text::STRING AS texto
+  UNION ALL
+  SELECT 'queja', AI_TRANSCRIBE(TO_FILE('@STG_OLIMPICA','archivos/problema-servicio.mp3')):text::STRING)
+SELECT tipo, LEFT(texto,120) AS preview,
+  AI_SENTIMENT(texto, ['producto','servicio','precio','retencion_cliente']) AS sentimiento,
+  AI_COMPLETE('claude-opus-4-5', PROMPT('Eres coach de Customer Experience para Olímpica. Devuelve JSON con clasificacion, prioridad, siguiente_accion, riesgo_churn (0-100). Solo JSON, en español. Texto: {0}', texto)) AS coach_cx
+FROM llamadas ORDER BY tipo;
+
+
+/* ================= PARTE 8 — Cortex Search (búsqueda semántica) ================= */
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='MEDIUM';
+-- Tabla enriquecida con contexto de tienda (últimos 12 meses)
+CREATE OR REPLACE TABLE T_OBSERVACIONES_ENRIQUECIDAS AS
+SELECT c.IdTienda, t.Ciudad, t.Zona, t.Gerencia, c.TipoSucursal, c.FechaRealizacion,
+       c.NotaChecklist, c.EstadoChecklist, c.Observaciones AS Texto
+FROM FACT_CHECKLIST c JOIN DIM_TIENDA t ON t.IdTienda = c.IdTienda
+WHERE c.FechaRealizacion >= DATEADD(year,-1,CURRENT_DATE()) AND c.Observaciones IS NOT NULL
+LIMIT 50000;
+
+-- Servicio de búsqueda semántica sobre las observaciones
+CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
+  ON Texto
+  ATTRIBUTES IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist
+  WAREHOUSE = WH_HOL_OLIMPICA TARGET_LAG='1 hour'
+  AS SELECT IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist, Texto
+     FROM T_OBSERVACIONES_ENRIQUECIDAS;
+
+SHOW CORTEX SEARCH SERVICES LIKE 'CSS_AUDITORIAS';
+
+-- Demo: búsqueda por concepto, aplanando el JSON a columnas legibles
+WITH busqueda AS (
+  SELECT PARSE_JSON(SNOWFLAKE.CORTEX.SEARCH_PREVIEW('DB_HOL_OLIMPICA.PUBLIC.CSS_AUDITORIAS',
+    '{ "query": "cadena de frío producto vencido", "columns": ["Ciudad","Zona","Gerencia","NotaChecklist","Texto"], "limit": 5 }'))['results'] AS resultados)
+SELECT r.value:Ciudad::STRING AS ciudad, r.value:Zona::STRING AS zona, r.value:Gerencia::STRING AS gerencia,
+       ROUND(r.value:NotaChecklist::FLOAT,1) AS nota_auditoria, r.value:Texto::STRING AS hallazgo
+FROM busqueda, LATERAL FLATTEN(input => busqueda.resultados) r;
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='SMALL';
+
+
+/* ================= PARTE 9 — Dynamic Table incremental ================= */
+-- KPI de ventas por tienda y mes; refresco incremental (COUNT(*)/SUM/AVG, sin COUNT DISTINCT)
+CREATE OR REPLACE DYNAMIC TABLE DT_VENTAS_TIENDA_MES
+  TARGET_LAG='1 hour' WAREHOUSE=WH_HOL_OLIMPICA REFRESH_MODE=INCREMENTAL
+AS
+SELECT DATE_TRUNC('month', ft.FECHA) AS mes, t.IdTienda, t.Ciudad, t.Gerencia,
+       COUNT(*) AS tickets, SUM(ft.MontoTotal) AS ventas, AVG(ft.MontoTotal) AS ticket_promedio,
+       SUM(ft.NumLineas) AS lineas
+FROM FACT_TICKET ft JOIN DIM_TIENDA t ON t.IdTienda = ft.IdTienda
+GROUP BY 1,2,3,4;
+
+-- Verificar la Dynamic Table
+SHOW DYNAMIC TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC;
+SELECT * FROM DT_VENTAS_TIENDA_MES ORDER BY mes DESC LIMIT 10;
+
+
+/* ================= PARTE 10 — Semantic View + Cortex Analyst ================= */
+-- El Semantic View SV_OLIMPICA se crea por la UI:
+--   Snowsight -> AI & ML -> Studio -> Cortex Analyst -> + Create -> Semantic View -> Create from scratch
+--   Tablas: DIM_TIENDA (PK IdTienda), FACT_TICKET (PK FACTURA), FACT_VENTA_LINEA (PK NroReg),
+--           DIM_PRODUCTO (PK PLU_SAP), DIM_PROMO (PK OFERTA_ID)
+--   Relaciones N:1: FACT_TICKET.IdTienda->DIM_TIENDA; FACT_VENTA_LINEA.FACTURA->FACT_TICKET;
+--                   FACT_VENTA_LINEA.PLU_SAP->DIM_PRODUCTO; FACT_VENTA_LINEA.OFERTA_ID->DIM_PROMO
+-- Consultas verificadas de ejemplo:
+SELECT t.Gerencia, COUNT(f.FACTURA) AS tickets
+FROM FACT_TICKET f JOIN DIM_TIENDA t ON t.IdTienda=f.IdTienda
+WHERE YEAR(f.FECHA)=2026 GROUP BY 1 ORDER BY 2 DESC;
+
+SELECT p.NomPromo, COUNT(*) AS frecuencia
+FROM FACT_VENTA_LINEA l JOIN DIM_PROMO p ON p.OFERTA_ID=l.OFERTA_ID
+GROUP BY 1 ORDER BY 2 DESC LIMIT 10;
+
+SELECT t.Ciudad, SUM(l.Venta) AS ventas_total
+FROM FACT_VENTA_LINEA l JOIN DIM_TIENDA t ON t.IdTienda=l.IdTienda
+GROUP BY 1 ORDER BY 2 DESC;
+
+SELECT t.IdTienda, t.Ciudad, AVG(f.MontoTotal) AS ticket_promedio
+FROM FACT_TICKET f JOIN DIM_TIENDA t ON t.IdTienda=f.IdTienda
+GROUP BY 1,2 ORDER BY 3 DESC;
+
+
+/* ================= PARTE 11 — Snowflake CoWork (agente) ================= */
+-- Se configura por la UI (no requiere SQL):
+--   Snowsight -> AI & ML -> Snowflake CoWork -> + Crear agente -> AGT_OLIMPICA
+--   Tools:  Cortex Analyst -> SV_OLIMPICA   |   Cortex Search -> CSS_AUDITORIAS
+--   Orquestador (español): usa Analyst para métricas de ventas/tickets/tiendas/productos
+--   y Search para hallazgos de auditoría/observaciones. Cita IdTienda, Zona, NomProducto.
+--   En Access agrega el rol ANALISTA_OPERACIONES para ver el gobierno automático (masking).
+
+
+/* ================= PARTE 12 — Limpieza del ambiente ================= */
+USE ROLE ACCOUNTADMIN;
+DROP DATABASE IF EXISTS DB_HOL_OLIMPICA;
+DROP DATABASE IF EXISTS DB_HOL_OLIMPICA_DEV;
+DROP WAREHOUSE IF EXISTS WH_HOL_OLIMPICA;
+DROP ROLE IF EXISTS ANALISTA_OPERACIONES;
+</script>
+
+    <script>
+/**
+ * Snowflake HOL Interactive Functions
+ * Version: 1.0.0 — Olimpica Edition
+ */
+
+const HOLState = {
+    totalSteps: 12,
+    completedSteps: new Set(),
+    startTime: null,
+    currentStep: 1
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHOL();
+});
+
+function initializeHOL() {
+    HOLState.totalSteps = document.querySelectorAll('.step-card').length || 12;
+    HOLState.startTime = new Date();
+    loadProgress();
+    initStepToggles();
+    initCodeBlocks();
+    initScrollSpy();
+    initKeyboardShortcuts();
+    updateProgressUI();
+}
+
+function markStepComplete(stepNumber) {
+    HOLState.completedSteps.add(stepNumber);
+    const stepCard = document.getElementById('step-' + stepNumber);
+    if (stepCard) {
+        stepCard.classList.add('completed');
+        const btn = stepCard.querySelector('.btn-check');
+        if (btn) {
+            btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Completado';
+            btn.disabled = true;
+            btn.style.background = 'var(--sf-green)';
+            btn.style.color = 'white';
+        }
+    }
+    const navItem = document.querySelector('.step-nav-item[data-step="' + stepNumber + '"]');
+    if (navItem) navItem.classList.add('completed');
+    saveProgress();
+    updateProgressUI();
+    if (HOLState.completedSteps.size === HOLState.totalSteps) showCompletion();
+    if (stepNumber < HOLState.totalSteps) {
+        setTimeout(function() { scrollToStep(stepNumber + 1); }, 500);
+    }
+}
+
+function updateProgressUI() {
+    const progress = (HOLState.completedSteps.size / HOLState.totalSteps) * 100;
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) progressFill.style.width = progress + '%';
+    const progressPercent = document.querySelector('.progress-percent');
+    if (progressPercent) progressPercent.textContent = Math.round(progress) + '%';
+}
+
+function saveProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const data = {
+        completedSteps: Array.from(HOLState.completedSteps),
+        startTime: HOLState.startTime.toISOString(),
+        lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem('hol-progress-' + holId, JSON.stringify(data));
+}
+
+function loadProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const saved = localStorage.getItem('hol-progress-' + holId);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            data.completedSteps.forEach(function(step) {
+                HOLState.completedSteps.add(step);
+                const stepCard = document.getElementById('step-' + step);
+                if (stepCard) stepCard.classList.add('completed');
+                const navItem = document.querySelector('.step-nav-item[data-step="' + step + '"]');
+                if (navItem) navItem.classList.add('completed');
+            });
+            if (data.startTime) HOLState.startTime = new Date(data.startTime);
+        } catch (e) { console.error('Error loading progress:', e); }
+    }
+}
+
+function resetProgress() {
+    if (confirm('Estas seguro de que deseas reiniciar tu progreso?')) {
+        const holId = document.body.dataset.holId || 'default-hol';
+        localStorage.removeItem('hol-progress-' + holId);
+        location.reload();
+    }
+}
+
+function initStepToggles() {
+    document.querySelectorAll('.step-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var stepCard = this.closest('.step-card');
+            var content = stepCard.querySelector('.step-content');
+            var isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed', isExpanded);
+        });
+    });
+    document.querySelectorAll('.step-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            var toggle = this.querySelector('.step-toggle');
+            if (toggle) toggle.click();
+        });
+    });
+}
+
+function initCodeBlocks() {
+    document.querySelectorAll('.code-block').forEach(function(block) {
+        var code = block.querySelector('code');
+        if (code && block.dataset.language === 'sql') {
+            code.innerHTML = highlightSQL(code.textContent);
+        }
+    });
+}
+
+function copyCode(button) {
+    var codeBlock = button.closest('.code-block');
+    var code = codeBlock.querySelector('code');
+    var text = code.textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        var originalHTML = button.innerHTML;
+        button.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
+        button.style.color = 'var(--sf-green)';
+        setTimeout(function() { button.innerHTML = originalHTML; button.style.color = ''; }, 2000);
+    }).catch(function(err) { console.error('Error copying:', err); });
+}
+
+function openInSnowsight(button) {
+    var codeBlock = button.closest('.code-block');
+    var code = codeBlock.querySelector('code');
+    var sql = code.textContent.trim();
+    var encoded = encodeURIComponent(sql);
+    window.open('https://app.snowflake.com/worksheet?query=' + encoded, '_blank');
+}
+
+// Descarga el script SQL completo del HOL como archivo .sql
+function downloadSQL() {
+    var el = document.getElementById('hol-sql');
+    if (!el) { return; }
+    var blob = new Blob([el.textContent.trim() + '\n'], { type: 'application/sql;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'HOL_OLIMPICA.sql';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1500);
+}
+
+function highlightSQL(code) {
+    var keywords = ['SELECT','FROM','WHERE','AND','OR','NOT','IN','LIKE','JOIN','LEFT','RIGHT','INNER','OUTER','ON','AS','GROUP BY','ORDER BY','HAVING','LIMIT','OFFSET','INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','VIEW','DATABASE','SCHEMA','DROP','ALTER','INDEX','PRIMARY KEY','FOREIGN KEY','REFERENCES','NULL','NOT NULL','DEFAULT','UNIQUE','CHECK','CASE','WHEN','THEN','ELSE','END','UNION','INTERSECT','EXCEPT','ALL','DISTINCT','WITH','RECURSIVE','OVER','PARTITION BY','WINDOW','ROWS','RANGE','BETWEEN','UNBOUNDED','PRECEDING','FOLLOWING','TRUE','FALSE','IS','COALESCE','NULLIF','CAST','CONVERT','TRY_CAST','COUNT','SUM','AVG','MIN','MAX','MEDIAN','ROW_NUMBER','RANK','DENSE_RANK','NTILE','LAG','LEAD','FIRST_VALUE','LAST_VALUE','DATE','TIME','TIMESTAMP','INTERVAL','EXTRACT','DATEADD','DATEDIFF','SEMANTIC','CORTEX','COMPLETE','SENTIMENT','TRANSLATE','SUMMARIZE','COPY','STAGE','WAREHOUSE','ROLE','GRANT','USE','SHOW','DESCRIBE','CLONE','MASKING','POLICY','DYNAMIC','TARGET_LAG'];
+    var highlighted = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    highlighted = highlighted.replace(/(--.*$)/gm,'<span class="comment">$1</span>');
+    highlighted = highlighted.replace(/('(?:[^'\\]|\\.)*')/g,'<span class="string">$1</span>');
+    highlighted = highlighted.replace(/\b(\d+(?:\.\d+)?)\b/g,'<span class="number">$1</span>');
+    keywords.forEach(function(kw) {
+        var regex = new RegExp('\\b(' + kw + ')\\b', 'gi');
+        highlighted = highlighted.replace(regex, '<span class="keyword">$1</span>');
+    });
+    return highlighted;
+}
+
+function initScrollSpy() {
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                var stepNumber = entry.target.dataset.step;
+                updateActiveNavItem(stepNumber);
+                HOLState.currentStep = parseInt(stepNumber);
+            }
+        });
+    }, { rootMargin: '-100px 0px -50% 0px' });
+    document.querySelectorAll('.step-card').forEach(function(card) { observer.observe(card); });
+}
+
+function updateActiveNavItem(stepNumber) {
+    document.querySelectorAll('.step-nav-item').forEach(function(item) { item.classList.remove('active'); });
+    var activeItem = document.querySelector('.step-nav-item[data-step="' + stepNumber + '"]');
+    if (activeItem) activeItem.classList.add('active');
+}
+
+function scrollToStep(stepNumber) {
+    var stepCard = document.getElementById('step-' + stepNumber);
+    if (stepCard) stepCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && e.key >= '1' && e.key <= '9') {
+            var n = parseInt(e.key);
+            if (n <= HOLState.totalSteps) { scrollToStep(n); e.preventDefault(); }
+        }
+        if (e.altKey && e.key === 'c') {
+            if (!HOLState.completedSteps.has(HOLState.currentStep)) markStepComplete(HOLState.currentStep);
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'n') { if (HOLState.currentStep < HOLState.totalSteps) scrollToStep(HOLState.currentStep + 1); e.preventDefault(); }
+        if (e.altKey && e.key === 'p') { if (HOLState.currentStep > 1) scrollToStep(HOLState.currentStep - 1); e.preventDefault(); }
+    });
+}
+
+function showCompletion() {
+    var completionSection = document.getElementById('completionSection');
+    if (completionSection) {
+        completionSection.classList.add('visible');
+        completionSection.scrollIntoView({ behavior: 'smooth' });
+        var endTime = new Date();
+        var duration = endTime - HOLState.startTime;
+        var minutes = Math.floor(duration / 60000);
+        var seconds = Math.floor((duration % 60000) / 1000);
+        var totalTimeEl = document.getElementById('totalTime');
+        if (totalTimeEl) totalTimeEl.textContent = minutes + 'm ' + seconds + 's';
+    }
+}
+
+window.HOL = { markStepComplete: markStepComplete, scrollToStep: scrollToStep, resetProgress: resetProgress, copyCode: copyCode, openInSnowsight: openInSnowsight, getState: function() { return Object.assign({}, HOLState); } };
+    </script>
+</body>
+</html>
