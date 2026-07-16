@@ -359,7 +359,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,
     t.DirectorGeneral,
-    c.Observaciones AS Observaciones_Preview
+    c.Observaciones AS Observaciones
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'
@@ -375,7 +375,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,        -- Verá '****'
     t.DirectorGeneral,      -- Verá '****'
-    c.Observaciones AS Observaciones_Preview  -- Verá el texto con la PII redactada por AI_REDACT
+    c.Observaciones AS Observaciones  -- Verá el texto con la PII redactada por AI_REDACT
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'

@@ -717,9 +717,6 @@ a:hover { color: var(--sf-blue-dark); }
                     <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
                         <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                     </button>
-                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
-                    </button>
                 </div>
             </div>
             <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
@@ -748,7 +745,7 @@ USE SCHEMA PUBLIC;</code></pre>
             </div>
             <div class="callout-content">
                 <strong class="callout-title">Tip</strong>
-                <p>El warehouse se crea como <code>SMALL</code> con multi-cluster (1-2). Más adelante lo escalaremos a <code>LARGE</code> para la carga masiva y luego lo reduciremos a <code>XSMALL</code> para ahorrar créditos.</p>
+                <p>El warehouse se crea como <code>XSMALL</code> con multi-cluster (1-2). En la demo de carga lo escalaremos a <code>XLARGE</code> para acelerar y luego volveremos a <code>XSMALL</code> para ahorrar créditos.</p>
             </div>
         </div>
 
@@ -810,9 +807,6 @@ USE SCHEMA PUBLIC;</code></pre>
                     <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
                         <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                     </button>
-                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
-                    </button>
                 </div>
             </div>
             <pre><code class="language-sql">CREATE OR REPLACE FILE FORMAT FF_CSV_GZ
@@ -848,9 +842,6 @@ LIST @STG_OLIMPICA/fact_venta_linea/;</code></pre>
                 <div class="code-actions">
                     <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
                         <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                    </button>
-                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
                     </button>
                 </div>
             </div>
@@ -971,7 +962,7 @@ CREATE OR REPLACE TABLE FACT_CHECKLIST (
         </div>
 
         <h3>2.3 &mdash; Carga masiva con COPY INTO (demo de elasticidad)</h3>
-        <p>Antes de cargar todo, hacemos un <strong>experimento de performance</strong> con la tabla más grande (<code>FACT_VENTA_LINEA</code>, 150M filas repartidas en 128 archivos de ~30&nbsp;MB en S3): la cargamos primero con un warehouse <code>XSMALL</code>, la truncamos y la volvemos a cargar con <code>XLARGE</code>. Verás que es <strong>mucho más rápido</strong> (en pruebas reales: ~64s en XSMALL vs ~8s en XLARGE para 150M filas). Snowflake escala de forma elástica y factura por segundo, sin infraestructura que administrar. Luego cargamos el resto de tablas aprovechando el <code>XLARGE</code>.</p>
+        <p>Antes de cargar todo, hacemos un <strong>experimento de elasticidad</strong> con la tabla más grande (<code>FACT_VENTA_LINEA</code>, 150M filas repartidas en 128 archivos de ~30&nbsp;MB en S3): la cargamos primero con un warehouse <code>XSMALL</code>, la truncamos y la volvemos a cargar con <code>XLARGE</code>. Verás que es <strong>mucho más rápido</strong> (en pruebas reales: ~64s en XSMALL vs ~8s en XLARGE para 150M filas). Snowflake escala de forma elástica y factura por segundo, sin infraestructura que administrar. Luego cargamos el resto de tablas aprovechando el <code>XLARGE</code>.</p>
 
         <div class="code-block" data-language="sql">
             <div class="code-header">
@@ -979,9 +970,6 @@ CREATE OR REPLACE TABLE FACT_CHECKLIST (
                 <div class="code-actions">
                     <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
                         <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                    </button>
-                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
                     </button>
                 </div>
             </div>
@@ -1037,9 +1025,6 @@ ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XSMALL';</code></pre>
                     <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
                         <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                     </button>
-                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
-                    </button>
                 </div>
             </div>
             <pre><code class="language-sql">SELECT 'DIM_TIENDA'       AS tabla, COUNT(*) AS registros FROM DIM_TIENDA       UNION ALL
@@ -1085,12 +1070,11 @@ ORDER BY registros DESC;</code></pre>
     </div>
     <div class="step-content">
         <div class="step-description">
-            <p>En este paso ejecutaremos queries analíticas sobre el volumen completo (~347M filas) y demostraremos cómo el <strong>escalado elástico</strong> del warehouse de Snowflake reduce drásticamente los tiempos de ejecución sin modificar las queries ni los datos.</p>
-            <p>Ejecutamos una consulta analítica compleja sobre el volumen completo. Puedes ajustar el tamaño del warehouse (por ejemplo a <code>XLARGE</code>) para acelerarla cuando lo necesites.</p>
+            <p>En este paso ejecutamos una query analítica compleja sobre el volumen completo (~347M filas). Snowflake permite <strong>escalar el warehouse</strong> de forma elástica para acelerar este tipo de consultas sin modificar el SQL ni los datos.</p>
         </div>
 
         <h3>3.1 — Análisis cruzado: Ventas por Gerencia/Zona x Categoría x Promoción</h3>
-        <p>Esta query une 4 tablas (DIM_TIENDA → FACT_TICKET → FACT_VENTA_LINEA → DIM_PROMO) y filtra los últimos 6 meses. Es un escenario típico de reporting gerencial:</p>
+        <p>Esta query une 5 tablas (DIM_TIENDA → FACT_TICKET → FACT_VENTA_LINEA → DIM_PROMO → DIM_PRODUCTO) y filtra los últimos 6 meses. Es un escenario típico de reporting gerencial:</p>
 
         <div class="code-block" data-language="sql">
             <div class="code-header">
@@ -1098,9 +1082,6 @@ ORDER BY registros DESC;</code></pre>
                 <div class="code-actions">
                     <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">
                         <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                    </button>
-                    <button class="btn-run" onclick="openInSnowsight(this)" title="Abrir en Snowsight">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
                     </button>
                 </div>
             </div>
@@ -1134,7 +1115,7 @@ LIMIT 20;</code></pre>
             </div>
             <div class="callout-content">
                 <strong class="callout-title">Complejidad de la query</strong>
-                <p>Esta query realiza un JOIN de 5 tablas sobre cientos de millones de filas con agregaciones y filtro temporal. Anota el tiempo de ejecución con warehouse SMALL.</p>
+                <p>Esta query realiza un JOIN de 5 tablas sobre cientos de millones de filas con agregaciones y filtro temporal. Observa el tiempo en el <strong>Query History</strong>; puedes escalar el warehouse a <code>XLARGE</code> para acelerarla.</p>
             </div>
         </div>
 
@@ -1508,7 +1489,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,
     t.DirectorGeneral,
-    c.Observaciones AS Observaciones_Preview
+    c.Observaciones AS Observaciones
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'
@@ -1535,7 +1516,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,        -- Verá '****'
     t.DirectorGeneral,      -- Verá '****'
-    c.Observaciones AS Observaciones_Preview  -- Verá el texto con la PII redactada por AI_REDACT
+    c.Observaciones AS Observaciones  -- Verá el texto con la PII redactada por AI_REDACT
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'
@@ -1876,7 +1857,7 @@ SELECT AI_COMPLETE(
 
         <!-- 7.5 Visual merchandising -->
         <h3>7.5 &mdash; Análisis de góndola / Visual Merchandising</h3>
-        <p>Caso avanzado: un modelo de visión analiza una foto de la tienda y genera un diagnóstico estructurado con recomendaciones priorizadas.</p>
+        <p>Caso avanzado: un modelo de visión analiza una foto de la tienda y genera un informe en texto, fácil de leer, con recomendaciones priorizadas.</p>
         <div class="code-block" data-language="sql">
             <div class="code-header">
                 <span class="code-language">SQL</span>
@@ -3199,7 +3180,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,
     t.DirectorGeneral,
-    c.Observaciones AS Observaciones_Preview
+    c.Observaciones AS Observaciones
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'
@@ -3215,7 +3196,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,        -- Verá '****'
     t.DirectorGeneral,      -- Verá '****'
-    c.Observaciones AS Observaciones_Preview  -- Verá el texto con la PII redactada por AI_REDACT
+    c.Observaciones AS Observaciones  -- Verá el texto con la PII redactada por AI_REDACT
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'
@@ -3730,14 +3711,6 @@ function copyCode(button) {
     }).catch(function(err) { console.error('Error copying:', err); });
 }
 
-function openInSnowsight(button) {
-    var codeBlock = button.closest('.code-block');
-    var code = codeBlock.querySelector('code');
-    var sql = code.textContent.trim();
-    var encoded = encodeURIComponent(sql);
-    window.open('https://app.snowflake.com/worksheet?query=' + encoded, '_blank');
-}
-
 // Descarga el script SQL completo del HOL como archivo .sql
 function downloadSQL() {
     var el = document.getElementById('hol-sql');
@@ -3819,7 +3792,7 @@ function showCompletion() {
     }
 }
 
-window.HOL = { markStepComplete: markStepComplete, scrollToStep: scrollToStep, resetProgress: resetProgress, copyCode: copyCode, openInSnowsight: openInSnowsight, getState: function() { return Object.assign({}, HOLState); } };
+window.HOL = { markStepComplete: markStepComplete, scrollToStep: scrollToStep, resetProgress: resetProgress, copyCode: copyCode, getState: function() { return Object.assign({}, HOLState); } };
     </script>
 </body>
 </html>
