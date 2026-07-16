@@ -730,7 +730,7 @@ CREATE OR REPLACE DATABASE DB_HOL_OLIMPICA
 
 CREATE OR REPLACE WAREHOUSE WH_HOL_OLIMPICA
 WITH
-  WAREHOUSE_SIZE='SMALL'
+  WAREHOUSE_SIZE='XSMALL'
   AUTO_SUSPEND=60
   AUTO_RESUME=TRUE
   MIN_CLUSTER_COUNT=1
@@ -971,7 +971,7 @@ CREATE OR REPLACE TABLE FACT_CHECKLIST (
         </div>
 
         <h3>2.3 &mdash; Carga masiva con COPY INTO (demo de elasticidad)</h3>
-        <p>Antes de cargar todo, hacemos un <strong>experimento de performance</strong> con la tabla más grande (<code>FACT_VENTA_LINEA</code>, 150M filas repartidas en 128 archivos de ~30&nbsp;MB en S3): la cargamos primero con un warehouse <code>SMALL</code>, la truncamos y la volvemos a cargar con <code>XLARGE</code>. Verás que es <strong>mucho más rápido</strong> (en pruebas reales: ~33s en SMALL vs ~8s en XLARGE para 150M filas). Snowflake escala de forma elástica y factura por segundo, sin infraestructura que administrar. Luego cargamos el resto de tablas aprovechando el <code>XLARGE</code>.</p>
+        <p>Antes de cargar todo, hacemos un <strong>experimento de performance</strong> con la tabla más grande (<code>FACT_VENTA_LINEA</code>, 150M filas repartidas en 128 archivos de ~30&nbsp;MB en S3): la cargamos primero con un warehouse <code>XSMALL</code>, la truncamos y la volvemos a cargar con <code>XLARGE</code>. Verás que es <strong>mucho más rápido</strong> (en pruebas reales: ~64s en XSMALL vs ~8s en XLARGE para 150M filas). Snowflake escala de forma elástica y factura por segundo, sin infraestructura que administrar. Luego cargamos el resto de tablas aprovechando el <code>XLARGE</code>.</p>
 
         <div class="code-block" data-language="sql">
             <div class="code-header">
@@ -985,22 +985,26 @@ CREATE OR REPLACE TABLE FACT_CHECKLIST (
                     </button>
                 </div>
             </div>
-            <pre><code class="language-sql">-- === Experimento de performance sobre FACT_VENTA_LINEA (150M filas, 128 archivos) ===
+            <pre><code class="language-sql">-- === Experimento de elasticidad sobre FACT_VENTA_LINEA (150M filas, 128 archivos) ===
 
--- 1) Carga con warehouse SMALL (1 nodo). Anota el tiempo en el historial de queries (Query History).
---    FORCE=TRUE fuerza la recarga aunque los archivos ya figuren como cargados (TRUNCATE no borra ese historial).
-ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='SMALL';
-COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/ FORCE=TRUE;
+-- 1) Primera carga con el warehouse en XSMALL (el tamaño más pequeño = 1 nodo).
+--    Fíjate en el tiempo en el historial de queries (Query History).
+COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
 
--- 2) Truncamos para repetir exactamente la misma carga
+-- ¿Cuántos registros se cargaron?
+SELECT 'FACT_VENTA_LINEA', COUNT(*) FROM FACT_VENTA_LINEA;
+
+-- 2) Truncamos para repetir exactamente la misma carga.
+--    TRUNCATE borra el historial de carga (load metadata) de la tabla,
+--    así que el COPY vuelve a cargar los mismos archivos sin necesidad de FORCE=TRUE.
 TRUNCATE TABLE FACT_VENTA_LINEA;
 
--- 3) Recarga con warehouse XLARGE (16 nodos). Compara el tiempo: mucho más rápido.
+-- 3) Recarga con el warehouse en XLARGE (16 nodos). Compara el tiempo: mucho más rápido.
 ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XLARGE';
-COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/ FORCE=TRUE;
+COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
 
 -- Snowflake factura por SEGUNDO: el XLARGE termina en una fracción del tiempo
--- (en esta prueba: SMALL ~33s vs XLARGE ~8s para 150M filas) y no hay infraestructura que administrar.
+-- (en esta prueba: XSMALL ~64s vs XLARGE ~8s para 150M filas) y no hay infraestructura que administrar.
 -- Aprovechamos el XLARGE para cargar el resto de tablas rápidamente:
 COPY INTO DIM_TIENDA        FROM @STG_OLIMPICA/dim_tienda/;
 COPY INTO DIM_PRODUCTO      FROM @STG_OLIMPICA/dim_producto/;
@@ -1020,7 +1024,7 @@ ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XSMALL';</code></pre>
             </div>
             <div class="callout-content">
                 <strong class="callout-title">Elasticidad + facturación por segundo</strong>
-                <p>En esta prueba, cargar 150M filas tomó <strong>~33s en SMALL</strong> y <strong>~8s en XLARGE</strong> (~4x más rápido). Snowflake escala de forma <strong>instantánea</strong> y factura <strong>por segundo</strong>: subes de tamaño solo cuando lo necesitas y lo reduces al terminar (<code>AUTO_SUSPEND</code>), sin administrar servidores. Compara ambos tiempos en <code>Query History</code>.</p>
+                <p>En esta prueba, cargar 150M filas tomó <strong>~64s en XSMALL</strong> y <strong>~8s en XLARGE</strong> (~8x más rápido). Snowflake escala de forma <strong>instantánea</strong> y factura <strong>por segundo</strong>: subes de tamaño solo cuando lo necesitas y lo reduces al terminar (<code>AUTO_SUSPEND</code>), sin administrar servidores. Compara ambos tiempos en <code>Query History</code>.</p>
             </div>
         </div>
 
@@ -2897,7 +2901,7 @@ CREATE OR REPLACE DATABASE DB_HOL_OLIMPICA
 
 CREATE OR REPLACE WAREHOUSE WH_HOL_OLIMPICA
 WITH
-  WAREHOUSE_SIZE='SMALL'
+  WAREHOUSE_SIZE='XSMALL'
   AUTO_SUSPEND=60
   AUTO_RESUME=TRUE
   MIN_CLUSTER_COUNT=1
@@ -3047,22 +3051,26 @@ CREATE OR REPLACE TABLE FACT_CHECKLIST (
 ) COMMENT='Checklists de auditoría operativa - 8M registros';
 
 -- > 2.3 — Carga masiva con COPY INTO (demo de elasticidad)
--- === Experimento de performance sobre FACT_VENTA_LINEA (150M filas, 128 archivos) ===
+-- === Experimento de elasticidad sobre FACT_VENTA_LINEA (150M filas, 128 archivos) ===
 
--- 1) Carga con warehouse SMALL (1 nodo). Anota el tiempo en el historial de queries (Query History).
---    FORCE=TRUE fuerza la recarga aunque los archivos ya figuren como cargados (TRUNCATE no borra ese historial).
-ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='SMALL';
-COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/ FORCE=TRUE;
+-- 1) Primera carga con el warehouse en XSMALL (el tamaño más pequeño = 1 nodo).
+--    Fíjate en el tiempo en el historial de queries (Query History).
+COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
 
--- 2) Truncamos para repetir exactamente la misma carga
+-- ¿Cuántos registros se cargaron?
+SELECT 'FACT_VENTA_LINEA', COUNT(*) FROM FACT_VENTA_LINEA;
+
+-- 2) Truncamos para repetir exactamente la misma carga.
+--    TRUNCATE borra el historial de carga (load metadata) de la tabla,
+--    así que el COPY vuelve a cargar los mismos archivos sin necesidad de FORCE=TRUE.
 TRUNCATE TABLE FACT_VENTA_LINEA;
 
--- 3) Recarga con warehouse XLARGE (16 nodos). Compara el tiempo: mucho más rápido.
+-- 3) Recarga con el warehouse en XLARGE (16 nodos). Compara el tiempo: mucho más rápido.
 ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XLARGE';
-COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/ FORCE=TRUE;
+COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
 
 -- Snowflake factura por SEGUNDO: el XLARGE termina en una fracción del tiempo
--- (en esta prueba: SMALL ~33s vs XLARGE ~8s para 150M filas) y no hay infraestructura que administrar.
+-- (en esta prueba: XSMALL ~64s vs XLARGE ~8s para 150M filas) y no hay infraestructura que administrar.
 -- Aprovechamos el XLARGE para cargar el resto de tablas rápidamente:
 COPY INTO DIM_TIENDA        FROM @STG_OLIMPICA/dim_tienda/;
 COPY INTO DIM_PRODUCTO      FROM @STG_OLIMPICA/dim_producto/;

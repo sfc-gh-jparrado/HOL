@@ -20,7 +20,7 @@ CREATE OR REPLACE DATABASE DB_HOL_OLIMPICA
 
 CREATE OR REPLACE WAREHOUSE WH_HOL_OLIMPICA
 WITH
-  WAREHOUSE_SIZE='SMALL'
+  WAREHOUSE_SIZE='XSMALL'
   AUTO_SUSPEND=60
   AUTO_RESUME=TRUE
   MIN_CLUSTER_COUNT=1
@@ -170,22 +170,26 @@ CREATE OR REPLACE TABLE FACT_CHECKLIST (
 ) COMMENT='Checklists de auditoría operativa - 8M registros';
 
 -- > 2.3 — Carga masiva con COPY INTO (demo de elasticidad)
--- === Experimento de performance sobre FACT_VENTA_LINEA (150M filas, 128 archivos) ===
+-- === Experimento de elasticidad sobre FACT_VENTA_LINEA (150M filas, 128 archivos) ===
 
--- 1) Carga con warehouse SMALL (1 nodo). Anota el tiempo en el historial de queries (Query History).
---    FORCE=TRUE fuerza la recarga aunque los archivos ya figuren como cargados (TRUNCATE no borra ese historial).
-ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='SMALL';
-COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/ FORCE=TRUE;
+-- 1) Primera carga con el warehouse en XSMALL (el tamaño más pequeño = 1 nodo).
+--    Fíjate en el tiempo en el historial de queries (Query History).
+COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
 
--- 2) Truncamos para repetir exactamente la misma carga
+-- ¿Cuántos registros se cargaron?
+SELECT 'FACT_VENTA_LINEA', COUNT(*) FROM FACT_VENTA_LINEA;
+
+-- 2) Truncamos para repetir exactamente la misma carga.
+--    TRUNCATE borra el historial de carga (load metadata) de la tabla,
+--    así que el COPY vuelve a cargar los mismos archivos sin necesidad de FORCE=TRUE.
 TRUNCATE TABLE FACT_VENTA_LINEA;
 
--- 3) Recarga con warehouse XLARGE (16 nodos). Compara el tiempo: mucho más rápido.
+-- 3) Recarga con el warehouse en XLARGE (16 nodos). Compara el tiempo: mucho más rápido.
 ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XLARGE';
-COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/ FORCE=TRUE;
+COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
 
 -- Snowflake factura por SEGUNDO: el XLARGE termina en una fracción del tiempo
--- (en esta prueba: SMALL ~33s vs XLARGE ~8s para 150M filas) y no hay infraestructura que administrar.
+-- (en esta prueba: XSMALL ~64s vs XLARGE ~8s para 150M filas) y no hay infraestructura que administrar.
 -- Aprovechamos el XLARGE para cargar el resto de tablas rápidamente:
 COPY INTO DIM_TIENDA        FROM @STG_OLIMPICA/dim_tienda/;
 COPY INTO DIM_PRODUCTO      FROM @STG_OLIMPICA/dim_producto/;
