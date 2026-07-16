@@ -577,8 +577,50 @@ FROM llamadas
 ORDER BY tipo_llamada;
 
 /* ----------------------------------------------------------------------
+   Dynamic Tables
+   > 8.1 — DT_VENTAS_TIENDA_MES (Ventas agregadas por tienda y mes)
+   ---------------------------------------------------------------------- */
+USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+USE WAREHOUSE WH_HOL_OLIMPICA;
+
+CREATE OR REPLACE DYNAMIC TABLE DT_VENTAS_TIENDA_MES
+    TARGET_LAG   = '1 hour'
+    WAREHOUSE    = WH_HOL_OLIMPICA
+    REFRESH_MODE = INCREMENTAL
+AS
+SELECT
+    DATE_TRUNC('month', ft.FECHA)  AS mes,
+    t.IdTienda,
+    t.Ciudad,
+    t.Gerencia,
+    COUNT(*)            AS tickets,
+    SUM(ft.MontoTotal)  AS ventas,
+    AVG(ft.MontoTotal)  AS ticket_promedio,
+    SUM(ft.NumLineas)   AS lineas
+FROM FACT_TICKET ft
+JOIN DIM_TIENDA t ON t.IdTienda = ft.IdTienda
+GROUP BY 1, 2, 3, 4;
+
+-- > 8.2 — Verificar la Dynamic Table
+-- Listar Dynamic Tables creadas
+SHOW DYNAMIC TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC;
+
+-- Consultar la Dynamic Table
+SELECT * FROM DT_VENTAS_TIENDA_MES ORDER BY mes DESC LIMIT 10;
+
+-- Historial de refresh
+SELECT NAME, STATE, REFRESH_START_TIME, REFRESH_END_TIME,
+       STATISTICS:numInsertedRows::INT AS filas_insertadas
+FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(
+    NAME => 'DB_HOL_OLIMPICA.PUBLIC.DT_VENTAS_TIENDA_MES'
+))
+ORDER BY REFRESH_START_TIME DESC LIMIT 5;
+
+/* ----------------------------------------------------------------------
    Cortex Search
-   > 8.1 — Crear tabla enriquecida para indexación
+   > 9.1 — Crear tabla enriquecida para indexación
    ---------------------------------------------------------------------- */
 USE ROLE ACCOUNTADMIN;
 USE DATABASE DB_HOL_OLIMPICA;
@@ -605,7 +647,7 @@ WHERE c.FechaRealizacion >= DATEADD(year, -1, CURRENT_DATE())
   AND c.Observaciones IS NOT NULL
 LIMIT 50000;
 
--- > 8.2 — Crear el servicio Cortex Search (SQL)
+-- > 9.2 — Crear el servicio Cortex Search (SQL)
 -- Crear servicio de búsqueda semántica sobre observaciones de auditoría
 CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
     ON Texto
@@ -617,11 +659,11 @@ CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
            FechaRealizacion, NotaChecklist, EstadoChecklist, Texto
     FROM T_OBSERVACIONES_ENRIQUECIDAS;
 
--- > 8.3 — Verificar el estado del servicio
+-- > 9.3 — Verificar el estado del servicio
 -- Verificar estado del servicio (esperar a que indexing_state = 'ACTIVE')
 SHOW CORTEX SEARCH SERVICES LIKE 'CSS_AUDITORIAS';
 
--- > 8.4 — Demo de búsqueda semántica
+-- > 9.4 — Demo de búsqueda semántica
 -- Búsqueda semántica: "cadena de frío producto vencido"
 -- Aplanamos el JSON a columnas legibles para negocio
 WITH busqueda AS (
@@ -644,87 +686,20 @@ SELECT
     r.value:Texto::STRING               AS hallazgo
 FROM busqueda, LATERAL FLATTEN(input => busqueda.resultados) r;
 
--- > 8.5 — Alternativa por la UI (Snowsight)
+-- > 9.5 — Alternativa por la UI (Snowsight)
 -- Restaurar tamaño del warehouse
 ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'SMALL';
 
 /* ----------------------------------------------------------------------
-   Dynamic Tables
-   > 9.1 — DT_VENTAS_TIENDA_MES (Ventas agregadas por tienda y mes)
-   ---------------------------------------------------------------------- */
-USE ROLE ACCOUNTADMIN;
-USE DATABASE DB_HOL_OLIMPICA;
-USE SCHEMA PUBLIC;
-USE WAREHOUSE WH_HOL_OLIMPICA;
-
-CREATE OR REPLACE DYNAMIC TABLE DT_VENTAS_TIENDA_MES
-    TARGET_LAG   = '1 hour'
-    WAREHOUSE    = WH_HOL_OLIMPICA
-    REFRESH_MODE = INCREMENTAL
-AS
-SELECT
-    DATE_TRUNC('month', ft.FECHA)  AS mes,
-    t.IdTienda,
-    t.Ciudad,
-    t.Gerencia,
-    COUNT(*)            AS tickets,
-    SUM(ft.MontoTotal)  AS ventas,
-    AVG(ft.MontoTotal)  AS ticket_promedio,
-    SUM(ft.NumLineas)   AS lineas
-FROM FACT_TICKET ft
-JOIN DIM_TIENDA t ON t.IdTienda = ft.IdTienda
-GROUP BY 1, 2, 3, 4;
-
--- > 9.2 — Verificar la Dynamic Table
--- Listar Dynamic Tables creadas
-SHOW DYNAMIC TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC;
-
--- Consultar la Dynamic Table
-SELECT * FROM DT_VENTAS_TIENDA_MES ORDER BY mes DESC LIMIT 10;
-
--- Historial de refresh
-SELECT NAME, STATE, REFRESH_START_TIME, REFRESH_END_TIME,
-       STATISTICS:numInsertedRows::INT AS filas_insertadas
-FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(
-    NAME => 'DB_HOL_OLIMPICA.PUBLIC.DT_VENTAS_TIENDA_MES'
-))
-ORDER BY REFRESH_START_TIME DESC LIMIT 5;
-
-/* ----------------------------------------------------------------------
    Cortex Analyst
-   > 10.2 — Verified Queries (5 ejemplos)
+   > 10.2 — Verified Query (1 ejemplo)
    ---------------------------------------------------------------------- */
--- 1. tickets_por_gerencia_2026
+-- tickets_por_gerencia_2026
 SELECT t.Gerencia, COUNT(f.FACTURA) AS tickets
 FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
 JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
 WHERE YEAR(f.FECHA) = 2026
 GROUP BY 1 ORDER BY 2 DESC;
-
--- 2. top_10_promociones
-SELECT p.NomPromo, COUNT(*) AS frecuencia
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_PROMO p ON p.OFERTA_ID = l.OFERTA_ID
-GROUP BY 1 ORDER BY 2 DESC LIMIT 10;
-
--- 3. ventas_por_ciudad
-SELECT t.Ciudad, SUM(l.Venta) AS ventas_total
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = l.IdTienda
-GROUP BY 1 ORDER BY 2 DESC;
-
--- 4. ventas_mensuales_categoria
-SELECT DATE_TRUNC('month', l.FECHA) AS mes, l.Categoria,
-       SUM(l.Venta) AS ventas
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-WHERE l.FECHA >= DATEADD(year, -1, CURRENT_DATE())
-GROUP BY 1, 2 ORDER BY 1, 2;
-
--- 5. ticket_promedio_tienda
-SELECT t.IdTienda, t.Ciudad, AVG(f.MontoTotal) AS ticket_promedio
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
-GROUP BY 1, 2 ORDER BY 3 DESC;
 
 /* ----------------------------------------------------------------------
    Snowflake CoWork

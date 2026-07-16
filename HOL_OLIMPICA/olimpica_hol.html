@@ -643,17 +643,17 @@ a:hover { color: var(--sf-blue-dark); }
             </a>
             <a class="step-nav-item" data-step="8" onclick="scrollToStep(8)">
                 <span class="step-indicator">8</span>
-                <span>Cortex Search</span>
-                <span class="nav-time">10 min</span>
-            </a>
-            <a class="step-nav-item" data-step="9" onclick="scrollToStep(9)">
-                <span class="step-indicator">9</span>
                 <span>Dynamic Tables</span>
                 <span class="nav-time">8 min</span>
             </a>
+            <a class="step-nav-item" data-step="9" onclick="scrollToStep(9)">
+                <span class="step-indicator">9</span>
+                <span>Cortex Search</span>
+                <span class="nav-time">10 min</span>
+            </a>
             <a class="step-nav-item" data-step="10" onclick="scrollToStep(10)">
                 <span class="step-indicator">10</span>
-                <span>Semantic View + Analyst</span>
+                <span>Cortex Analyst</span>
                 <span class="nav-time">8 min</span>
             </a>
             <a class="step-nav-item" data-step="11" onclick="scrollToStep(11)">
@@ -2000,190 +2000,6 @@ ORDER BY tipo_llamada;</code></pre>
     <div class="step-header">
         <div class="step-number">8</div>
         <div class="step-info">
-            <h2 class="step-title">Cortex Search</h2>
-            <span class="step-duration">~10 min</span>
-        </div>
-        <button class="step-toggle" aria-expanded="true">
-            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
-        </button>
-    </div>
-    <div class="step-content">
-        <div class="step-description">
-            <p><strong>Cortex Search</strong> permite realizar búsquedas semánticas sobre texto en lenguaje natural &mdash; sin necesidad de keywords exactos. Indexaremos las observaciones de auditoría de Olímpica para poder buscar hallazgos por concepto (ej. "cadena de frío", "producto vencido") de forma inteligente.</p>
-        </div>
-
-        <!-- 8.1 Tabla enriquecida -->
-        <h3>8.1 &mdash; Crear tabla enriquecida para indexación</h3>
-        <p>Primero escalamos el warehouse y creamos una tabla con las observaciones del último año, enriquecida con datos de tienda.</p>
-        <div class="code-block" data-language="sql">
-            <div class="code-header">
-                <span class="code-language">SQL</span>
-                <div class="code-actions">
-                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
-                </div>
-            </div>
-            <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
-USE DATABASE DB_HOL_OLIMPICA;
-USE SCHEMA PUBLIC;
-
--- Escalar warehouse para la creación del índice
-ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'MEDIUM';
-
--- Tabla enriquecida con contexto de tienda (últimos 12 meses, máx. 50k registros)
-CREATE OR REPLACE TABLE T_OBSERVACIONES_ENRIQUECIDAS AS
-SELECT
-    c.IdTienda,
-    t.Ciudad,
-    t.Zona,
-    t.Gerencia,
-    c.TipoSucursal,
-    c.FechaRealizacion,
-    c.NotaChecklist,
-    c.EstadoChecklist,
-    c.Observaciones AS Texto
-FROM FACT_CHECKLIST c
-JOIN DIM_TIENDA t ON t.IdTienda = c.IdTienda
-WHERE c.FechaRealizacion >= DATEADD(year, -1, CURRENT_DATE())
-  AND c.Observaciones IS NOT NULL
-LIMIT 50000;</code></pre>
-        </div>
-
-        <!-- 8.2 Crear Cortex Search Service -->
-        <h3>8.2 &mdash; Crear el servicio Cortex Search (SQL)</h3>
-        <p>Creamos el servicio de búsqueda semántica sobre la columna <code>Texto</code>, con atributos de filtrado.</p>
-        <div class="code-block" data-language="sql">
-            <div class="code-header">
-                <span class="code-language">SQL</span>
-                <div class="code-actions">
-                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
-                </div>
-            </div>
-            <pre><code class="language-sql">-- Crear servicio de búsqueda semántica sobre observaciones de auditoría
-CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
-    ON Texto
-    ATTRIBUTES IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist
-    WAREHOUSE = WH_HOL_OLIMPICA
-    TARGET_LAG = '1 hour'
-    AS
-    SELECT IdTienda, Ciudad, Zona, Gerencia, TipoSucursal,
-           FechaRealizacion, NotaChecklist, EstadoChecklist, Texto
-    FROM T_OBSERVACIONES_ENRIQUECIDAS;</code></pre>
-        </div>
-
-        <div class="callout callout-info">
-            <div class="callout-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-            </div>
-            <div class="callout-content">
-                <strong class="callout-title">Tiempo de indexación</strong>
-                <p>La indexación tarda entre 3 y 8 minutos. Puedes continuar con el siguiente sub-paso mientras tanto.</p>
-            </div>
-        </div>
-
-        <!-- 8.3 Verificar -->
-        <h3>8.3 &mdash; Verificar el estado del servicio</h3>
-        <div class="code-block" data-language="sql">
-            <div class="code-header">
-                <span class="code-language">SQL</span>
-                <div class="code-actions">
-                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
-                </div>
-            </div>
-            <pre><code class="language-sql">-- Verificar estado del servicio (esperar a que indexing_state = 'ACTIVE')
-SHOW CORTEX SEARCH SERVICES LIKE 'CSS_AUDITORIAS';</code></pre>
-        </div>
-
-        <!-- 8.4 Demo búsqueda -->
-        <h3>8.4 &mdash; Demo de búsqueda semántica</h3>
-        <p>Una vez activo el servicio, realizamos una búsqueda por concepto. No necesitamos keywords exactos &mdash; Cortex Search entiende la intención semántica. Aplanamos el JSON de resultados a <strong>columnas legibles</strong> para que un usuario de negocio vea directamente ciudad, zona, gerencia, la nota de auditoría y el hallazgo.</p>
-        <div class="code-block" data-language="sql">
-            <div class="code-header">
-                <span class="code-language">SQL</span>
-                <div class="code-actions">
-                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
-                </div>
-            </div>
-            <pre><code class="language-sql">-- Búsqueda semántica: "cadena de frío producto vencido"
--- Aplanamos el JSON a columnas legibles para negocio
-WITH busqueda AS (
-    SELECT PARSE_JSON(
-        SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
-            'DB_HOL_OLIMPICA.PUBLIC.CSS_AUDITORIAS',
-            '{
-                "query": "cadena de frío producto vencido",
-                "columns": ["Ciudad", "Zona", "Gerencia", "NotaChecklist", "Texto"],
-                "limit": 5
-            }'
-        )
-    )['results'] AS resultados
-)
-SELECT
-    r.value:Ciudad::STRING              AS ciudad,
-    r.value:Zona::STRING                AS zona,
-    r.value:Gerencia::STRING            AS gerencia,
-    ROUND(r.value:NotaChecklist::FLOAT, 1) AS nota_auditoria,
-    r.value:Texto::STRING               AS hallazgo
-FROM busqueda, LATERAL FLATTEN(input => busqueda.resultados) r;</code></pre>
-        </div>
-
-        <div class="callout callout-tip">
-            <div class="callout-icon">
-                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
-            </div>
-            <div class="callout-content">
-                <strong class="callout-title">Prueba otras búsquedas</strong>
-                <p>Intenta: <code>"filas largas en cajas de pago"</code>, <code>"producto sin etiqueta de precio"</code>, <code>"limpieza deficiente en baños"</code> &mdash; Cortex Search encontrará observaciones relacionadas aunque no usen esas palabras exactas.</p>
-            </div>
-        </div>
-
-        <!-- 8.5 Opción UI -->
-        <h3>8.5 &mdash; Alternativa por la UI (Snowsight)</h3>
-        <p>También puedes crear el servicio desde la interfaz gráfica:</p>
-        <ol>
-            <li><strong>Snowsight</strong> &rarr; menú lateral &rarr; <strong>AI &amp; ML</strong> &rarr; <strong>Cortex Search</strong>.</li>
-            <li>Botón <strong>+ Create</strong> &rarr; <strong>Cortex Search Service</strong>.</li>
-            <li><strong>Step 1</strong> &mdash; Source data: Database <code>DB_HOL_OLIMPICA</code>, Schema <code>PUBLIC</code>, Table <code>T_OBSERVACIONES_ENRIQUECIDAS</code>.</li>
-            <li><strong>Step 2</strong> &mdash; Search column: <code>Texto</code>.</li>
-            <li><strong>Step 3</strong> &mdash; Attributes: marcar <code>IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist</code>.</li>
-            <li><strong>Step 4</strong> &mdash; Columns in results: dejar todas las columnas seleccionadas.</li>
-            <li><strong>Step 5</strong> &mdash; Configure: Name = <code>CSS_AUDITORIAS</code>, Warehouse = <code>WH_HOL_OLIMPICA</code>, Target lag = <code>1 hour</code>. Click <strong>Create</strong>.</li>
-            <li>Esperar a que <strong>Indexing state</strong> pase a <code>ACTIVE</code>. Luego usar la pestaña <strong>Search Playground</strong> para probar búsquedas.</li>
-        </ol>
-
-        <div class="code-block" data-language="sql">
-            <div class="code-header">
-                <span class="code-language">SQL</span>
-                <div class="code-actions">
-                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
-                </div>
-            </div>
-            <pre><code class="language-sql">-- Restaurar tamaño del warehouse
-ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'SMALL';</code></pre>
-        </div>
-
-        <div class="callout callout-success">
-            <div class="callout-icon">
-                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-            </div>
-            <div class="callout-content">
-                <strong class="callout-title">Resumen del paso</strong>
-                <p>Has creado un servicio de búsqueda semántica sobre 50,000 observaciones de auditoría. Ahora cualquier usuario puede buscar hallazgos por concepto sin necesidad de escribir SQL complejo ni conocer los términos exactos almacenados.</p>
-            </div>
-        </div>
-
-        <div class="step-actions">
-            <button class="btn-check" onclick="markStepComplete(8)">
-                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-                Marcar como completado
-            </button>
-        </div>
-    </div>
-</article>
-
-<article class="step-card" id="step-9" data-step="9">
-    <div class="step-header">
-        <div class="step-number">9</div>
-        <div class="step-info">
             <h2 class="step-title">Dynamic Tables</h2>
             <span class="step-duration">~8 min</span>
         </div>
@@ -2207,7 +2023,7 @@ ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'SMALL';</code></pre>
             </div>
         </div>
 
-        <h3>9.1 &mdash; DT_VENTAS_TIENDA_MES (Ventas agregadas por tienda y mes)</h3>
+        <h3>8.1 &mdash; DT_VENTAS_TIENDA_MES (Ventas agregadas por tienda y mes)</h3>
         <p>Consolida tickets, ventas y ticket promedio por tienda y mes, agregando desde <code>FACT_TICKET</code> (grano de ticket) y enriqueciendo con dimensiones geogr&aacute;ficas de <code>DIM_TIENDA</code>.</p>
 
         <div class="code-block" data-language="sql">
@@ -2253,7 +2069,7 @@ GROUP BY 1, 2, 3, 4;</code></pre>
             </div>
         </div>
 
-        <h3>9.2 &mdash; Verificar la Dynamic Table</h3>
+        <h3>8.2 &mdash; Verificar la Dynamic Table</h3>
 
         <div class="code-block" data-language="sql">
             <div class="code-header">
@@ -2286,6 +2102,190 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 5;</code></pre>
             <div class="callout-content">
                 <strong class="callout-title">Pipeline incremental sin ETL externo</strong>
                 <p>Cada vez que lleguen nuevos tickets a <code>FACT_TICKET</code>, Snowflake detectar&aacute; los cambios y refrescar&aacute; la Dynamic Table de forma incremental &mdash; sin Airflow, sin cron, sin c&oacute;digo adicional.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(8)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-9" data-step="9">
+    <div class="step-header">
+        <div class="step-number">9</div>
+        <div class="step-info">
+            <h2 class="step-title">Cortex Search</h2>
+            <span class="step-duration">~10 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p><strong>Cortex Search</strong> permite realizar búsquedas semánticas sobre texto en lenguaje natural &mdash; sin necesidad de keywords exactos. Indexaremos las observaciones de auditoría de Olímpica para poder buscar hallazgos por concepto (ej. "cadena de frío", "producto vencido") de forma inteligente.</p>
+        </div>
+
+        <!-- 8.1 Tabla enriquecida -->
+        <h3>9.1 &mdash; Crear tabla enriquecida para indexación</h3>
+        <p>Primero escalamos el warehouse y creamos una tabla con las observaciones del último año, enriquecida con datos de tienda.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+
+-- Escalar warehouse para la creación del índice
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'MEDIUM';
+
+-- Tabla enriquecida con contexto de tienda (últimos 12 meses, máx. 50k registros)
+CREATE OR REPLACE TABLE T_OBSERVACIONES_ENRIQUECIDAS AS
+SELECT
+    c.IdTienda,
+    t.Ciudad,
+    t.Zona,
+    t.Gerencia,
+    c.TipoSucursal,
+    c.FechaRealizacion,
+    c.NotaChecklist,
+    c.EstadoChecklist,
+    c.Observaciones AS Texto
+FROM FACT_CHECKLIST c
+JOIN DIM_TIENDA t ON t.IdTienda = c.IdTienda
+WHERE c.FechaRealizacion >= DATEADD(year, -1, CURRENT_DATE())
+  AND c.Observaciones IS NOT NULL
+LIMIT 50000;</code></pre>
+        </div>
+
+        <!-- 8.2 Crear Cortex Search Service -->
+        <h3>9.2 &mdash; Crear el servicio Cortex Search (SQL)</h3>
+        <p>Creamos el servicio de búsqueda semántica sobre la columna <code>Texto</code>, con atributos de filtrado.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Crear servicio de búsqueda semántica sobre observaciones de auditoría
+CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
+    ON Texto
+    ATTRIBUTES IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist
+    WAREHOUSE = WH_HOL_OLIMPICA
+    TARGET_LAG = '1 hour'
+    AS
+    SELECT IdTienda, Ciudad, Zona, Gerencia, TipoSucursal,
+           FechaRealizacion, NotaChecklist, EstadoChecklist, Texto
+    FROM T_OBSERVACIONES_ENRIQUECIDAS;</code></pre>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Tiempo de indexación</strong>
+                <p>La indexación tarda entre 3 y 8 minutos. Puedes continuar con el siguiente sub-paso mientras tanto.</p>
+            </div>
+        </div>
+
+        <!-- 8.3 Verificar -->
+        <h3>9.3 &mdash; Verificar el estado del servicio</h3>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Verificar estado del servicio (esperar a que indexing_state = 'ACTIVE')
+SHOW CORTEX SEARCH SERVICES LIKE 'CSS_AUDITORIAS';</code></pre>
+        </div>
+
+        <!-- 8.4 Demo búsqueda -->
+        <h3>9.4 &mdash; Demo de búsqueda semántica</h3>
+        <p>Una vez activo el servicio, realizamos una búsqueda por concepto. No necesitamos keywords exactos &mdash; Cortex Search entiende la intención semántica. Aplanamos el JSON de resultados a <strong>columnas legibles</strong> para que un usuario de negocio vea directamente ciudad, zona, gerencia, la nota de auditoría y el hallazgo.</p>
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Búsqueda semántica: "cadena de frío producto vencido"
+-- Aplanamos el JSON a columnas legibles para negocio
+WITH busqueda AS (
+    SELECT PARSE_JSON(
+        SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+            'DB_HOL_OLIMPICA.PUBLIC.CSS_AUDITORIAS',
+            '{
+                "query": "cadena de frío producto vencido",
+                "columns": ["Ciudad", "Zona", "Gerencia", "NotaChecklist", "Texto"],
+                "limit": 5
+            }'
+        )
+    )['results'] AS resultados
+)
+SELECT
+    r.value:Ciudad::STRING              AS ciudad,
+    r.value:Zona::STRING                AS zona,
+    r.value:Gerencia::STRING            AS gerencia,
+    ROUND(r.value:NotaChecklist::FLOAT, 1) AS nota_auditoria,
+    r.value:Texto::STRING               AS hallazgo
+FROM busqueda, LATERAL FLATTEN(input => busqueda.resultados) r;</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Prueba otras búsquedas</strong>
+                <p>Intenta: <code>"filas largas en cajas de pago"</code>, <code>"producto sin etiqueta de precio"</code>, <code>"limpieza deficiente en baños"</code> &mdash; Cortex Search encontrará observaciones relacionadas aunque no usen esas palabras exactas.</p>
+            </div>
+        </div>
+
+        <!-- 8.5 Opción UI -->
+        <h3>9.5 &mdash; Alternativa por la UI (Snowsight)</h3>
+        <p>También puedes crear el servicio desde la interfaz gráfica:</p>
+        <ol>
+            <li><strong>Snowsight</strong> &rarr; menú lateral &rarr; <strong>AI &amp; ML</strong> &rarr; <strong>Cortex Search</strong>.</li>
+            <li>Botón <strong>+ Create</strong> &rarr; <strong>Cortex Search Service</strong>.</li>
+            <li><strong>Step 1</strong> &mdash; Source data: Database <code>DB_HOL_OLIMPICA</code>, Schema <code>PUBLIC</code>, Table <code>T_OBSERVACIONES_ENRIQUECIDAS</code>.</li>
+            <li><strong>Step 2</strong> &mdash; Search column: <code>Texto</code>.</li>
+            <li><strong>Step 3</strong> &mdash; Attributes: marcar <code>IdTienda, Ciudad, Zona, Gerencia, TipoSucursal, FechaRealizacion, NotaChecklist, EstadoChecklist</code>.</li>
+            <li><strong>Step 4</strong> &mdash; Columns in results: dejar todas las columnas seleccionadas.</li>
+            <li><strong>Step 5</strong> &mdash; Configure: Name = <code>CSS_AUDITORIAS</code>, Warehouse = <code>WH_HOL_OLIMPICA</code>, Target lag = <code>1 hour</code>. Click <strong>Create</strong>.</li>
+            <li>Esperar a que <strong>Indexing state</strong> pase a <code>ACTIVE</code>. Luego usar la pestaña <strong>Search Playground</strong> para probar búsquedas.</li>
+        </ol>
+
+        <div class="code-block" data-language="sql">
+            <div class="code-header">
+                <span class="code-language">SQL</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-sql">-- Restaurar tamaño del warehouse
+ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'SMALL';</code></pre>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Resumen del paso</strong>
+                <p>Has creado un servicio de búsqueda semántica sobre 50,000 observaciones de auditoría. Ahora cualquier usuario puede buscar hallazgos por concepto sin necesidad de escribir SQL complejo ni conocer los términos exactos almacenados.</p>
             </div>
         </div>
 
@@ -2378,23 +2378,19 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 5;</code></pre>
             <li>Click <strong>Save and validate</strong>, luego <strong>Create</strong>.</li>
         </ol>
 
-        <h3>10.2 &mdash; Verified Queries (5 ejemplos)</h3>
-        <p>Agr&eacute;galas en el paso &ldquo;Verified queries&rdquo; del wizard:</p>
+        <h3>10.2 &mdash; Verified Query (1 ejemplo)</h3>
+        <p>Agr&eacute;gala en el paso &ldquo;Verified queries&rdquo; del wizard:</p>
 
         <div class="table-wrapper">
             <table class="data-table">
                 <thead><tr><th>Nombre</th><th>Pregunta</th></tr></thead>
                 <tbody>
                     <tr><td>tickets_por_gerencia_2026</td><td>&iquest;Cu&aacute;ntos tickets por gerencia tuvimos en 2026?</td></tr>
-                    <tr><td>top_10_promociones</td><td>Top 10 promociones m&aacute;s aplicadas</td></tr>
-                    <tr><td>ventas_por_ciudad</td><td>Ventas totales por ciudad</td></tr>
-                    <tr><td>ventas_mensuales_categoria</td><td>Ventas mensuales por categor&iacute;a del &uacute;ltimo a&ntilde;o</td></tr>
-                    <tr><td>ticket_promedio_tienda</td><td>Ticket promedio por tienda</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <h4>SQL de cada verified query:</h4>
+        <h4>SQL del verified query:</h4>
 
         <div class="code-block" data-language="sql">
             <div class="code-header">
@@ -2405,37 +2401,12 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 5;</code></pre>
                     </button>
                 </div>
             </div>
-            <pre><code class="language-sql">-- 1. tickets_por_gerencia_2026
+            <pre><code class="language-sql">-- tickets_por_gerencia_2026
 SELECT t.Gerencia, COUNT(f.FACTURA) AS tickets
 FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
 JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
 WHERE YEAR(f.FECHA) = 2026
-GROUP BY 1 ORDER BY 2 DESC;
-
--- 2. top_10_promociones
-SELECT p.NomPromo, COUNT(*) AS frecuencia
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_PROMO p ON p.OFERTA_ID = l.OFERTA_ID
-GROUP BY 1 ORDER BY 2 DESC LIMIT 10;
-
--- 3. ventas_por_ciudad
-SELECT t.Ciudad, SUM(l.Venta) AS ventas_total
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = l.IdTienda
-GROUP BY 1 ORDER BY 2 DESC;
-
--- 4. ventas_mensuales_categoria
-SELECT DATE_TRUNC('month', l.FECHA) AS mes, l.Categoria,
-       SUM(l.Venta) AS ventas
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-WHERE l.FECHA >= DATEADD(year, -1, CURRENT_DATE())
-GROUP BY 1, 2 ORDER BY 1, 2;
-
--- 5. ticket_promedio_tienda
-SELECT t.IdTienda, t.Ciudad, AVG(f.MontoTotal) AS ticket_promedio
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
-GROUP BY 1, 2 ORDER BY 3 DESC;</code></pre>
+GROUP BY 1 ORDER BY 2 DESC;</code></pre>
         </div>
 
         <h3>10.4 &mdash; Probar en el Chat de Cortex Analyst</h3>
@@ -2444,10 +2415,6 @@ GROUP BY 1, 2 ORDER BY 3 DESC;</code></pre>
             <li>En el panel <strong>Chat</strong>, prueba estas preguntas:
                 <ul>
                     <li>&iquest;Cu&aacute;ntos tickets por gerencia tuvimos en 2026?</li>
-                    <li>Top 10 promociones m&aacute;s aplicadas</li>
-                    <li>Ventas totales por ciudad</li>
-                    <li>Ventas mensuales por categor&iacute;a del &uacute;ltimo a&ntilde;o</li>
-                    <li>Ticket promedio por tienda</li>
                 </ul>
             </li>
             <li>Cortex Analyst genera el SQL, lo ejecuta y muestra resultados + visualizaci&oacute;n.</li>
@@ -3462,8 +3429,50 @@ FROM llamadas
 ORDER BY tipo_llamada;
 
 /* ----------------------------------------------------------------------
+   Dynamic Tables
+   > 8.1 — DT_VENTAS_TIENDA_MES (Ventas agregadas por tienda y mes)
+   ---------------------------------------------------------------------- */
+USE ROLE ACCOUNTADMIN;
+USE DATABASE DB_HOL_OLIMPICA;
+USE SCHEMA PUBLIC;
+USE WAREHOUSE WH_HOL_OLIMPICA;
+
+CREATE OR REPLACE DYNAMIC TABLE DT_VENTAS_TIENDA_MES
+    TARGET_LAG   = '1 hour'
+    WAREHOUSE    = WH_HOL_OLIMPICA
+    REFRESH_MODE = INCREMENTAL
+AS
+SELECT
+    DATE_TRUNC('month', ft.FECHA)  AS mes,
+    t.IdTienda,
+    t.Ciudad,
+    t.Gerencia,
+    COUNT(*)            AS tickets,
+    SUM(ft.MontoTotal)  AS ventas,
+    AVG(ft.MontoTotal)  AS ticket_promedio,
+    SUM(ft.NumLineas)   AS lineas
+FROM FACT_TICKET ft
+JOIN DIM_TIENDA t ON t.IdTienda = ft.IdTienda
+GROUP BY 1, 2, 3, 4;
+
+-- > 8.2 — Verificar la Dynamic Table
+-- Listar Dynamic Tables creadas
+SHOW DYNAMIC TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC;
+
+-- Consultar la Dynamic Table
+SELECT * FROM DT_VENTAS_TIENDA_MES ORDER BY mes DESC LIMIT 10;
+
+-- Historial de refresh
+SELECT NAME, STATE, REFRESH_START_TIME, REFRESH_END_TIME,
+       STATISTICS:numInsertedRows::INT AS filas_insertadas
+FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(
+    NAME => 'DB_HOL_OLIMPICA.PUBLIC.DT_VENTAS_TIENDA_MES'
+))
+ORDER BY REFRESH_START_TIME DESC LIMIT 5;
+
+/* ----------------------------------------------------------------------
    Cortex Search
-   > 8.1 — Crear tabla enriquecida para indexación
+   > 9.1 — Crear tabla enriquecida para indexación
    ---------------------------------------------------------------------- */
 USE ROLE ACCOUNTADMIN;
 USE DATABASE DB_HOL_OLIMPICA;
@@ -3490,7 +3499,7 @@ WHERE c.FechaRealizacion >= DATEADD(year, -1, CURRENT_DATE())
   AND c.Observaciones IS NOT NULL
 LIMIT 50000;
 
--- > 8.2 — Crear el servicio Cortex Search (SQL)
+-- > 9.2 — Crear el servicio Cortex Search (SQL)
 -- Crear servicio de búsqueda semántica sobre observaciones de auditoría
 CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
     ON Texto
@@ -3502,11 +3511,11 @@ CREATE OR REPLACE CORTEX SEARCH SERVICE CSS_AUDITORIAS
            FechaRealizacion, NotaChecklist, EstadoChecklist, Texto
     FROM T_OBSERVACIONES_ENRIQUECIDAS;
 
--- > 8.3 — Verificar el estado del servicio
+-- > 9.3 — Verificar el estado del servicio
 -- Verificar estado del servicio (esperar a que indexing_state = 'ACTIVE')
 SHOW CORTEX SEARCH SERVICES LIKE 'CSS_AUDITORIAS';
 
--- > 8.4 — Demo de búsqueda semántica
+-- > 9.4 — Demo de búsqueda semántica
 -- Búsqueda semántica: "cadena de frío producto vencido"
 -- Aplanamos el JSON a columnas legibles para negocio
 WITH busqueda AS (
@@ -3529,87 +3538,20 @@ SELECT
     r.value:Texto::STRING               AS hallazgo
 FROM busqueda, LATERAL FLATTEN(input => busqueda.resultados) r;
 
--- > 8.5 — Alternativa por la UI (Snowsight)
+-- > 9.5 — Alternativa por la UI (Snowsight)
 -- Restaurar tamaño del warehouse
 ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE = 'SMALL';
 
 /* ----------------------------------------------------------------------
-   Dynamic Tables
-   > 9.1 — DT_VENTAS_TIENDA_MES (Ventas agregadas por tienda y mes)
-   ---------------------------------------------------------------------- */
-USE ROLE ACCOUNTADMIN;
-USE DATABASE DB_HOL_OLIMPICA;
-USE SCHEMA PUBLIC;
-USE WAREHOUSE WH_HOL_OLIMPICA;
-
-CREATE OR REPLACE DYNAMIC TABLE DT_VENTAS_TIENDA_MES
-    TARGET_LAG   = '1 hour'
-    WAREHOUSE    = WH_HOL_OLIMPICA
-    REFRESH_MODE = INCREMENTAL
-AS
-SELECT
-    DATE_TRUNC('month', ft.FECHA)  AS mes,
-    t.IdTienda,
-    t.Ciudad,
-    t.Gerencia,
-    COUNT(*)            AS tickets,
-    SUM(ft.MontoTotal)  AS ventas,
-    AVG(ft.MontoTotal)  AS ticket_promedio,
-    SUM(ft.NumLineas)   AS lineas
-FROM FACT_TICKET ft
-JOIN DIM_TIENDA t ON t.IdTienda = ft.IdTienda
-GROUP BY 1, 2, 3, 4;
-
--- > 9.2 — Verificar la Dynamic Table
--- Listar Dynamic Tables creadas
-SHOW DYNAMIC TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC;
-
--- Consultar la Dynamic Table
-SELECT * FROM DT_VENTAS_TIENDA_MES ORDER BY mes DESC LIMIT 10;
-
--- Historial de refresh
-SELECT NAME, STATE, REFRESH_START_TIME, REFRESH_END_TIME,
-       STATISTICS:numInsertedRows::INT AS filas_insertadas
-FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(
-    NAME => 'DB_HOL_OLIMPICA.PUBLIC.DT_VENTAS_TIENDA_MES'
-))
-ORDER BY REFRESH_START_TIME DESC LIMIT 5;
-
-/* ----------------------------------------------------------------------
    Cortex Analyst
-   > 10.2 — Verified Queries (5 ejemplos)
+   > 10.2 — Verified Query (1 ejemplo)
    ---------------------------------------------------------------------- */
--- 1. tickets_por_gerencia_2026
+-- tickets_por_gerencia_2026
 SELECT t.Gerencia, COUNT(f.FACTURA) AS tickets
 FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
 JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
 WHERE YEAR(f.FECHA) = 2026
 GROUP BY 1 ORDER BY 2 DESC;
-
--- 2. top_10_promociones
-SELECT p.NomPromo, COUNT(*) AS frecuencia
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_PROMO p ON p.OFERTA_ID = l.OFERTA_ID
-GROUP BY 1 ORDER BY 2 DESC LIMIT 10;
-
--- 3. ventas_por_ciudad
-SELECT t.Ciudad, SUM(l.Venta) AS ventas_total
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = l.IdTienda
-GROUP BY 1 ORDER BY 2 DESC;
-
--- 4. ventas_mensuales_categoria
-SELECT DATE_TRUNC('month', l.FECHA) AS mes, l.Categoria,
-       SUM(l.Venta) AS ventas
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_VENTA_LINEA l
-WHERE l.FECHA >= DATEADD(year, -1, CURRENT_DATE())
-GROUP BY 1, 2 ORDER BY 1, 2;
-
--- 5. ticket_promedio_tienda
-SELECT t.IdTienda, t.Ciudad, AVG(f.MontoTotal) AS ticket_promedio
-FROM DB_HOL_OLIMPICA.PUBLIC.FACT_TICKET f
-JOIN DB_HOL_OLIMPICA.PUBLIC.DIM_TIENDA t ON t.IdTienda = f.IdTienda
-GROUP BY 1, 2 ORDER BY 3 DESC;
 
 /* ----------------------------------------------------------------------
    Snowflake CoWork
