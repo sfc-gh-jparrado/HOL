@@ -189,7 +189,6 @@ ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='XLARGE';
 COPY INTO FACT_VENTA_LINEA FROM @STG_OLIMPICA/fact_venta_linea/;
 
 -- Snowflake factura por SEGUNDO: el XLARGE termina en una fracción del tiempo
--- (en esta prueba: XSMALL ~64s vs XLARGE ~8s para 150M filas) y no hay infraestructura que administrar.
 -- Aprovechamos el XLARGE para cargar el resto de tablas rápidamente:
 COPY INTO DIM_TIENDA        FROM @STG_OLIMPICA/dim_tienda/;
 COPY INTO DIM_PRODUCTO      FROM @STG_OLIMPICA/dim_producto/;
@@ -215,26 +214,11 @@ ORDER BY registros DESC;
 
 /* ----------------------------------------------------------------------
    Performance & Warehouse Scaling
-   > 3.1 — Top 10 productos más vendidos
+   > 3.1 — Análisis cruzado: Ventas por Gerencia/Zona x Categoría x Promoción
    ---------------------------------------------------------------------- */
--- Aseguramos warehouse SMALL para la primera ejecución
+-- Ajustamos el warehouse a SMALL para esta consulta analítica
 ALTER WAREHOUSE WH_HOL_OLIMPICA SET WAREHOUSE_SIZE='SMALL';
 
--- Top 10 productos más vendidos (150M filas + JOIN dimensión)
-SELECT
-    p.NomProducto,
-    p.NomCategoria,
-    p.Marca,
-    SUM(v.Cantidad)     AS unidades_vendidas,
-    SUM(v.Venta)        AS venta_total_cop,
-    COUNT(*)            AS lineas_venta
-FROM FACT_VENTA_LINEA v
-JOIN DIM_PRODUCTO p ON p.PLU_SAP = v.PLU_SAP
-GROUP BY 1, 2, 3
-ORDER BY unidades_vendidas DESC
-LIMIT 10;
-
--- > 3.2 — Análisis cruzado: Ventas por Gerencia/Zona x Categoría x Promoción
 -- Análisis cruzado: Gerencia/Zona x Categoría x Promoción (últimos 6 meses)
 SELECT
     t.Gerencia,
@@ -375,7 +359,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,
     t.DirectorGeneral,
-    LEFT(c.Observaciones, 120) AS Observaciones_Preview
+    c.Observaciones AS Observaciones_Preview
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'
@@ -391,7 +375,7 @@ SELECT
     t.Gerencia,
     t.EncargadoZona,        -- Verá '****'
     t.DirectorGeneral,      -- Verá '****'
-    LEFT(c.Observaciones, 120) AS Observaciones_Preview  -- Verá el texto con la PII redactada por AI_REDACT
+    c.Observaciones AS Observaciones_Preview  -- Verá el texto con la PII redactada por AI_REDACT
 FROM DIM_TIENDA t
 JOIN FACT_CHECKLIST c ON c.IdTienda = t.IdTienda
 WHERE t.Zona = 'Bolivar'
@@ -417,7 +401,7 @@ SELECT AI_COMPLETE(
 -- Resumen en <=5 palabras + evaluación JSON multi-aspecto
 SELECT
     IdTienda,
-    LEFT(Observaciones, 80) AS preview,
+    Observaciones AS observacion,
 
     AI_COMPLETE(
         'openai-gpt-4.1',
@@ -425,14 +409,14 @@ SELECT
                Observaciones)
     ) AS resumen_corto,
 
-    AI_COMPLETE(
+    TRY_PARSE_JSON(AI_COMPLETE(
         'openai-gpt-4.1',
         CONCAT(
             'Evalúa la siguiente observación de auditoría de tienda. ',
             'Responde SOLO en JSON con el formato {"severidad":"alta|media|baja","area_afectada":"<área>","requiere_accion":true|false}. ',
             'Texto: ', Observaciones
         )
-    ) AS evaluacion_json
+    )) AS evaluacion_json
 
 FROM FACT_CHECKLIST
 WHERE Observaciones IS NOT NULL
@@ -442,7 +426,7 @@ LIMIT 10;
 -- Análisis de sentimiento sobre las observaciones de auditoría
 SELECT
     IdTienda,
-    LEFT(Observaciones, 100) AS preview,
+    Observaciones AS observacion,
     AI_SENTIMENT(Observaciones):categories[0]:sentiment::VARCHAR AS sentimiento
 FROM FACT_CHECKLIST
 WHERE Observaciones IS NOT NULL
@@ -467,8 +451,8 @@ FROM (
 -- Traducción de observaciones de español a inglés
 SELECT
     IdTienda,
-    LEFT(Observaciones, 120) AS observacion_es,
-    AI_TRANSLATE(LEFT(Observaciones, 400), 'es', 'en') AS observacion_en
+    Observaciones AS observacion_es,
+    AI_TRANSLATE(Observaciones, 'es', 'en') AS observacion_en
 FROM FACT_CHECKLIST
 WHERE Observaciones IS NOT NULL
 LIMIT 3;
@@ -477,7 +461,7 @@ LIMIT 3;
 -- Clasificación automática de observaciones en categorías operativas
 SELECT
     IdTienda,
-    LEFT(Observaciones, 100) AS preview,
+    Observaciones AS observacion,
     AI_CLASSIFY(
         Observaciones,
         ['Limpieza', 'Inventario', 'Cadena de frío', 'Atención al cliente', 'Documentación legal', 'Seguridad']
@@ -495,7 +479,7 @@ USE DATABASE DB_HOL_OLIMPICA;
 USE SCHEMA PUBLIC;
 USE WAREHOUSE WH_HOL_OLIMPICA;
 
--- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (mismas credenciales del Paso 2).
+-- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (mismas credenciales).
 -- Solo apuntamos a la subcarpeta 'archivos/' del mismo bucket para leer los no estructurados.
 LIST @STG_OLIMPICA/archivos/;
 
@@ -537,17 +521,17 @@ SELECT AI_COMPLETE(
 -- Análisis de góndola / visual merchandising con IA de visión
 SELECT AI_COMPLETE(
     'claude-sonnet-4-5',
-    PROMPT('Eres un experto en visual merchandising y trade marketing para retail FMCG. Analiza esta foto de una góndola / exhibición de tienda y devuelve un JSON con: 1) estado_general (ordenado/desordenado), 2) categorias_detectadas, 3) problemas_visuales (lista: producto fuera de lugar, sobre-stock, faltantes, falta de etiquetado, mezcla de categorías, etc.), 4) impacto_estimado_ventas (alto/medio/bajo con justificación), 5) recomendaciones_priorizadas (3 acciones concretas para mejorar la visualización y la experiencia del comprador). Responde solo en JSON y en español. {0}',
+    PROMPT('Eres un experto en visual merchandising y trade marketing para Olímpica (cadena de retail colombiana). Analiza esta foto de una góndola / exhibición de tienda y entrega un informe claro y fácil de leer, en español, con estos puntos: 1) Estado general (ordenado o desordenado), 2) Categorías detectadas, 3) Problemas visuales (producto fuera de lugar, sobre-stock, faltantes, falta de etiquetado, mezcla de categorías, etc.), 4) Impacto estimado en ventas (alto/medio/bajo con una breve justificación), 5) Tres recomendaciones priorizadas y concretas. Responde en texto plano bien organizado con títulos y viñetas, NO en JSON. {0}',
            TO_FILE('@STG_OLIMPICA', 'archivos/producto_foto_001.jpg'))
 ) AS analisis_gondola;
 
 -- > 7.6 — Lectura de cupón de descuento (Claude Opus)
 -- Extracción estructurada de cupón de descuento con Claude Opus
-SELECT AI_COMPLETE(
+SELECT TRY_PARSE_JSON(REGEXP_REPLACE(AI_COMPLETE(
     'claude-opus-4-5',
-    PROMPT('Lee este cupón de descuento de Olímpica y devuelve en JSON: codigo_cupon, porcentaje_descuento, fecha_vigencia, condiciones, productos_aplicables. Responde solo en JSON y en español. {0}',
+    PROMPT('Lee este cupón de descuento de Olímpica y devuelve SOLO un JSON (sin ```), en español, con estos campos: codigo_cupon, porcentaje_descuento, fecha_vigencia, condiciones, productos_aplicables. {0}',
            TO_FILE('@STG_OLIMPICA', 'archivos/cupon_descuento_001.png'))
-) AS cupon_datos;
+), '```json|```', '')) AS cupon_datos;
 
 -- > 7.7 — AI_TRANSCRIBE: Transcripción de audio
 -- Transcripción simple de audio
@@ -566,7 +550,7 @@ WITH llamadas AS (
 )
 SELECT
     tipo_llamada,
-    LEFT(texto, 120) AS preview,
+    texto AS transcripcion,
 
     -- Sentimiento por aspectos
     AI_SENTIMENT(texto, ['producto', 'servicio', 'precio', 'retencion_cliente']) AS sentimiento_aspectos,
@@ -584,10 +568,10 @@ SELECT
     ) AS extraccion,
 
     -- Coach de Customer Experience
-    AI_COMPLETE(
+    TRY_PARSE_JSON(REGEXP_REPLACE(AI_COMPLETE(
         'claude-opus-4-5',
-        PROMPT('Eres un coach de Customer Experience para Olímpica (cadena retail colombiana). Lee esta llamada y devuelve un JSON con: clasificacion (oferta_proactiva | reclamo | consulta), prioridad (alta | media | baja), siguiente_accion (1 sola frase concreta), riesgo_churn (0-100). Responde solo en JSON y en español. Texto: {0}', texto)
-    ) AS coach_cx
+        PROMPT('Eres un coach de Customer Experience para Olímpica (cadena retail colombiana). Lee esta llamada y devuelve SOLO un JSON (sin ```) con: clasificacion (oferta_proactiva | reclamo | consulta), prioridad (alta | media | baja), siguiente_accion (1 sola frase concreta), riesgo_churn (0-100). En español. Texto: {0}', texto)
+    ), '```json|```', '')) AS coach_cx
 
 FROM llamadas
 ORDER BY tipo_llamada;
