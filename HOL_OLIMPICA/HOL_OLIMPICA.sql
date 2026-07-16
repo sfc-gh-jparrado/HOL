@@ -610,14 +610,6 @@ SHOW DYNAMIC TABLES IN SCHEMA DB_HOL_OLIMPICA.PUBLIC;
 -- Consultar la Dynamic Table
 SELECT * FROM DT_VENTAS_TIENDA_MES ORDER BY mes DESC LIMIT 10;
 
--- Historial de refresh
-SELECT NAME, STATE, REFRESH_START_TIME, REFRESH_END_TIME,
-       STATISTICS:numInsertedRows::INT AS filas_insertadas
-FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(
-    NAME => 'DB_HOL_OLIMPICA.PUBLIC.DT_VENTAS_TIENDA_MES'
-))
-ORDER BY REFRESH_START_TIME DESC LIMIT 5;
-
 /* ----------------------------------------------------------------------
    Cortex Search
    > 9.1 — Crear tabla enriquecida para indexación
