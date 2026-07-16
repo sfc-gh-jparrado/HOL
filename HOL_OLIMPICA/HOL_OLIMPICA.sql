@@ -6,6 +6,9 @@
    Datos sinteticos para fines demostrativos.
    ========================================================================== */
 
+-- AWS_KEY_ID     = '<SOLICITAR_AL_INSTRUCTOR>'
+-- AWS_SECRET_KEY = '<SOLICITAR_AL_INSTRUCTOR>'
+
 /* ----------------------------------------------------------------------
    Setup del ambiente
    ---------------------------------------------------------------------- */
@@ -44,7 +47,7 @@ CREATE OR REPLACE FILE FORMAT FF_CSV_GZ
 
 CREATE OR REPLACE STAGE STG_OLIMPICA
   URL='s3://demosjparrado/olimpica_hol/'
-  STORAGE_INTEGRATION=SI_FCV_S3
+  CREDENTIALS=(AWS_KEY_ID='<SOLICITAR_AL_INSTRUCTOR>' AWS_SECRET_KEY='<SOLICITAR_AL_INSTRUCTOR>')
   FILE_FORMAT=FF_CSV_GZ;
 
 -- Verificamos que los archivos son accesibles
@@ -488,7 +491,7 @@ USE DATABASE DB_HOL_OLIMPICA;
 USE SCHEMA PUBLIC;
 USE WAREHOUSE WH_HOL_OLIMPICA;
 
--- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (misma storage integration SI_FCV_S3).
+-- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (mismas credenciales del Paso 2).
 -- Solo apuntamos a la subcarpeta 'archivos/' del mismo bucket para leer los no estructurados.
 LIST @STG_OLIMPICA/archivos/;
 

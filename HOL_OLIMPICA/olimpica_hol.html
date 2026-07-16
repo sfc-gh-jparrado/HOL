@@ -801,7 +801,7 @@ USE SCHEMA PUBLIC;</code></pre>
         </div>
 
         <h3>2.1 — File Format y Stage externo</h3>
-        <p>Creamos el formato CSV (delimitador <code>;</code>, gzip) y el stage apuntando al bucket S3 con storage integration:</p>
+        <p>Creamos el formato CSV (delimitador <code>;</code>, gzip) y el stage externo apuntando al bucket S3. Usamos <strong>credenciales</strong> (read-only): reemplaza <code>&lt;SOLICITAR_AL_INSTRUCTOR&gt;</code> por el <code>AWS_KEY_ID</code> y <code>AWS_SECRET_KEY</code> que te entregue el instructor.</p>
 
         <div class="code-block" data-language="sql">
             <div class="code-header">
@@ -827,7 +827,7 @@ USE SCHEMA PUBLIC;</code></pre>
 
 CREATE OR REPLACE STAGE STG_OLIMPICA
   URL='s3://demosjparrado/olimpica_hol/'
-  STORAGE_INTEGRATION=SI_FCV_S3
+  CREDENTIALS=(AWS_KEY_ID='<SOLICITAR_AL_INSTRUCTOR>' AWS_SECRET_KEY='<SOLICITAR_AL_INSTRUCTOR>')
   FILE_FORMAT=FF_CSV_GZ;
 
 -- Verificamos que los archivos son accesibles
@@ -1829,7 +1829,7 @@ LIMIT 10;</code></pre>
 
         <!-- 7.1 Stage y listado -->
         <h3>7.1 &mdash; Reutilizar el stage y listar los archivos</h3>
-        <p>No necesitamos crear un stage nuevo ni volver a autenticarnos: los archivos no estructurados están en la subcarpeta <code>archivos/</code> del <strong>mismo bucket</strong> que ya configuramos en el Paso 2. Reutilizamos el stage <code>STG_OLIMPICA</code> (con su misma <em>storage integration</em> <code>SI_FCV_S3</code>) y solo cambiamos la carpeta que leemos.</p>
+        <p>No necesitamos crear un stage nuevo ni volver a autenticarnos: los archivos no estructurados están en la subcarpeta <code>archivos/</code> del <strong>mismo bucket</strong> que ya configuramos en el Paso 2. Reutilizamos el stage <code>STG_OLIMPICA</code> (con las <em>mismas credenciales</em>) y solo cambiamos la carpeta que leemos.</p>
         <div class="code-block" data-language="sql">
             <div class="code-header">
                 <span class="code-language">SQL</span>
@@ -1842,7 +1842,7 @@ USE DATABASE DB_HOL_OLIMPICA;
 USE SCHEMA PUBLIC;
 USE WAREHOUSE WH_HOL_OLIMPICA;
 
--- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (misma storage integration SI_FCV_S3).
+-- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (mismas credenciales del Paso 2).
 -- Solo apuntamos a la subcarpeta 'archivos/' del mismo bucket para leer los no estructurados.
 LIST @STG_OLIMPICA/archivos/;</code></pre>
         </div>
@@ -2883,6 +2883,9 @@ DROP ROLE IF EXISTS ANALISTA_OPERACIONES;</code></pre>
    Datos sinteticos para fines demostrativos.
    ========================================================================== */
 
+-- AWS_KEY_ID     = '<SOLICITAR_AL_INSTRUCTOR>'
+-- AWS_SECRET_KEY = '<SOLICITAR_AL_INSTRUCTOR>'
+
 /* ----------------------------------------------------------------------
    Setup del ambiente
    ---------------------------------------------------------------------- */
@@ -2921,7 +2924,7 @@ CREATE OR REPLACE FILE FORMAT FF_CSV_GZ
 
 CREATE OR REPLACE STAGE STG_OLIMPICA
   URL='s3://demosjparrado/olimpica_hol/'
-  STORAGE_INTEGRATION=SI_FCV_S3
+  CREDENTIALS=(AWS_KEY_ID='<SOLICITAR_AL_INSTRUCTOR>' AWS_SECRET_KEY='<SOLICITAR_AL_INSTRUCTOR>')
   FILE_FORMAT=FF_CSV_GZ;
 
 -- Verificamos que los archivos son accesibles
@@ -3365,7 +3368,7 @@ USE DATABASE DB_HOL_OLIMPICA;
 USE SCHEMA PUBLIC;
 USE WAREHOUSE WH_HOL_OLIMPICA;
 
--- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (misma storage integration SI_FCV_S3).
+-- Reutilizamos el stage STG_OLIMPICA creado en el Paso 2 (mismas credenciales del Paso 2).
 -- Solo apuntamos a la subcarpeta 'archivos/' del mismo bucket para leer los no estructurados.
 LIST @STG_OLIMPICA/archivos/;
 
