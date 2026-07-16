@@ -663,6 +663,11 @@ a:hover { color: var(--sf-blue-dark); }
             </a>
             <a class="step-nav-item" data-step="12" onclick="scrollToStep(12)">
                 <span class="step-indicator">12</span>
+                <span>ML: Segmentación de tiendas</span>
+                <span class="nav-time">8 min</span>
+            </a>
+            <a class="step-nav-item" data-step="13" onclick="scrollToStep(13)">
+                <span class="step-indicator">13</span>
                 <span>Recursos & Cleanup</span>
                 <span class="nav-time">4 min</span>
             </a>
@@ -2618,6 +2623,66 @@ USE ROLE ACCOUNTADMIN;</code></pre>
     <div class="step-header">
         <div class="step-number">12</div>
         <div class="step-info">
+            <h2 class="step-title">ML: Segmentación de tiendas con CoCo</h2>
+            <span class="step-duration">~8 min</span>
+        </div>
+        <button class="step-toggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+    </div>
+    <div class="step-content">
+        <div class="step-description">
+            <p>En este paso usamos <strong>CoCo</strong> (el asistente de código de Snowflake, dentro de un <strong>Notebook de Snowsight</strong>) para crear, con un <strong>solo prompt en lenguaje natural</strong>, un modelo de <em>machine learning</em> que agrupa las 1.800 tiendas de Olímpica en <strong>segmentos según su comportamiento de ventas</strong>. CoCo escribe el código por ti; el notebook genera <strong>gráficos</strong> y una <strong>explicación paso a paso</strong>.</p>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Ruta en Snowsight</strong>
+                <p><code>Projects &rarr; Notebooks &rarr; + Notebook</code> (usa la base <code>DB_HOL_OLIMPICA</code> y el warehouse <code>WH_HOL_OLIMPICA</code>). Abre <strong>CoCo</strong> dentro del notebook y pega el siguiente prompt.</p>
+            </div>
+        </div>
+
+        <h3>12.1 &mdash; Prompt para CoCo</h3>
+        <p>Copia este prompt en CoCo. Está escrito en lenguaje de negocio: no necesitas saber programar, CoCo se encarga del código.</p>
+
+        <div class="code-block" data-language="text">
+            <div class="code-header">
+                <span class="code-language">PROMPT</span>
+                <div class="code-actions">
+                    <button class="btn-copy" onclick="copyCode(this)" title="Copiar código">Copiar</button>
+                </div>
+            </div>
+            <pre><code class="language-text">Usando la base de datos DB_HOL_OLIMPICA, créame en este notebook un modelo que agrupe las tiendas de Olímpica en segmentos según cómo venden (por ejemplo cuánto venden, qué tan alto es su ticket promedio y qué tan seguido tienen ventas).
+
+Quiero entenderlo paso a paso: explica cada parte en español con palabras sencillas, muéstrame gráficos claros y, al final, ponle un nombre a cada segmento y dime qué acción de negocio recomendarías para cada uno.</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+            </div>
+            <div class="callout-content">
+                <strong class="callout-title">Qué obtendrás</strong>
+                <p>Un notebook que prepara los datos de ventas por tienda, entrena un modelo de agrupación (clustering), muestra gráficos de los segmentos y termina con un <strong>nombre y una acción comercial sugerida</strong> para cada grupo. Ejecuta las celdas de arriba a abajo y revisa las explicaciones.</p>
+            </div>
+        </div>
+
+        <div class="step-actions">
+            <button class="btn-check" onclick="markStepComplete(12)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                Marcar como completado
+            </button>
+        </div>
+    </div>
+</article>
+
+<article class="step-card" id="step-13" data-step="13">
+    <div class="step-header">
+        <div class="step-number">13</div>
+        <div class="step-info">
             <h2 class="step-title">Recursos &amp; Cleanup</h2>
             <span class="step-duration">~4 min</span>
         </div>
@@ -2630,7 +2695,7 @@ USE ROLE ACCOUNTADMIN;</code></pre>
             <p>Recursos de referencia, un ejercicio avanzado sugerido con Cortex Code y el script de limpieza del ambiente.</p>
         </div>
 
-        <h3>12.1 &mdash; Recursos de referencia</h3>
+        <h3>13.1 &mdash; Recursos de referencia</h3>
 
         <div class="table-wrapper">
             <table class="data-table">
@@ -2646,7 +2711,7 @@ USE ROLE ACCOUNTADMIN;</code></pre>
             </table>
         </div>
 
-        <h3>12.2 &mdash; Ejercicio sugerido con Cortex Code (CoCo)</h3>
+        <h3>13.2 &mdash; Ejercicio sugerido con Cortex Code (CoCo)</h3>
 
         <div class="callout callout-tip">
             <div class="callout-icon">
@@ -2662,7 +2727,7 @@ USE ROLE ACCOUNTADMIN;</code></pre>
             </div>
         </div>
 
-        <h3>12.3 &mdash; Limpieza del ambiente</h3>
+        <h3>13.3 &mdash; Limpieza del ambiente</h3>
         <p>Ejecuta el siguiente script para eliminar todos los objetos creados durante el lab:</p>
 
         <div class="code-block" data-language="sql">
@@ -2708,7 +2773,7 @@ DROP ROLE IF EXISTS ANALISTA_OPERACIONES;</code></pre>
         </div>
 
         <div class="step-actions">
-            <button class="btn-check" onclick="markStepComplete(12)">
+            <button class="btn-check" onclick="markStepComplete(13)">
                 <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
                 Marcar como completado
             </button>
@@ -3583,7 +3648,7 @@ DROP ROLE IF EXISTS ANALISTA_OPERACIONES;
  */
 
 const HOLState = {
-    totalSteps: 12,
+    totalSteps: 13,
     completedSteps: new Set(),
     startTime: null,
     currentStep: 1
