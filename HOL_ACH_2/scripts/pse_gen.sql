@@ -100,6 +100,29 @@ SELECT 52000000+SEQ8(),
        'DOC'||LPAD(UNIFORM(90000000,90000050,RANDOM()),8,'0'),'Bogota'
 FROM TABLE(GENERATOR(ROWCOUNT=>15));
 
+-- ===================== ENRIQUECIMIENTO PII (nombre, email, telefono) =====================
+-- PII realista y deterministica por documento_hash. El email queda con formato valido
+-- para que SYSTEM$CLASSIFY lo detecte (semantic_category=EMAIL, privacy_category=IDENTIFIER).
+CREATE OR REPLACE TABLE PSE_TX_ENR AS
+SELECT t.txn_id, t.ts, t.banco, t.comercio_id, t.monto, t.canal, t.estado,
+       t.tipo_persona, t.documento_hash, t.ciudad,
+       a.fn[ABS(HASH(t.documento_hash,1)) % 16]::STRING || ' ' ||
+       a.ln[ABS(HASH(t.documento_hash,2)) % 16]::STRING AS nombre,
+       LOWER(a.fn[ABS(HASH(t.documento_hash,1)) % 16]::STRING) || '.' ||
+       LOWER(a.ln[ABS(HASH(t.documento_hash,2)) % 16]::STRING) ||
+       (ABS(HASH(t.documento_hash,3)) % 900 + 100)::STRING || '@' ||
+       a.dom[ABS(HASH(t.documento_hash,3)) % 4]::STRING AS email,
+       '+57 3' || LPAD((ABS(HASH(t.documento_hash,1)) % 1000000000)::STRING, 9, '0') AS telefono
+FROM PSE_TRANSACTIONS t,
+  (SELECT
+     ARRAY_CONSTRUCT('Maria','Juan','Carlos','Ana','Luis','Andrea','Diego','Laura',
+                     'Camilo','Sofia','Jorge','Paula','Felipe','Valentina','Santiago','Daniela') fn,
+     ARRAY_CONSTRUCT('Gomez','Rodriguez','Martinez','Lopez','Garcia','Ramirez','Torres','Diaz',
+                     'Vargas','Rojas','Moreno','Castro','Gutierrez','Sanchez','Ospina','Restrepo') ln,
+     ARRAY_CONSTRUCT('gmail.com','hotmail.com','outlook.com','yahoo.es') dom) a;
+DROP TABLE PSE_TRANSACTIONS;
+ALTER TABLE PSE_TX_ENR RENAME TO PSE_TRANSACTIONS;
+
 -- ===================== UNLOAD a S3 =====================
 COPY INTO @stg_hol/pse_hist/data_ FROM PSE_TRANSACTIONS
   FILE_FORMAT=(TYPE=CSV FIELD_DELIMITER=';' COMPRESSION=GZIP) HEADER=TRUE MAX_FILE_SIZE=80000000 OVERWRITE=TRUE;

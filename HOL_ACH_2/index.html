@@ -140,7 +140,8 @@ CREATE OR REPLACE STAGE stg_hol
 CREATE OR REPLACE TABLE PSE_TRANSACTIONS (
   txn_id NUMBER, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
   monto NUMBER, canal STRING, estado STRING, tipo_persona STRING,
-  documento_hash STRING, ciudad STRING);
+  documento_hash STRING, ciudad STRING,
+  nombre STRING, email STRING, telefono STRING);
 CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER, nombre STRING, categoria STRING);
 CREATE OR REPLACE TABLE BANCOS (banco STRING, tipo STRING);
 
@@ -177,13 +178,21 @@ FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</co
     <div class="why"><strong>Conclusión:</strong> las 4 señales convergen en el comercio 9001 y el anillo <code>DOC900000xx</code>.</div>
 
     <h2><span class="persona p-gov">Gobierno</span><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
-    <pre class="sql"><code>-- Clasificacion automatica
+    <pre class="sql"><code>-- Clasificacion automatica de PII: descubre y taggea columnas sensibles
+-- (detecta EMAIL con confianza alta y le aplica semantic_category=EMAIL, privacy_category=IDENTIFIER)
 CALL SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
 
--- Enmascarar documento
-CREATE OR REPLACE MASKING POLICY mask_doc AS (val STRING) RETURNS STRING -&gt;
-  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val ELSE 'DOC-****' END;
-ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN documento_hash SET MASKING POLICY mask_doc;
+-- Ver los tags que aplico la clasificacion (semantic_category / privacy_category)
+SELECT column_name, tag_name, tag_value
+FROM TABLE(INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('PSE_TRANSACTIONS','table'))
+ORDER BY 1;
+
+-- Enmascarar el email detectado (IDENTIFIER) y demas datos personales (documento, nombre)
+CREATE OR REPLACE MASKING POLICY mask_pii AS (val STRING) RETURNS STRING -&gt;
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val ELSE '***-REDACTED' END;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN documento_hash SET MASKING POLICY mask_pii;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN email          SET MASKING POLICY mask_pii;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN nombre         SET MASKING POLICY mask_pii;
 
 -- Acceso por fila por banco
 CREATE OR REPLACE ROW ACCESS POLICY rap_banco AS (banco STRING) RETURNS BOOLEAN -&gt;
@@ -292,7 +301,8 @@ CREATE OR REPLACE STAGE stg_hol
 CREATE OR REPLACE TABLE PSE_TRANSACTIONS (
   txn_id NUMBER, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
   monto NUMBER, canal STRING, estado STRING, tipo_persona STRING,
-  documento_hash STRING, ciudad STRING);
+  documento_hash STRING, ciudad STRING,
+  nombre STRING, email STRING, telefono STRING);
 CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER, nombre STRING, categoria STRING);
 CREATE OR REPLACE TABLE BANCOS (banco STRING, tipo STRING);
 
@@ -328,13 +338,21 @@ FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</co
     <div class="why"><strong>Conclusión:</strong> las 4 señales convergen en el comercio 9001 y el anillo <code>DOC900000xx</code>.</div>
 
     <h2><span class="persona p-gov">Gobierno</span><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
-    <pre class="sql"><code>-- Clasificacion automatica
+    <pre class="sql"><code>-- Clasificacion automatica de PII: descubre y taggea columnas sensibles
+-- (detecta EMAIL con confianza alta y le aplica semantic_category=EMAIL, privacy_category=IDENTIFIER)
 CALL SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
 
--- Enmascarar documento
-CREATE OR REPLACE MASKING POLICY mask_doc AS (val STRING) RETURNS STRING -&gt;
-  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val ELSE 'DOC-****' END;
-ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN documento_hash SET MASKING POLICY mask_doc;
+-- Ver los tags que aplico la clasificacion (semantic_category / privacy_category)
+SELECT column_name, tag_name, tag_value
+FROM TABLE(INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('PSE_TRANSACTIONS','table'))
+ORDER BY 1;
+
+-- Enmascarar el email detectado (IDENTIFIER) y demas datos personales (documento, nombre)
+CREATE OR REPLACE MASKING POLICY mask_pii AS (val STRING) RETURNS STRING -&gt;
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val ELSE '***-REDACTED' END;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN documento_hash SET MASKING POLICY mask_pii;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN email          SET MASKING POLICY mask_pii;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN nombre         SET MASKING POLICY mask_pii;
 
 -- Acceso por fila por banco
 CREATE OR REPLACE ROW ACCESS POLICY rap_banco AS (banco STRING) RETURNS BOOLEAN -&gt;
