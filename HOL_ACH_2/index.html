@@ -207,10 +207,10 @@ SELECT comercio_id,
 FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime qué se rompería." (skill <code>lineage</code>)</p></div>
 
-    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — capa semántica y dashboard (batch)</h2>
+    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y dashboard (batch)</h2>
     <h3>Módulo 4.1 · Capa semántica (semantic view)</h3>
     <p>Antes del tablero, crea una capa semántica reutilizable sobre las 3 tablas: defines métricas y dimensiones una sola vez para que el dashboard, Cortex Analyst y los agentes hablen el mismo idioma.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado, hora). Usa el skill <code>semantic-view</code>."</p></div>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
     <pre class="sql"><code>CREATE OR REPLACE SEMANTIC VIEW sv_pse
   TABLES (
     transactions AS PSE_TRANSACTIONS PRIMARY KEY (txn_id),
@@ -370,7 +370,7 @@ FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);
     <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — semántica, agente y explorador (batch)</h2>
     <h3>Módulo 4.1 · Capa semántica (semantic view)</h3>
     <p>Sobre los ~30M ya cargados, crea una capa semántica reutilizable: métricas y dimensiones definidas una vez, que luego consumen el agente y el explorador visual.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado, hora). Usa el skill <code>semantic-view</code>."</p></div>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
     <pre class="sql"><code>CREATE OR REPLACE SEMANTIC VIEW sv_pse
   TABLES (
     transactions AS PSE_TRANSACTIONS PRIMARY KEY (txn_id),
@@ -400,8 +400,7 @@ FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);
 SELECT * FROM SEMANTIC_VIEW(sv_pse METRICS transacciones, pct_rechazo DIMENSIONS banco)
 ORDER BY pct_rechazo DESC;</code></pre>
 
-    <h3>Módulo 4.2 · Cortex Agent en CoWork</h3>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y regístralo en Snowflake CoWork."</p></div>
+    <h3>Módulo 4.2 · Probar el agente en CoWork</h3>
     <div class="note"><strong>Recuerda:</strong> para que el agente aparezca en <strong>Snowflake CoWork</strong> hay que agregarlo en la pestaña de CoWork (Add existing agent); crearlo y hacer GRANT a PUBLIC no basta.</div>
     <p>Pruébalo en CoWork:</p>
     <ul>
