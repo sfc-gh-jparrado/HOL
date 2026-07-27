@@ -1,33 +1,32 @@
-# HOL ACH — El incidente de las 3:00 AM (PSE en tiempo real)
+# HOL ACH — El incidente de las 3:00 AM (PSE, batch)
 
-HOL integrado (1 hora) para **ACH Colombia** sobre el dominio **PSE**: seguridad, gobierno y desarrollo con Snowflake + Cortex Code (Coco).
+HOL integrado (1 hora) para **ACH Colombia** sobre el dominio **PSE**: seguridad, gobierno y desarrollo con Snowflake + Cortex Code (Coco). **Todo en batch**: los datos se cargan desde S3 con `COPY` y se analizan. Sin Snowpipe ni tiempo real.
 
-- Guía: `index.html` → publicada en https://sfc-gh-jparrado.github.io/HOL/HOL_ACH_2/
+- Guía: `index.html` → https://sfc-gh-jparrado.github.io/HOL/HOL_ACH_2/
+- Dos módulos con selector global: **A · Full-stack** (Node.js + Coco Desktop + CLI + Podman) y **B · Solo navegador**.
 - Narrativa: un anillo de fraude golpea un comercio a las 3:00 AM y un banco dispara sus rechazos. Detectar → contener → prevenir.
 
-## Datos
-- Histórico: ~30M transacciones PSE en `s3://demosjparrado/hol_ach_2/pse_hist/` (+ `comercios/`).
-- Feed en vivo: `s3://demosjparrado/hol_ach_2/pse_stream/` (lo alimenta el feeder).
-- Modelo: `PSE_TRANSACTIONS`, `COMERCIOS`, `BANCOS` en `HOL_SEC.INCIDENTE`.
+## Datos (en S3 del instructor)
+- `s3://demosjparrado/hol_ach_2/pse_hist/` — ~30M transacciones PSE.
+- `.../comercios/` — dimensión comercios (501).
+- `.../bancos/` — dimensión bancos (20).
+- Modelo destino: `PSE_TRANSACTIONS`, `COMERCIOS`, `BANCOS` en `HOL_SEC.INCIDENTE`.
+- El estudiante **no toca AWS**: solo lee el bucket con la llave IAM read-only embebida en el `STAGE` (`COPY` desde S3). Sin `INSERT INTO` en el lab.
 
 ## Scripts
-- `scripts/pse_gen.sql` — genera el histórico en Snowflake y lo descarga (UNLOAD) a S3.
-- `scripts/feeder_pse.py` — feeder de tiempo real (sube lotes a `pse_stream/` vía AWS SSO).
-- `scripts/start_feeder.sh [intervalo_seg] [batch]` / `scripts/stop_feeder.sh` — arrancar/detener el feeder.
-- `scripts/app_pse_monitor.py` — dashboard Streamlit-in-Snowflake que lee las Dynamic Tables.
+- `scripts/pse_gen.sql` — (instructor) genera el histórico en Snowflake y lo descarga (UNLOAD) a S3, incluidas las dimensiones.
+- `scripts/app_pse_monitor.py` — dashboard Streamlit-in-Snowflake que lee `PSE_TRANSACTIONS` (Módulo A).
+- `scripts/feeder_pse.py`, `start_feeder.sh`, `stop_feeder.sh` — **OPCIONAL / avanzado**: simulan un feed de streaming a S3. **No forman parte del HOL batch**; se conservan por si se quiere demostrar ingesta continua (Snowpipe) por separado.
 
-## Cómo correr
-1. Ejecuta el bloque de Setup del `index.html` (crea entorno, stage y carga el histórico).
-2. Crea el PIPE de auto-ingest y las Dynamic Tables (Acto 3 del `index.html`).
-3. Configura la notificación de evento del bucket hacia el `notification_channel` del PIPE.
-4. Arranca el feeder durante la sesión: `cd scripts && ./start_feeder.sh 15 800` (requiere AWS SSO activo).
-5. Despliega `app_pse_monitor.py` en Snowsight (Streamlit) o construye el Cortex Agent (Ambiente 2).
+## Cómo correr (estudiante)
+1. Ejecuta el bloque de Setup del `index.html` (crea entorno, stage y `COPY` de las 3 tablas desde S3).
+2. Acto 1: detecciones de fraude (rechazos por banco, velocity, monto atípico, comercio bajo ataque).
+3. Acto 2: gobierno (clasificar, enmascarar documento, acceso por banco, triage con IA).
+4. Acto 3: Módulo A = dashboard (`app_pse_monitor.py`); Módulo B = semantic view + Cortex Agent en CoWork.
 
-## Operación y costo
-El feed en vivo mantiene Snowpipe y las Dynamic Tables activos. **Arranca el feeder solo durante la sesión y deténlo al final.** Al terminar:
-- `./stop_feeder.sh`
-- `ALTER DYNAMIC TABLE ... SUSPEND` (las tres) y `ALTER PIPE pse_pipe SET PIPE_EXECUTION_PAUSED = TRUE`
-- `DROP DATABASE HOL_SEC; DROP WAREHOUSE HOL_WH;`
+## Operación (instructor)
+- Regenerar/actualizar datos: correr `scripts/pse_gen.sql` (requiere AWS SSO y llave IAM con escritura temporal para el UNLOAD; revertir a read-only después).
+- Refresco batch: para traer datos nuevos, re-ejecutar el `COPY` o programar una `TASK`.
 - Rotar/borrar la llave IAM read-only del stage cuando el HOL deje de usarse.
 
 Datos 100% sintéticos, sin PII real.
