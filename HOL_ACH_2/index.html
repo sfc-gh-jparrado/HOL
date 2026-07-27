@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="snowflake-source" content="cortex-agent-authored" />
+  <title>HOL — El incidente de las 3:00 AM · Snowflake + Coco</title>
+  <script type="application/json" id="snowflake-report-metadata">
+  {
+    "generated": "2026-07-27",
+    "intent": "HOL integrado (1 hora) para usuarios técnicos de seguridad, gobierno y desarrollo, con Snowflake y Cortex Code (Coco). Datos sintéticos (~50M filas) en S3 cargados vía stage. Dos rutas: Ambiente 1 (Coco Desktop + Node.js + Snowflake CLI + Podman) y Ambiente 2 (solo Snowflake vía UI). El HTML incluye botón para descargar el SQL completo y se publica en GitHub Pages.",
+    "dataSources": [
+      { "type": "stage", "notes": "s3://demosjparrado/hol_ach_2/ -> AUTH_LOGINS (20M), EXPORT_EVENTS (25M), CUSTOMERS (5M). CSV gzip delim ';' con header. Stage con credenciales IAM read-only (placeholders en el HTML público)." }
+    ],
+    "sections": [
+      { "id": "setup", "title": "Setup", "producerNotes": "DB/WH/stage/file format + COPY INTO desde S3. Validado: 20000242 / 25001030 / 5000000 filas." },
+      { "id": "acto1", "title": "Acto 1 · Detectar (Seguridad)", "producerNotes": "Brute force (svc_etl 40 fallos 02:00), impossible travel (svc_etl CO->DE), exfiltración (svc_etl 8635 MB a las 03:00). Validado end-to-end." },
+      { "id": "acto2", "title": "Acto 2 · Contener (Gobierno)", "producerNotes": "SYSTEM$CLASSIFY, masking, row access policy, AI_CLASSIFY triage, lineage." },
+      { "id": "acto3", "title": "Acto 3 · Prevenir (Desarrollo)", "producerNotes": "Dynamic table + resize elástico + app SPCS (Amb 1) o Cortex Agent (Amb 2)." }
+    ]
+  }
+  </script>
+  <style>
+    :root { color-scheme: light dark; --sf-blue:#29b5e8; --sf-navy:#11567f; --sf-mid:#71d3dc; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+      max-width: 960px; margin: 0 auto; padding: 0 24px 80px; line-height: 1.6;
+      color: light-dark(#1f2937,#e5e7eb); background: light-dark(#ffffff,#0b1220);
+    }
+    h1,h2,h3 { color: light-dark(#0f172a,#f1f5f9); line-height: 1.25; }
+    h2 { margin-top: 2.4em; padding-bottom: .3em; border-bottom: 2px solid light-dark(#e5e7eb,#1f2b3a); }
+    h3 { margin-top: 1.8em; }
+    a { color: light-dark(#0b6fa4,#60a5fa); }
+    code { font-family:"SF Mono",ui-monospace,Menlo,monospace; background: light-dark(#f1f5f9,#16202e); padding:.12em .38em; border-radius:5px; font-size:.9em; }
+    pre { background: light-dark(#0f172a,#060b14); color:#e5e7eb; padding:16px 18px; border-radius:10px; overflow-x:auto; border:1px solid light-dark(#1e293b,#1f2b3a); font-size:.86em; line-height:1.5; }
+    pre code { background:none; padding:0; color:inherit; }
+    pre.sql { border-left:4px solid var(--sf-blue); }
+    pre.shell { border-left:4px solid #a78bfa; }
+    .hero { background: linear-gradient(135deg,var(--sf-navy) 0%,#072a3f 100%); color:#fff; border-radius:16px; padding:40px 36px; margin:28px 0 0; }
+    .hero .kicker { color:var(--sf-mid); font-weight:700; letter-spacing:.12em; text-transform:uppercase; font-size:.78rem; margin:0 0 10px; }
+    .hero h1 { color:#fff; margin:0 0 12px; font-size:2.1rem; }
+    .hero p { margin:0; color:#cfeefc; max-width:60ch; }
+    .hero .badges { margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; }
+    .hero .badge { background:rgba(255,255,255,.12); border:1px solid rgba(113,211,220,.5); color:#eafaff; padding:6px 12px; border-radius:999px; font-size:.8rem; font-weight:600; }
+    .actionbar { position:sticky; top:0; z-index:20; display:flex; gap:12px; align-items:center; flex-wrap:wrap; background: light-dark(#f8fafc,#0b1220); padding:12px 0; margin:0 0 8px; border-bottom:1px solid light-dark(#e5e7eb,#1f2b3a); }
+    .btn { display:inline-flex; align-items:center; gap:8px; background:var(--sf-blue); color:#06232f; border:none; cursor:pointer; font-family:inherit; font-weight:700; font-size:.92rem; padding:10px 16px; border-radius:9px; }
+    .btn:hover { background:#4cc6f2; }
+    .actionbar .hint { font-size:.82rem; color: light-dark(#64748b,#7f95ab); }
+    .note,.warn,.why { border-radius:10px; padding:14px 16px; margin:18px 0; border-left:4px solid; font-size:.95em; }
+    .note { background: light-dark(#eff6ff,#0e1f2e); border-color:var(--sf-blue); }
+    .warn { background: light-dark(#fff7ed,#2a1a0d); border-color:#f59e0b; }
+    .why  { background: light-dark(#f0fdf4,#0d1f16); border-color:#22c55e; }
+    .coco { background: light-dark(#faf5ff,#17111f); border:1px solid light-dark(#e9d5ff,#3b2a52); border-radius:10px; padding:14px 16px; margin:16px 0; }
+    .coco .tag { font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color: light-dark(#7c3aed,#c4b5fd); }
+    .coco p { margin:6px 0 0; font-style:italic; }
+    .timeline { list-style:none; padding:0; margin:24px 0; }
+    .timeline li { display:flex; gap:14px; padding:10px 0; align-items:baseline; }
+    .timeline .t { flex:0 0 74px; font-weight:700; color:var(--sf-blue); font-variant-numeric:tabular-nums; }
+    .timeline .d { flex:1; }
+    .tabs { margin:20px 0; border:1px solid light-dark(#d1d5db,#263243); border-radius:12px; overflow:hidden; }
+    .tabbar { display:flex; background: light-dark(#f3f4f6,#111a26); }
+    .tabbtn { flex:1; padding:14px 12px; border:none; cursor:pointer; background:transparent; color: light-dark(#374151,#9fb3c8); font-size:.95rem; font-weight:600; font-family:inherit; border-bottom:3px solid transparent; }
+    .tabbtn[aria-selected="true"] { background: light-dark(#ffffff,#0b1220); color: light-dark(#0f172a,#eafaff); border-bottom-color:var(--sf-blue); }
+    .tabpanel { padding:18px 20px; display:none; }
+    .tabpanel[data-active="true"] { display:block; }
+    .env-hint { font-size:.82rem; color: light-dark(#64748b,#7f95ab); margin-top:-2px; }
+    .persona { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 10px; border-radius:999px; margin-right:8px; vertical-align:middle; }
+    .p-sec { background: light-dark(#fee2e2,#3a1416); color: light-dark(#b91c1c,#fca5a5); }
+    .p-gov { background: light-dark(#dbeafe,#0e2036); color: light-dark(#1d4ed8,#93c5fd); }
+    .p-dev { background: light-dark(#dcfce7,#0d2a19); color: light-dark(#15803d,#86efac); }
+    table { border-collapse:collapse; width:100%; margin:16px 0; font-size:.92em; }
+    th,td { border:1px solid light-dark(#d1d5db,#263243); padding:8px 10px; text-align:left; vertical-align:top; }
+    th { background: light-dark(#f3f4f6,#111a26); font-weight:700; }
+    .chartwrap { margin:20px 0; padding:16px; border:1px solid light-dark(#e5e7eb,#1f2b3a); border-radius:12px; background: light-dark(#fbfdff,#0d1522); }
+    footer { margin-top:60px; padding-top:20px; border-top:1px solid light-dark(#e5e7eb,#1f2b3a); font-size:.85rem; color: light-dark(#64748b,#7f95ab); }
+    .step-num { color:var(--sf-blue); font-weight:800; }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <p class="kicker">Hands-on Lab · Snowflake + Cortex Code</p>
+    <h1>El incidente de las 3:00 AM</h1>
+    <p>Una cuenta de servicio empezó a exfiltrar datos de madrugada. En una hora vas a <strong>detectarlo</strong>, <strong>contenerlo</strong> y <strong>prevenir</strong> que vuelva a pasar — usando Snowflake y dejando que <strong>Coco</strong> escriba el SQL contigo.</p>
+    <div class="badges">
+      <span class="badge">⏱ 60 minutos</span>
+      <span class="badge">🔐 Seguridad</span>
+      <span class="badge">🏛 Gobierno</span>
+      <span class="badge">🛠 Desarrollo</span>
+      <span class="badge">☁️ Datos en S3 (~50M filas)</span>
+    </div>
+  </div>
+
+  <div class="actionbar">
+    <button class="btn" id="dl-sql" type="button">⬇ Descargar SQL completo</button>
+    <span class="hint">Arma <code>hol_incidente_3am.sql</code> con todos los bloques del lab, en orden.</span>
+  </div>
+
+  <h2 id="intro">De qué se trata</h2>
+  <p>Este es un HOL <strong>integrado</strong>: un solo hilo narrativo que atraviesa tres perfiles técnicos. Cada acto resuelve una parte del incidente y termina con un artefacto concreto. Los datos son sintéticos, viven en un bucket de S3 y los cargas a Snowflake vía <em>stage</em>.</p>
+
+  <ul class="timeline">
+    <li><span class="t">00–06</span><span class="d"><strong>Setup.</strong> Creas el entorno y cargas ~50M filas desde S3.</span></li>
+    <li><span class="t">06–24</span><span class="d"><span class="persona p-sec">Seguridad</span><strong>Acto 1 · Detectar.</strong> Coco escribe las queries de caza: fuerza bruta, viaje imposible y el pico de exfiltración.</span></li>
+    <li><span class="t">24–42</span><span class="d"><span class="persona p-gov">Gobierno</span><strong>Acto 2 · Contener.</strong> Clasificas PII, aplicas enmascaramiento y política de fila, y mides el impacto.</span></li>
+    <li><span class="t">42–56</span><span class="d"><span class="persona p-dev">Desarrollo</span><strong>Acto 3 · Prevenir.</strong> Monitoreo continuo — app en contenedor (Amb 1) o agente conversacional (Amb 2).</span></li>
+    <li><span class="t">56–60</span><span class="d"><strong>Cierre.</strong> Qué construiste y hacia dónde escalarlo.</span></li>
+  </ul>
+
+  <div class="note">
+    <strong>Dos ambientes, una misma historia.</strong> Los Actos 1 y 2 son idénticos para todos (SQL puro + Coco). El Acto 3 se bifurca: si tienes terminal y Podman sigues la ruta full-stack; si solo tienes la UI de Snowflake, construyes un agente. Verás pestañas <em>Ambiente 1 / Ambiente 2</em> donde el camino cambia.
+  </div>
+
+  <table>
+    <thead><tr><th>Ambiente</th><th>Herramientas</th><th>Cómo se hace el Acto 3</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1 · Full-stack</strong></td><td>Coco Desktop, Node.js, Snowflake CLI, Podman</td><td>Coco genera una app, la conteneriza con Podman y la despliega en SPCS.</td></tr>
+      <tr><td><strong>2 · Solo UI</strong></td><td>Snowflake vía navegador (Snowsight + Coco + CoWork)</td><td>Coco construye un semantic view y un Cortex Agent; se prueba en CoWork.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="chartwrap">
+    <h3 style="margin-top:0">Lo que vas a ver en los datos</h3>
+    <p class="env-hint">Volumen de bytes exportados por hora — el pico de las 3:00 AM es el incidente.</p>
+    <canvas id="spike" width="880" height="300"></canvas>
+  </div>
+
+  <!-- ======================= SETUP ======================= -->
+  <h2 id="setup"><span class="step-num">00.</span> Setup — entorno y carga desde S3</h2>
+  <p>Abre una worksheet en Snowsight (o Coco Desktop) y ejecuta el bloque. Crea el entorno, un <em>stage</em> sobre el bucket S3 del lab, y carga las tres tablas (~50M filas).</p>
+
+  <div class="warn"><strong>Credenciales:</strong> reemplaza <code>&lt;AWS_KEY_ID&gt;</code> y <code>&lt;AWS_SECRET_KEY&gt;</code> por la llave IAM read-only que te entrega el instructor. No se publican en esta página.</div>
+
+  <pre class="sql"><code>CREATE DATABASE IF NOT EXISTS HOL_SEC;
+CREATE SCHEMA IF NOT EXISTS HOL_SEC.INCIDENTE;
+CREATE WAREHOUSE IF NOT EXISTS HOL_WH
+  WAREHOUSE_SIZE = XSMALL AUTO_SUSPEND = 60 AUTO_RESUME = TRUE;
+
+USE SCHEMA HOL_SEC.INCIDENTE;
+USE WAREHOUSE HOL_WH;
+
+-- Formato y stage sobre el bucket S3 del lab
+CREATE OR REPLACE FILE FORMAT ff_csv_gz
+  TYPE = CSV FIELD_DELIMITER = ';' SKIP_HEADER = 1
+  FIELD_OPTIONALLY_ENCLOSED_BY = '"' COMPRESSION = GZIP;
+
+CREATE OR REPLACE STAGE stg_hol
+  URL = 's3://demosjparrado/hol_ach_2/'
+  CREDENTIALS = (AWS_KEY_ID = '&lt;AWS_KEY_ID&gt;' AWS_SECRET_KEY = '&lt;AWS_SECRET_KEY&gt;')
+  FILE_FORMAT = ff_csv_gz;
+
+-- Tablas destino
+CREATE OR REPLACE TABLE AUTH_LOGINS (
+  event_id  NUMBER, event_ts TIMESTAMP_NTZ, user_name STRING,
+  city STRING, country STRING, client_ip STRING, status STRING);
+
+CREATE OR REPLACE TABLE EXPORT_EVENTS (
+  export_id NUMBER, export_ts TIMESTAMP_NTZ, user_name STRING, bytes_out NUMBER);
+
+CREATE OR REPLACE TABLE CUSTOMERS (
+  customer_id NUMBER, full_name STRING, email STRING,
+  national_id STRING, card_last4 STRING, branch_city STRING);
+
+-- Carga desde S3
+COPY INTO AUTH_LOGINS   FROM @stg_hol/auth_logins/;
+COPY INTO EXPORT_EVENTS FROM @stg_hol/export_events/;
+COPY INTO CUSTOMERS     FROM @stg_hol/customers/;
+
+-- Verificación de conteos
+SELECT 'AUTH_LOGINS' AS tabla, COUNT(*) AS filas FROM AUTH_LOGINS
+UNION ALL SELECT 'EXPORT_EVENTS', COUNT(*) FROM EXPORT_EVENTS
+UNION ALL SELECT 'CUSTOMERS', COUNT(*) FROM CUSTOMERS;</code></pre>
+
+  <div class="why"><strong>Por qué desde S3:</strong> es el patrón real de ingesta — datos en el data lake, Snowflake los carga a escala. Conteos esperados: 20.000.242 · 25.001.030 · 5.000.000.</div>
+
+  <!-- ======================= ACTO 1 ======================= -->
+  <h2 id="acto1"><span class="persona p-sec">Seguridad</span><span class="step-num">01.</span> Detectar — caza de amenazas con Coco</h2>
+  <p>No escribas el SQL a mano: descríbele a Coco qué buscas. Debajo de cada prompt dejamos el SQL de referencia (que también entra al script descargable).</p>
+
+  <h3>1.1 · Fuerza bruta</h3>
+  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Sobre <code>AUTH_LOGINS</code>, encuentra usuarios con 10 o más logins fallidos en ventanas de 10 minutos. Muéstrame usuario, ventana y número de fallos."</p></div>
+  <pre class="sql"><code>-- Deteccion: fuerza bruta
+SELECT user_name,
+       TIME_SLICE(event_ts, 10, 'MINUTE') AS ventana,
+       COUNT(*) AS fallos
+FROM AUTH_LOGINS
+WHERE status = 'FAIL'
+GROUP BY 1, 2
+HAVING COUNT(*) >= 10
+ORDER BY fallos DESC;</code></pre>
+  <p>Resultado esperado: <code>svc_etl</code> con 40 fallos en la ventana de las 02:00.</p>
+
+  <h3>1.2 · Viaje imposible</h3>
+  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Para cada usuario, detecta dos logins exitosos consecutivos desde países distintos con menos de 3 horas de diferencia. Usa <code>LAG</code> particionando por usuario."</p></div>
+  <pre class="sql"><code>-- Deteccion: viaje imposible
+WITH s AS (
+  SELECT user_name, event_ts, country,
+         LAG(country)  OVER (PARTITION BY user_name ORDER BY event_ts) AS prev_country,
+         LAG(event_ts) OVER (PARTITION BY user_name ORDER BY event_ts) AS prev_ts
+  FROM AUTH_LOGINS
+  WHERE status = 'SUCCESS'
+)
+SELECT user_name, prev_country, country, prev_ts, event_ts
+FROM s
+WHERE prev_country IS NOT NULL
+  AND country &lt;&gt; prev_country
+  AND TIMESTAMPDIFF('hour', prev_ts, event_ts) &lt; 3;</code></pre>
+  <p>Resultado esperado: solo <code>svc_etl</code>, con un salto <code>CO → DE</code> (00:30 → 02:30).</p>
+
+  <h3>1.3 · Pico de exfiltración</h3>
+  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Agrega <code>EXPORT_EVENTS</code> por hora y usuario. Marca como anómalas las horas cuyo total de <code>bytes_out</code> supere 3 desviaciones estándar sobre la media del usuario."</p></div>
+  <pre class="sql"><code>-- Deteccion: exfiltracion anomala (>3 sigma)
+WITH h AS (
+  SELECT user_name, DATE_TRUNC('hour', export_ts) AS hora, SUM(bytes_out) AS bytes_hora
+  FROM EXPORT_EVENTS GROUP BY 1, 2
+), stats AS (
+  SELECT user_name, AVG(bytes_hora) AS media, STDDEV(bytes_hora) AS ds
+  FROM h GROUP BY 1
+)
+SELECT h.user_name, h.hora, ROUND(h.bytes_hora/1e6, 1) AS mb_hora
+FROM h JOIN stats s ON h.user_name = s.user_name
+WHERE h.bytes_hora &gt; s.media + 3 * COALESCE(s.ds, 0)
+ORDER BY h.bytes_hora DESC;</code></pre>
+  <p>Resultado esperado: <code>svc_etl</code> encabeza con ~8.635 MB a las 03:00 — muy por encima de cualquier usuario normal.</p>
+
+  <div class="note"><strong>Skill opcional:</strong> invoca el skill <code>security-investigation</code> para que Coco arme la investigación completa (anomalías de login → exfiltración → cuentas afectadas) como un flujo guiado.</div>
+
+  <div class="why"><strong>Conclusión del acto:</strong> los tres hilos convergen en <code>svc_etl</code>. Tienes al culpable y la ventana temporal. Ahora hay que contener el daño sobre los datos que tocó.</div>
+
+  <!-- ======================= ACTO 2 ======================= -->
+  <h2 id="acto2"><span class="persona p-gov">Gobierno</span><span class="step-num">02.</span> Contener — clasificar y blindar la PII</h2>
+  <p>La cuenta comprometida leyó <code>CUSTOMERS</code>. Antes de que vuelva a pasar, gobierna esa tabla.</p>
+
+  <h3>2.1 · Clasificación automática de PII</h3>
+  <pre class="sql"><code>-- Clasificacion automatica (auto-tag de categorias semanticas)
+SELECT SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.CUSTOMERS', {'auto_tag': true});</code></pre>
+  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Interpreta el resultado de la clasificación de <code>CUSTOMERS</code> y dime qué columnas son identificadores directos y cuáles cuasi-identificadores."</p></div>
+
+  <h3>2.2 · Enmascaramiento dinámico</h3>
+  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea una masking policy que muestre el valor completo solo a ACCOUNTADMIN/SECURITYADMIN y enmascare al resto. Aplícala a <code>email</code> y <code>national_id</code>."</p></div>
+  <pre class="sql"><code>-- Enmascaramiento dinamico de PII
+CREATE OR REPLACE MASKING POLICY mask_pii AS (val STRING) RETURNS STRING -&gt;
+  CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val
+    ELSE '*** REDACTED ***'
+  END;
+
+ALTER TABLE CUSTOMERS MODIFY COLUMN email       SET MASKING POLICY mask_pii;
+ALTER TABLE CUSTOMERS MODIFY COLUMN national_id SET MASKING POLICY mask_pii;</code></pre>
+
+  <h3>2.3 · Política de acceso por fila (least privilege)</h3>
+  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea una row access policy sobre <code>CUSTOMERS</code>: ACCOUNTADMIN ve todo; un rol regional solo ve filas de su ciudad."</p></div>
+  <pre class="sql"><code>-- Acceso por fila segun rol/sucursal
+CREATE OR REPLACE ROW ACCESS POLICY rap_branch AS (branch STRING) RETURNS BOOLEAN -&gt;
+  CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN TRUE
+    WHEN CURRENT_ROLE() = 'ANALISTA_BOGOTA' THEN branch = 'Bogota'
+    ELSE FALSE
+  END;
+
+ALTER TABLE CUSTOMERS ADD ROW ACCESS POLICY rap_branch ON (branch_city);</code></pre>
+
+  <h3>2.4 · Triage de alertas con IA</h3>
+  <pre class="sql"><code>-- Triage automatico de severidad con Cortex AI
+SELECT user_name,
+       AI_CLASSIFY('Actividad sospechosa de ' || user_name ||
+                   ': exportacion anomala y viaje imposible',
+                   ['critico','alto','medio','bajo']):labels[0]::STRING AS severidad
+FROM (
+  SELECT DISTINCT user_name FROM EXPORT_EVENTS WHERE bytes_out &gt; 150000000
+);</code></pre>
+
+  <h3>2.5 · Impacto antes de actuar</h3>
+  <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>CUSTOMERS</code>? Antes de revocar accesos, dime qué se rompería."</p></div>
+  <div class="warn"><strong>Cuidado:</strong> revocar en caliente puede tumbar pipelines legítimos. El skill <code>lineage</code> le permite a Coco calcular el "blast radius" antes de que toques un grant.</div>
+
+  <div class="why"><strong>Conclusión del acto:</strong> la PII quedó clasificada, enmascarada y restringida por fila, con el impacto medido. El daño está contenido.</div>
+
+  <!-- ======================= ACTO 3 ======================= -->
+  <h2 id="acto3"><span class="persona p-dev">Desarrollo</span><span class="step-num">03.</span> Prevenir — monitoreo continuo</h2>
+  <p>Contener no basta: necesitas algo que vigile solo. Aquí el camino se bifurca según tu ambiente.</p>
+
+  <div class="tabs" id="envtabs">
+    <div class="tabbar" role="tablist">
+      <button class="tabbtn" role="tab" id="tab-e1" aria-controls="panel-e1" aria-selected="true">Ambiente 1 · Full-stack (CLI + Podman)</button>
+      <button class="tabbtn" role="tab" id="tab-e2" aria-controls="panel-e2" aria-selected="false">Ambiente 2 · Solo UI</button>
+    </div>
+
+    <div class="tabpanel" id="panel-e1" role="tabpanel" aria-labelledby="tab-e1" data-active="true">
+      <p class="env-hint">Coco Desktop · Node.js · Snowflake CLI · Podman</p>
+
+      <h3>3.1 · Pipeline incremental de detección</h3>
+      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea una dynamic table incremental que mantenga, por usuario y hora, el total de <code>bytes_out</code>, con target lag de 1 minuto."</p></div>
+      <pre class="sql"><code>-- Pipeline incremental de exfiltracion por hora
+CREATE OR REPLACE DYNAMIC TABLE DT_EXFIL_HORA
+  TARGET_LAG = '1 minute' WAREHOUSE = HOL_WH AS
+SELECT user_name,
+       DATE_TRUNC('hour', export_ts) AS hora,
+       SUM(bytes_out) AS bytes_hora
+FROM EXPORT_EVENTS
+GROUP BY 1, 2;</code></pre>
+
+      <h3>3.2 · Escalado elástico</h3>
+      <p>Cambiar el tamaño del warehouse es instantáneo y se factura por segundo. Recarga <code>EXPORT_EVENTS</code> con distintos tamaños y compáralo en tu cuenta.</p>
+      <pre class="sql"><code>-- Escalado elastico: recargar EXPORT_EVENTS con distintos tamanos
+ALTER WAREHOUSE HOL_WH SET WAREHOUSE_SIZE = SMALL;
+TRUNCATE TABLE EXPORT_EVENTS;
+COPY INTO EXPORT_EVENTS FROM @stg_hol/export_events/ FORCE = TRUE;
+
+ALTER WAREHOUSE HOL_WH SET WAREHOUSE_SIZE = XLARGE;
+TRUNCATE TABLE EXPORT_EVENTS;
+COPY INTO EXPORT_EVENTS FROM @stg_hol/export_events/ FORCE = TRUE;
+
+ALTER WAREHOUSE HOL_WH SET WAREHOUSE_SIZE = XSMALL;</code></pre>
+      <div class="warn"><strong>Gotcha:</strong> <code>TRUNCATE</code> no borra el historial de carga de <code>COPY</code>, así que el segundo COPY omitiría los archivos. Por eso va <code>FORCE = TRUE</code>.</div>
+      <div class="note"><strong>Qué esperar a esta escala:</strong> recargar 25M filas (28 archivos) toma pocos segundos <em>tanto</em> en SMALL como en XLARGE — a este volumen la carga ya es paralela y rápida. El diferencial de tamaño se nota en cargas mucho mayores o en consultas analíticas pesadas. El mensaje clave: elasticidad instantánea y facturación por segundo, sin reprovisionar infraestructura.</div>
+
+      <h3>3.3 · App de monitoreo en contenedor</h3>
+      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Genera una app Next.js que lea <code>DT_EXFIL_HORA</code> y muestre un panel de alertas. Contenerízala con Podman y despliégala en SPCS con el skill <code>deploy-to-spcs</code>."</p></div>
+      <pre class="shell"><code># Coco genera Dockerfile y spec.yaml; el flujo esencial es:
+snow --version
+podman build -t hol-sec-monitor .
+snow spcs image-registry login
+podman push &lt;registry&gt;/hol-sec-monitor:latest
+snow spcs service create ...</code></pre>
+
+      <div class="why"><strong>Entregable:</strong> una app desplegada en SPCS que vigila la exfiltración en tiempo casi real.</div>
+    </div>
+
+    <div class="tabpanel" id="panel-e2" role="tabpanel" aria-labelledby="tab-e2" data-active="false">
+      <p class="env-hint">Snowflake vía navegador · Snowsight + Coco + CoWork</p>
+
+      <h3>3.1 · Semantic view de las detecciones</h3>
+      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>AUTH_LOGINS</code> y <code>EXPORT_EVENTS</code> con métricas de logins fallidos, bytes exportados y dimensión usuario/ciudad. Usa el skill <code>semantic-view</code>."</p></div>
+
+      <h3>3.2 · Cortex Agent de seguridad</h3>
+      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>cortex-agent</code>, crea un agente que use ese semantic view y regístralo en Snowflake CoWork."</p></div>
+      <div class="note"><strong>Recuerda:</strong> para que el agente aparezca en <strong>Snowflake CoWork</strong> hay que agregarlo explícitamente en la pestaña de CoWork (Add existing agent); crearlo y hacer GRANT a PUBLIC no basta.</div>
+
+      <h3>3.3 · Pruébalo en CoWork</h3>
+      <ul>
+        <li>"¿Qué usuario tuvo un viaje imposible ayer?"</li>
+        <li>"Muéstrame las horas con exportación anómala."</li>
+        <li>"¿Cuál es la severidad del caso de <code>svc_etl</code>?"</li>
+      </ul>
+
+      <h3>3.4 · Alerta programada (bonus)</h3>
+      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea una ALERT que corra cada hora y notifique si algún usuario supera el umbral de exfiltración. Usa el skill <code>alert</code>."</p></div>
+
+      <div class="why"><strong>Entregable:</strong> un agente conversacional de seguridad, gobernado y consultable desde CoWork, sin escribir código de app.</div>
+    </div>
+  </div>
+
+  <!-- ======================= FLUJO ======================= -->
+  <h2 id="flujo">El incidente, de principio a fin</h2>
+  <pre class="mermaid">
+flowchart LR
+  A[svc_etl comprometida] --> B[Acto 1: Detectar<br/>fuerza bruta - viaje imposible - pico]
+  B --> C[Acto 2: Contener<br/>clasificar PII - masking - row access]
+  C --> D{Ambiente}
+  D -->|1 Full-stack| E[App SPCS en Podman<br/>+ dynamic table]
+  D -->|2 Solo UI| F[Cortex Agent<br/>en CoWork + Alert]
+  E --> G[Monitoreo continuo]
+  F --> G[Monitoreo continuo]
+  </pre>
+
+  <h2 id="cierre">Cierre</h2>
+  <p>En una hora recorriste el ciclo completo de un incidente y produjiste artefactos reales en cada perfil:</p>
+  <ul>
+    <li><span class="persona p-sec">Seguridad</span> tres detecciones que convergen en la cuenta comprometida.</li>
+    <li><span class="persona p-gov">Gobierno</span> PII clasificada, enmascarada y restringida por fila, con impacto medido.</li>
+    <li><span class="persona p-dev">Desarrollo</span> monitoreo continuo — app en contenedor o agente conversacional.</li>
+  </ul>
+  <p><strong>Hacia dónde escalarlo:</strong> conectar telemetría real de <code>SNOWFLAKE.ACCOUNT_USAGE</code>, integrar el Trust Center, y versionar las políticas de gobierno como código con el skill <code>dcm</code>.</p>
+
+  <h3>Limpieza</h3>
+  <pre class="sql"><code>-- Limpieza al terminar el lab
+DROP DATABASE IF EXISTS HOL_SEC;
+DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
+
+  <footer>
+    HOL generado con Cortex Code · Datos 100% sintéticos, sin PII real · Snowflake +
+    <a href="https://docs.snowflake.com/">Documentación</a>
+  </footer>
+
+  <script src="/libs/chart.js@4.4.4/chart.umd.js"></script>
+  <script>
+    (function () {
+      var hours = [], vals = [];
+      for (var h = 0; h < 24; h++) {
+        hours.push((h < 10 ? '0' + h : h) + ':00');
+        var base = 20 + Math.round(Math.sin(h / 3.5) * 8 + Math.random() * 10);
+        vals.push(h === 3 ? 320 : base);
+      }
+      new Chart(document.getElementById('spike'), {
+        type: 'bar',
+        data: { labels: hours, datasets: [{
+          label: 'MB exportados / hora', data: vals,
+          backgroundColor: vals.map(function (v) { return v > 200 ? '#ef4444' : '#29b5e8'; })
+        }] },
+        options: { responsive: false, plugins: { legend: { display: false } },
+          scales: { y: { title: { display: true, text: 'MB exportados' } } } }
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var buttons = Array.prototype.slice.call(document.querySelectorAll('#envtabs .tabbtn'));
+      function activate(btn) {
+        buttons.forEach(function (b) {
+          var sel = b === btn;
+          b.setAttribute('aria-selected', sel ? 'true' : 'false');
+          var panel = document.getElementById(b.getAttribute('aria-controls'));
+          if (panel) panel.setAttribute('data-active', sel ? 'true' : 'false');
+        });
+      }
+      buttons.forEach(function (b) { b.addEventListener('click', function () { activate(b); }); });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('dl-sql');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var blocks = Array.prototype.slice.call(document.querySelectorAll('pre.sql code'));
+        var body = blocks.map(function (b) { return b.textContent.trim(); }).join('\n\n');
+        var header = '-- HOL: El incidente de las 3:00 AM\n' +
+          '-- Snowflake + Cortex Code\n' +
+          '-- Reemplaza <AWS_KEY_ID> y <AWS_SECRET_KEY> antes de ejecutar.\n\n';
+        var blob = new Blob([header + body + '\n'], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'hol_incidente_3am.sql';
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      });
+    })();
+  </script>
+
+  <script src="/libs/mermaid@10.9.6/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true, securityLevel: 'strict' });
+  </script>
+
+</body>
+</html>
