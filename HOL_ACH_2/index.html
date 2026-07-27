@@ -9,11 +9,8 @@
   {
     "generated": "2026-07-27",
     "client": "ACH Colombia",
-    "intent": "HOL integrado (1h) para ACH sobre el dominio PSE: seguridad, gobierno y desarrollo con Snowflake + Cortex Code (Coco). Datos PSE en S3 (~30M historicas) + feed en tiempo real (feeder->S3->Snowpipe auto-ingest->Dynamic Tables->dashboard en vivo). Dos ambientes: Amb1 (CLI+Podman/SiS) y Amb2 (solo UI + Cortex Agent en CoWork).",
-    "dataSources": [
-      { "type": "stage", "notes": "s3://demosjparrado/hol_ach_2/ -> pse_hist/ (PSE_TRANSACTIONS 30M), comercios/ (COMERCIOS 501), pse_stream/ (feed en vivo). CSV gzip ';' con header. Llave IAM read-only (placeholders)." }
-    ],
-    "validated": "PSE_TRANSACTIONS=30.003.515 filas. Detecciones: rechazos Scotiabank 03:00=1605 (57.3%), velocity anillo DOC900000xx 21-25 txns/10min, comercio 9001 monto max 199.3 MCOP, comercio 9001 pico 03:00-03:20. Snowpipe auto-ingest + 3 Dynamic Tables (lag 1min) validadas end-to-end."
+    "intent": "HOL PSE en 2 modulos de punta a punta con selector global: Modulo A (full-stack: Node.js + Coco Desktop + Snowflake CLI + Podman) y Modulo B (solo navegador). Datos PSE en S3 (~30M) + feed tiempo real (Snowpipe + Dynamic Tables). Boton Descargar SQL por modulo activo. Publicado en GitHub Pages HOL_ACH_2.",
+    "validated": "PSE_TRANSACTIONS=30.003.515. Rechazos Scotiabank 03:00=1605 (57.3%), velocity anillo DOC900000xx, comercio 9001 monto max 199.3 MCOP, comercio 9001 pico 03:00-03:20. Snowpipe auto-ingest + 3 Dynamic Tables validadas."
   }
   </script>
   <style>
@@ -21,15 +18,14 @@
     * { box-sizing: border-box; }
     body { font-family:-apple-system,system-ui,"Segoe UI",sans-serif; max-width:960px; margin:0 auto; padding:0 24px 80px; line-height:1.6; color:light-dark(#1f2937,#e5e7eb); background:light-dark(#ffffff,#0b1220); }
     h1,h2,h3 { color:light-dark(#0f172a,#f1f5f9); line-height:1.25; }
-    h2 { margin-top:2.4em; padding-bottom:.3em; border-bottom:2px solid light-dark(#e5e7eb,#1f2b3a); }
-    h3 { margin-top:1.8em; }
+    h2 { margin-top:2.2em; padding-bottom:.3em; border-bottom:2px solid light-dark(#e5e7eb,#1f2b3a); }
+    h3 { margin-top:1.6em; }
     a { color:light-dark(#0b6fa4,#60a5fa); }
     code { font-family:"SF Mono",ui-monospace,Menlo,monospace; background:light-dark(#f1f5f9,#16202e); padding:.12em .38em; border-radius:5px; font-size:.9em; }
     pre { background:light-dark(#0f172a,#060b14); color:#e5e7eb; padding:16px 18px; border-radius:10px; overflow-x:auto; border:1px solid light-dark(#1e293b,#1f2b3a); font-size:.86em; line-height:1.5; }
     pre code { background:none; padding:0; color:inherit; }
     pre.sql { border-left:4px solid var(--sf-blue); }
     pre.shell { border-left:4px solid #a78bfa; }
-    pre.py { border-left:4px solid #34d399; }
     .hero { background:linear-gradient(135deg,var(--ach) 0%,#01294d 100%); color:#fff; border-radius:16px; padding:38px 36px; margin:28px 0 0; }
     .hero img.logo { height:40px; margin-bottom:18px; display:block; }
     .hero .kicker { color:var(--sf-mid); font-weight:700; letter-spacing:.12em; text-transform:uppercase; font-size:.78rem; margin:0 0 10px; }
@@ -37,10 +33,22 @@
     .hero p { margin:0; color:#d6ecff; max-width:62ch; }
     .hero .badges { margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; }
     .hero .badge { background:rgba(255,255,255,.12); border:1px solid rgba(113,211,220,.5); color:#eafaff; padding:6px 12px; border-radius:999px; font-size:.8rem; font-weight:600; }
-    .actionbar { position:sticky; top:0; z-index:20; display:flex; gap:12px; align-items:center; flex-wrap:wrap; background:light-dark(#f8fafc,#0b1220); padding:12px 0; margin:0 0 8px; border-bottom:1px solid light-dark(#e5e7eb,#1f2b3a); }
-    .btn { display:inline-flex; align-items:center; gap:8px; background:var(--sf-blue); color:#06232f; border:none; cursor:pointer; font-family:inherit; font-weight:700; font-size:.92rem; padding:10px 16px; border-radius:9px; }
+
+    /* Selector global de modulo + acciones */
+    .modbar { position:sticky; top:0; z-index:30; background:light-dark(#f8fafc,#0b1220); padding:12px 0; margin:0 0 8px; border-bottom:1px solid light-dark(#e5e7eb,#1f2b3a); }
+    .modrow { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .modbtn { border:1px solid light-dark(#cbd5e1,#334155); background:light-dark(#fff,#111a26); color:light-dark(#334155,#cbd5e1); cursor:pointer; font-family:inherit; font-weight:700; font-size:.9rem; padding:9px 14px; border-radius:10px; }
+    .modbtn[aria-selected="true"] { background:var(--ach); color:#fff; border-color:var(--ach); }
+    .btn { display:inline-flex; align-items:center; gap:8px; background:var(--sf-blue); color:#06232f; border:none; cursor:pointer; font-family:inherit; font-weight:700; font-size:.9rem; padding:9px 14px; border-radius:10px; margin-left:auto; }
     .btn:hover { background:#4cc6f2; }
-    .actionbar .hint { font-size:.82rem; color:light-dark(#64748b,#7f95ab); }
+    .modhint { font-size:.82rem; color:light-dark(#64748b,#7f95ab); margin:6px 0 0; }
+
+    .module { display:none; }
+    .module[data-active="true"] { display:block; }
+    .modtag { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 10px; border-radius:999px; margin-bottom:8px; }
+    .ta { background:light-dark(#ede9fe,#241a3a); color:light-dark(#6d28d9,#c4b5fd); }
+    .tb { background:light-dark(#dcfce7,#0d2a19); color:light-dark(#15803d,#86efac); }
+
     .note,.warn,.why { border-radius:10px; padding:14px 16px; margin:18px 0; border-left:4px solid; font-size:.95em; }
     .note { background:light-dark(#eff6ff,#0e1f2e); border-color:var(--sf-blue); }
     .warn { background:light-dark(#fff7ed,#2a1a0d); border-color:#f59e0b; }
@@ -48,17 +56,9 @@
     .coco { background:light-dark(#faf5ff,#17111f); border:1px solid light-dark(#e9d5ff,#3b2a52); border-radius:10px; padding:14px 16px; margin:16px 0; }
     .coco .tag { font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:light-dark(#7c3aed,#c4b5fd); }
     .coco p { margin:6px 0 0; font-style:italic; }
-    .timeline { list-style:none; padding:0; margin:24px 0; }
-    .timeline li { display:flex; gap:14px; padding:10px 0; align-items:baseline; }
+    .timeline { list-style:none; padding:0; margin:20px 0; }
+    .timeline li { display:flex; gap:14px; padding:8px 0; align-items:baseline; }
     .timeline .t { flex:0 0 74px; font-weight:700; color:var(--sf-blue); font-variant-numeric:tabular-nums; }
-    .timeline .d { flex:1; }
-    .tabs { margin:20px 0; border:1px solid light-dark(#d1d5db,#263243); border-radius:12px; overflow:hidden; }
-    .tabbar { display:flex; background:light-dark(#f3f4f6,#111a26); }
-    .tabbtn { flex:1; padding:14px 12px; border:none; cursor:pointer; background:transparent; color:light-dark(#374151,#9fb3c8); font-size:.95rem; font-weight:600; font-family:inherit; border-bottom:3px solid transparent; }
-    .tabbtn[aria-selected="true"] { background:light-dark(#ffffff,#0b1220); color:light-dark(#0f172a,#eafaff); border-bottom-color:var(--sf-blue); }
-    .tabpanel { padding:18px 20px; display:none; }
-    .tabpanel[data-active="true"] { display:block; }
-    .env-hint { font-size:.82rem; color:light-dark(#64748b,#7f95ab); margin-top:-2px; }
     .persona { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 10px; border-radius:999px; margin-right:8px; vertical-align:middle; }
     .p-sec { background:light-dark(#fee2e2,#3a1416); color:light-dark(#b91c1c,#fca5a5); }
     .p-gov { background:light-dark(#dbeafe,#0e2036); color:light-dark(#1d4ed8,#93c5fd); }
@@ -79,7 +79,7 @@
     <img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAoCAMAAAACNM4XAAACrFBMVEX///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////9ANFm5AAAA43RSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqLC0uLzAxMjM0NTY3ODk6Ozw9PkFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaXF1eYGFiY2RlZmdoaWprbG1ub3BxcnN0dXd4eXp7fH1+gIGCg4SFhoeIiYqMjY6PkJGSk5WXmJmam5ydn6GipKeoqaqrrK2vsLGys7W2t7i5ury9vr/AwcLDxMXGyMnKy8zNzs/Q0dPU1dbX2tvc3d7f4OHj5OXm5+nr7O3u7/Dx8vP09fb3+Pn6+2d3pQUAAATdSURBVFiF7Vf5X1RVFL/MMKxChEyBgIgshVosDqAEJSJBxiKMloq2YZFKpSyCQGACQioB0kKFmma5gKFRCFqBWEJqWZEYECZ+/5HOfTO8ucOHZR5l/eL3h3vO3c733eWccx9j9/D/wz1KxcXLle5URvX1Rf9XxG14hsolwMckLgDXlU3PTJ8p8dbmYCrnXsPzJKqAA4pmB+LbmRIbYesjiS1blE1bj8J/SDxD7EHijOZ5a3lpm5vCxebvajQkqruyLTfwFeYq5Wx8jjE/gF/pBvDpwQDWM7acRIjFVoahlJe9FkuudKWdE+fgFq3cnxjjGQsj4W+pEQelTjAO4R68DK2UXCO5Wif23fewAaaPUfv6zefw92aPYD+zk7oV7/h00GAMV7OkhsD35RaoY7C30qh3xCm0rAqSxIYCxwm7rSsa6gm1DS0Ad7WngMsHmw5yNFVb7STG6yeOnzh+8lfgsenJvLPo+qafXc1X1IkiEq8C51MIqak+k01aBsxmPrgj2m/GXwlGtQxXpyde3GxPboO9pNoDX5NopE/vvzEw8PufeHCyWfVYQTE1SGwawOOy/oelF9xGZ8tF4m6+Rq8zfWs0NjY2GvvWkckmbCVSHBNb/MSA+aNyzzKHuW0Bh8B0UkSXkYJdpsroHQUkLtKi2aYnzZg3mg+a7e1JmOM5fJsVmN+gYuhlfR7apqVL82XM471cxqIHfyL3VJ8EyvPyx7DxB5RuT31F0nfoWMFvsvccYqcwTzT0OUJlfSXKpyXuoNAcDTqSEmANHTY32nVRxqfNl1qBbtJ62gq7MHrq6DHC0XbksJtQi4Z+xgOyXshNWQCrtMUUMuuq6HqzzUPdLua9YZhjUHqwzrSkVIbvxVFqCBfxMyywiNgMLuMbhs4Z5H6sltv2wVuFenFUAE4LU8w3Qynud+VlDNyl2ix0mbpawOKwVhy8CqWyrsVFSzlcn3bj4qUmngTVRY08CyQMDum9PD37PzEMCcdu0/ih26wUi0QLbyJN1mNRYwFnRDsdbS3qGE9s6CYRBRwh0U3XbHh4ZFRlGBeEc/IcZ9rXMmSIZpoRIOtvYIMFxG7xdB7LPlxOqvrITZ513C/0c5ekoF+j00VqxwZewY4xNQzFLBQDwhvBegQqudKAJRYQm8HJIBykMl1v1vcoMPSNATeQzNgHtD8tLacJX7SG26HXNLIXXkqJx8MxRqgsPSyHj0v83mVfluvRVr8Ij7PObtV4Q5PAleffqDCu2m2Tnor680VWdK/7cMZBGGfrZISx7uSqdSNoqa4Rhon61DicSVEEt6RlQUosw4AzY0m0mAiLrcwAvtyZ9PFcnVUl3cjMnn20Xe7X0Ol8N4knhaN8Pe2ieSi2jrSmUmUjNUWMBWfeFiy98KSzDXH7F79Au/31QHqivFjM/S1VyofJpUX0QFma61dB+TRhT/lDlA5foPbEkiyHKW1NgAUZPE+wtDw+c1FH50K5J4ObZCvWsrdIPMuX5LST5VD2iOs9W0m1/Oy3/egxkE9qbUm+nVLiTuk3NQR4h8SXEPJP1Lv86BdWlHH/2pYzn6JXXhEPkiv1SU+QyD2wicpVSeQhSbH6iWxPiXUfkUUW0D/Iv7xucLDJ1BUUzstAKdl7RHI3donkOu0Nf7m4SoFbw5T40j3cNfwNYnPSXW4C9AAAAAAASUVORK5CYII=" alt="ACH Colombia" />
     <p class="kicker">Hands-on Lab · Snowflake + Cortex Code</p>
     <h1>El incidente de las 3:00 AM</h1>
-    <p>De madrugada, un comercio empieza a recibir una avalancha de pagos PSE y un banco dispara sus rechazos. En una hora vas a <strong>detectar</strong> el fraude, <strong>contener</strong> el riesgo y <strong>prevenir</strong> que se repita — sobre datos PSE reales en escala y un flujo en <strong>tiempo real</strong>, con <strong>Coco</strong> escribiendo el SQL contigo.</p>
+    <p>De madrugada, un comercio recibe una avalancha de pagos PSE y un banco dispara sus rechazos. En una hora vas a <strong>detectar</strong> el fraude, <strong>contener</strong> el riesgo y <strong>prevenir</strong> que se repita — sobre datos PSE reales en escala y un flujo en <strong>tiempo real</strong>, con <strong>Coco</strong> escribiendo el SQL contigo.</p>
     <div class="badges">
       <span class="badge">⏱ 60 minutos</span>
       <span class="badge">💳 PSE</span>
@@ -90,46 +90,39 @@
     </div>
   </div>
 
-  <div class="actionbar">
-    <button class="btn" id="dl-sql" type="button">⬇ Descargar SQL completo</button>
-    <span class="hint">Arma <code>hol_ach_pse.sql</code> con todos los bloques del lab, en orden.</span>
+  <div class="modbar">
+    <div class="modrow">
+      <button class="modbtn" id="btn-a" aria-controls="mod-a" aria-selected="true">Módulo A · Full-stack (Node.js + Coco Desktop + CLI + Podman)</button>
+      <button class="modbtn" id="btn-b" aria-controls="mod-b" aria-selected="false">Módulo B · Solo navegador</button>
+      <button class="btn" id="dl-sql" type="button">⬇ Descargar SQL</button>
+    </div>
+    <p class="modhint" id="modhint">Estás viendo el <strong>Módulo A</strong>: ruta full-stack. Cada módulo es un lab completo de punta a punta.</p>
   </div>
 
-  <h2 id="intro">De qué se trata</h2>
-  <p>ACH procesa pagos 24/7. Este HOL usa ese mismo pulso: un histórico de <strong>~30M transacciones PSE</strong> en S3 y un <strong>feed en tiempo real</strong> que sigue llegando durante la sesión. Un solo hilo narrativo atraviesa tres perfiles y cada acto entrega un artefacto concreto.</p>
+  <!-- ============================================================= -->
+  <!-- =====================  MÓDULO A  ============================= -->
+  <!-- ============================================================= -->
+  <section class="module" id="mod-a" data-active="true">
+    <span class="modtag ta">Módulo A · Full-stack</span>
+    <p>Requisitos: <strong>Coco Desktop, Node.js, Snowflake CLI (<code>snow</code>) y Podman</strong>. Usas Coco para escribir el SQL, el CLI para operar y, en el Acto 3, contenerizas y despliegas el dashboard en SPCS.</p>
 
-  <ul class="timeline">
-    <li><span class="t">00–06</span><span class="d"><strong>Setup.</strong> Entorno + carga del histórico PSE desde S3.</span></li>
-    <li><span class="t">06–24</span><span class="d"><span class="persona p-sec">Seguridad</span><strong>Acto 1 · Detectar.</strong> Coco escribe la caza de fraude: rechazos por banco, velocity por documento, monto atípico y comercio bajo ataque.</span></li>
-    <li><span class="t">24–42</span><span class="d"><span class="persona p-gov">Gobierno</span><strong>Acto 2 · Contener.</strong> Clasificas el documento, aplicas enmascaramiento y acceso por entidad, y triage con IA.</span></li>
-    <li><span class="t">42–56</span><span class="d"><span class="persona p-dev">Desarrollo</span><strong>Acto 3 · Prevenir.</strong> Ingesta en tiempo real (Snowpipe + Dynamic Tables) y un dashboard que se actualiza solo.</span></li>
-    <li><span class="t">56–60</span><span class="d"><strong>Cierre.</strong> Qué construiste y cómo escalarlo.</span></li>
-  </ul>
+    <ul class="timeline">
+      <li><span class="t">00–06</span><span>Setup — entorno + carga del histórico PSE desde S3.</span></li>
+      <li><span class="t">06–24</span><span><span class="persona p-sec">Seguridad</span>Acto 1 · Detectar (4 señales de fraude PSE).</span></li>
+      <li><span class="t">24–42</span><span><span class="persona p-gov">Gobierno</span>Acto 2 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
+      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Acto 3 · Tiempo real + dashboard en SPCS/Streamlit.</span></li>
+      <li><span class="t">56–60</span><span>Cierre y limpieza.</span></li>
+    </ul>
 
-  <div class="note">
-    <strong>Dos ambientes, una misma historia.</strong> Los Actos 1 y 2 son idénticos (SQL puro + Coco). El Acto 3 se bifurca: con terminal y Podman despliegas un dashboard en SPCS/Streamlit; con solo la UI construyes un Cortex Agent para <strong>Snowflake CoWork</strong>. Verás pestañas donde el camino cambia.
-  </div>
+    <div class="chartwrap">
+      <h3 style="margin-top:0">Lo que vas a ver en los datos</h3>
+      <p class="modhint">Rechazos PSE por hora — el pico de las 3:00 AM es el incidente.</p>
+      <canvas id="spikeA" width="860" height="280"></canvas>
+    </div>
 
-  <table>
-    <thead><tr><th>Ambiente</th><th>Herramientas</th><th>Acto 3</th></tr></thead>
-    <tbody>
-      <tr><td><strong>1 · Full-stack</strong></td><td>Coco Desktop, Node.js, Snowflake CLI, Podman</td><td>Dashboard en vivo (Streamlit-in-Snowflake o app en SPCS) sobre las Dynamic Tables.</td></tr>
-      <tr><td><strong>2 · Solo UI</strong></td><td>Snowflake vía navegador (Snowsight + Coco + CoWork)</td><td>Semantic view PSE + Cortex Agent, probado en CoWork.</td></tr>
-    </tbody>
-  </table>
-
-  <div class="chartwrap">
-    <h3 style="margin-top:0">Lo que vas a ver en los datos</h3>
-    <p class="env-hint">Rechazos PSE por hora — el pico de las 3:00 AM es el incidente.</p>
-    <canvas id="spike" width="880" height="300"></canvas>
-  </div>
-
-  <!-- ======================= SETUP ======================= -->
-  <h2 id="setup"><span class="step-num">00.</span> Setup — entorno y carga del histórico PSE</h2>
-  <p>Abre una worksheet en Snowsight (o Coco Desktop) y ejecuta el bloque. Crea el entorno, un <em>stage</em> sobre el bucket S3 del lab y carga el histórico PSE.</p>
-  <div class="warn"><strong>Credenciales:</strong> reemplaza <code>&lt;AWS_KEY_ID&gt;</code> y <code>&lt;AWS_SECRET_KEY&gt;</code> por la llave IAM read-only que entrega el instructor.</div>
-
-  <pre class="sql"><code>CREATE DATABASE IF NOT EXISTS HOL_SEC;
+    <h2><span class="step-num">A0.</span> Setup — entorno y carga del histórico PSE</h2>
+    <p>En Coco Desktop abre una worksheet (o usa <code>snow sql</code>) y ejecuta el bloque. Reemplaza las credenciales que te da el instructor.</p>
+    <pre class="sql"><code>CREATE DATABASE IF NOT EXISTS HOL_SEC;
 CREATE SCHEMA IF NOT EXISTS HOL_SEC.INCIDENTE;
 CREATE WAREHOUSE IF NOT EXISTS HOL_WH
   WAREHOUSE_SIZE = XSMALL AUTO_SUSPEND = 60 AUTO_RESUME = TRUE;
@@ -146,256 +139,261 @@ CREATE OR REPLACE STAGE stg_hol
   CREDENTIALS = (AWS_KEY_ID = '&lt;AWS_KEY_ID&gt;' AWS_SECRET_KEY = '&lt;AWS_SECRET_KEY&gt;')
   FILE_FORMAT = ff_csv_gz;
 
--- Fact PSE + dimensiones
 CREATE OR REPLACE TABLE PSE_TRANSACTIONS (
   txn_id NUMBER, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
   monto NUMBER, canal STRING, estado STRING, tipo_persona STRING,
   documento_hash STRING, ciudad STRING);
-
-CREATE OR REPLACE TABLE COMERCIOS (
-  comercio_id NUMBER, nombre STRING, categoria STRING);
-
+CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER, nombre STRING, categoria STRING);
 CREATE OR REPLACE TABLE BANCOS (banco STRING, tipo STRING);
 INSERT INTO BANCOS VALUES
- ('Bancolombia','Establecimiento'),('Davivienda','Establecimiento'),
- ('BBVA Colombia','Establecimiento'),('Banco de Bogota','Establecimiento'),
- ('Nequi','SEDPE'),('Daviplata','SEDPE'),('Banco de Occidente','Establecimiento'),
- ('Scotiabank Colpatria','Establecimiento'),('Itau','Establecimiento'),
- ('Banco Popular','Establecimiento'),('Banco Caja Social','Establecimiento'),
- ('Banco AV Villas','Establecimiento'),('Banco Agrario','Establecimiento'),
- ('Bancoomeva','Cooperativo'),('Banco Falabella','Establecimiento'),
- ('Banco Pichincha','Establecimiento'),('GNB Sudameris','Establecimiento'),
- ('Banco Serfinanza','Establecimiento'),('Lulo Bank','Neobanco'),('Nu Colombia','Neobanco');
+ ('Bancolombia','Establecimiento'),('Davivienda','Establecimiento'),('BBVA Colombia','Establecimiento'),
+ ('Banco de Bogota','Establecimiento'),('Nequi','SEDPE'),('Daviplata','SEDPE'),
+ ('Banco de Occidente','Establecimiento'),('Scotiabank Colpatria','Establecimiento'),('Itau','Establecimiento'),
+ ('Banco Popular','Establecimiento'),('Banco Caja Social','Establecimiento'),('Banco AV Villas','Establecimiento'),
+ ('Banco Agrario','Establecimiento'),('Bancoomeva','Cooperativo'),('Banco Falabella','Establecimiento'),
+ ('Banco Pichincha','Establecimiento'),('GNB Sudameris','Establecimiento'),('Banco Serfinanza','Establecimiento'),
+ ('Lulo Bank','Neobanco'),('Nu Colombia','Neobanco');
 
--- Carga desde S3
 COPY INTO PSE_TRANSACTIONS FROM @stg_hol/pse_hist/;
 COPY INTO COMERCIOS        FROM @stg_hol/comercios/;
-
 SELECT COUNT(*) AS transacciones FROM PSE_TRANSACTIONS;  -- ~30.003.515</code></pre>
-  <div class="why"><strong>Por qué desde S3:</strong> es el patrón real de ACH — los pagos viven en el lago y Snowflake los carga a escala. Verás ~30 millones de transacciones listas para analizar.</div>
 
-  <!-- ======================= ACTO 1 ======================= -->
-  <h2 id="acto1"><span class="persona p-sec">Seguridad</span><span class="step-num">01.</span> Detectar — caza de fraude PSE con Coco</h2>
-  <p>No escribas el SQL a mano: descríbele a Coco qué buscas. Debajo dejamos el SQL de referencia (también entra al script descargable).</p>
-
-  <h3>1.1 · Pico de rechazos por banco</h3>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Sobre <code>PSE_TRANSACTIONS</code>, dame por banco y por hora el número de rechazos y el % de rechazo. Ordena por rechazos."</p></div>
-  <pre class="sql"><code>-- Deteccion: rechazos anomalos por banco/hora
-SELECT banco, DATE_TRUNC('hour', ts) AS hora,
-       COUNT(*) AS total,
+    <h2><span class="persona p-sec">Seguridad</span><span class="step-num">A1.</span> Detectar — caza de fraude PSE</h2>
+    <p>Descríbele a Coco qué buscas; debajo queda el SQL de referencia.</p>
+    <h3>A1.1 · Pico de rechazos por banco</h3>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Por banco y hora, dame rechazos y % de rechazo sobre <code>PSE_TRANSACTIONS</code>."</p></div>
+    <pre class="sql"><code>SELECT banco, DATE_TRUNC('hour', ts) AS hora, COUNT(*) AS total,
        SUM(IFF(estado='RECHAZADA',1,0)) AS rechazos,
        ROUND(100*SUM(IFF(estado='RECHAZADA',1,0))/COUNT(*),1) AS pct_rechazo
-FROM PSE_TRANSACTIONS
-GROUP BY 1,2
-HAVING rechazos > 500
-ORDER BY rechazos DESC;</code></pre>
-  <p>Resultado esperado: <code>Scotiabank Colpatria</code> a las 03:00 con ~1.605 rechazos (57,3% vs ~9% normal) — posible caída o ataque contra ese banco.</p>
+FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING rechazos > 500 ORDER BY rechazos DESC;</code></pre>
+    <p>Esperado: <code>Scotiabank Colpatria</code> a las 03:00, ~1.605 rechazos (57,3%).</p>
+    <h3>A1.2 · Velocity por documento</h3>
+    <pre class="sql"><code>SELECT documento_hash, TIME_SLICE(ts,10,'MINUTE') AS ventana, COUNT(*) AS txns
+FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) >= 15 ORDER BY txns DESC;</code></pre>
+    <p>Esperado: anillo <code>DOC900000xx</code>, 20–25 txns en 10 minutos.</p>
+    <h3>A1.3 · Monto atípico por comercio</h3>
+    <pre class="sql"><code>WITH s AS (SELECT AVG(monto) mu, STDDEV(monto) sd FROM PSE_TRANSACTIONS)
+SELECT comercio_id, COUNT(*) n, ROUND(MAX(monto)/1e6,1) max_mcop
+FROM PSE_TRANSACTIONS, s WHERE monto > s.mu + 3*s.sd
+GROUP BY 1 ORDER BY max_mcop DESC;</code></pre>
+    <p>Esperado: comercio <code>9001</code> con hasta ~199 MCOP.</p>
+    <h3>A1.4 · Comercio bajo ataque</h3>
+    <pre class="sql"><code>SELECT comercio_id, TIME_SLICE(ts,10,'MINUTE') AS ventana, COUNT(*) AS txns,
+       COUNT(DISTINCT documento_hash) AS documentos, ROUND(SUM(monto)/1e6,1) AS mcop
+FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</code></pre>
+    <p>Esperado: comercio <code>9001</code> domina las ventanas 03:00–03:20.</p>
+    <div class="why"><strong>Conclusión:</strong> las 4 señales convergen en el comercio 9001 y el anillo <code>DOC900000xx</code>.</div>
 
-  <h3>1.2 · Velocity por documento (card testing)</h3>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Encuentra documentos con 15 o más transacciones en ventanas de 10 minutos. Muéstrame documento, ventana y número de transacciones."</p></div>
-  <pre class="sql"><code>-- Deteccion: velocity por documento
-SELECT documento_hash,
-       TIME_SLICE(ts, 10, 'MINUTE') AS ventana,
-       COUNT(*) AS txns
-FROM PSE_TRANSACTIONS
-GROUP BY 1,2
-HAVING COUNT(*) >= 15
-ORDER BY txns DESC;</code></pre>
-  <p>Resultado esperado: un grupo de documentos <code>DOC900000xx</code> con 20–25 txns en 10 minutos, todas hacia el mismo comercio — el anillo de fraude.</p>
+    <h2><span class="persona p-gov">Gobierno</span><span class="step-num">A2.</span> Contener — gobernar el dato sensible</h2>
+    <pre class="sql"><code>-- Clasificacion automatica
+SELECT SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
 
-  <h3>1.3 · Monto atípico por comercio</h3>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Marca las transacciones cuyo monto supere 3 desviaciones estándar sobre la media global y agrúpalas por comercio, ordenando por el monto máximo."</p></div>
-  <pre class="sql"><code>-- Deteccion: montos atipicos (>3 sigma)
-WITH s AS (SELECT AVG(monto) AS mu, STDDEV(monto) AS sd FROM PSE_TRANSACTIONS)
-SELECT comercio_id, COUNT(*) AS n, ROUND(MAX(monto)/1e6,1) AS max_mcop
-FROM PSE_TRANSACTIONS, s
-WHERE monto > s.mu + 3*s.sd
-GROUP BY 1
-ORDER BY max_mcop DESC;</code></pre>
-  <p>Resultado esperado: el comercio <code>9001</code> encabeza con montos de hasta ~199 millones COP, muy por encima del máximo normal (~20 millones).</p>
-
-  <h3>1.4 · Comercio bajo ataque</h3>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Por comercio y ventana de 10 minutos, cuenta transacciones y documentos distintos. Muéstrame los comercios con picos de volumen."</p></div>
-  <pre class="sql"><code>-- Deteccion: comercio bajo ataque (concentracion anomala)
-SELECT comercio_id,
-       TIME_SLICE(ts, 10, 'MINUTE') AS ventana,
-       COUNT(*) AS txns,
-       COUNT(DISTINCT documento_hash) AS documentos,
-       ROUND(SUM(monto)/1e6,1) AS mcop
-FROM PSE_TRANSACTIONS
-GROUP BY 1,2
-HAVING COUNT(*) > 300
-ORDER BY txns DESC;</code></pre>
-  <p>Resultado esperado: el comercio <code>9001</code> domina las ventanas de 03:00 a 03:20 con cientos de transacciones — el objetivo del anillo.</p>
-
-  <div class="note"><strong>Skill opcional:</strong> invoca <code>security-investigation</code> para que Coco arme la investigación completa (rechazos → velocity → comercio objetivo) como un flujo guiado.</div>
-  <div class="why"><strong>Conclusión:</strong> las cuatro señales convergen en el comercio <code>9001</code> y el anillo <code>DOC900000xx</code>, con un banco (Scotiabank) bajo estrés. Tienes el fraude y su ventana. Toca contener.</div>
-
-  <!-- ======================= ACTO 2 ======================= -->
-  <h2 id="acto2"><span class="persona p-gov">Gobierno</span><span class="step-num">02.</span> Contener — gobernar el dato sensible</h2>
-  <p>Las transacciones exponen el documento del pagador. Antes de compartir tableros o dar acceso a más analistas, gobierna la tabla.</p>
-
-  <h3>2.1 · Clasificación automática</h3>
-  <pre class="sql"><code>-- Clasificacion automatica de categorias semanticas / PII
-SELECT SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});</code></pre>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Interpreta la clasificación de <code>PSE_TRANSACTIONS</code> y dime qué columnas son identificadores sensibles."</p></div>
-
-  <h3>2.2 · Enmascaramiento del documento</h3>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea una masking policy que muestre el documento completo solo a ACCOUNTADMIN/SECURITYADMIN y lo enmascare al resto. Aplícala a <code>documento_hash</code>."</p></div>
-  <pre class="sql"><code>-- Enmascaramiento dinamico del documento
+-- Enmascarar documento
 CREATE OR REPLACE MASKING POLICY mask_doc AS (val STRING) RETURNS STRING -&gt;
-  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val
-       ELSE 'DOC-****' END;
-ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN documento_hash SET MASKING POLICY mask_doc;</code></pre>
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val ELSE 'DOC-****' END;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN documento_hash SET MASKING POLICY mask_doc;
 
-  <h3>2.3 · Acceso por fila (por banco / entidad)</h3>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea una row access policy: ACCOUNTADMIN ve todo; un rol de un banco solo ve las transacciones originadas en ese banco."</p></div>
-  <pre class="sql"><code>-- Acceso por fila segun banco de la entidad
+-- Acceso por fila por banco
 CREATE OR REPLACE ROW ACCESS POLICY rap_banco AS (banco STRING) RETURNS BOOLEAN -&gt;
   CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN TRUE
-       WHEN CURRENT_ROLE() = 'ENTIDAD_BANCOLOMBIA' THEN banco = 'Bancolombia'
-       ELSE FALSE END;
-ALTER TABLE PSE_TRANSACTIONS ADD ROW ACCESS POLICY rap_banco ON (banco);</code></pre>
+       WHEN CURRENT_ROLE() = 'ENTIDAD_BANCOLOMBIA' THEN banco = 'Bancolombia' ELSE FALSE END;
+ALTER TABLE PSE_TRANSACTIONS ADD ROW ACCESS POLICY rap_banco ON (banco);
 
-  <h3>2.4 · Triage de alertas con IA</h3>
-  <pre class="sql"><code>-- Severidad automatica de la alerta con Cortex AI
+-- Triage de severidad con Cortex AI
 SELECT comercio_id,
-       AI_CLASSIFY('Comercio ' || comercio_id ||
-         ' con pico de transacciones y montos atipicos de madrugada',
-         ['critico','alto','medio','bajo']):labels[0]::STRING AS severidad
+       AI_CLASSIFY('Comercio ' || comercio_id || ' con pico de transacciones y montos atipicos de madrugada',
+                   ['critico','alto','medio','bajo']):labels[0]::STRING AS severidad
 FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);</code></pre>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime qué se rompería." (skill <code>lineage</code>)</p></div>
 
-  <h3>2.5 · Impacto antes de actuar</h3>
-  <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>PSE_TRANSACTIONS</code>? Antes de bloquear un comercio o revocar accesos, dime qué se rompería."</p></div>
-  <div class="warn"><strong>Cuidado:</strong> bloquear en caliente puede tumbar liquidación o reportes legítimos. El skill <code>lineage</code> le permite a Coco calcular el "blast radius" antes de tocar un grant.</div>
-  <div class="why"><strong>Conclusión:</strong> el documento quedó enmascarado, el acceso restringido por entidad y la alerta priorizada, con el impacto medido.</div>
+    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">A3.</span> Prevenir — <span class="live"></span>tiempo real + dashboard en SPCS</h2>
+    <div class="note"><strong>Arquitectura:</strong> <code>feeder</code> → S3 <code>pse_stream/</code> (cada ~15s) → <code>Snowpipe auto-ingest</code> → <code>Dynamic Tables (lag 1 min)</code> → <code>dashboard</code>. El instructor arranca el feeder.</div>
+    <pre class="sql"><code>-- PIPE con auto-ingest
+CREATE OR REPLACE PIPE pse_pipe AUTO_INGEST = TRUE AS
+COPY INTO PSE_TRANSACTIONS FROM @stg_hol/pse_stream/ FILE_FORMAT = (FORMAT_NAME = ff_csv_gz);
+SHOW PIPES LIKE 'pse_pipe';   -- toma notification_channel (ARN de SQS)
 
-  <!-- ======================= ACTO 3 ======================= -->
-  <h2 id="acto3"><span class="persona p-dev">Desarrollo</span><span class="step-num">03.</span> Prevenir — monitoreo en <span class="live"></span>tiempo real</h2>
-  <p>Contener no basta: ACH opera 24/7, así que necesitas vigilancia continua. Vas a montar el pulso real de PSE.</p>
-
-  <div class="note"><strong>Arquitectura del "tiempo real":</strong><br/>
-  <code>feeder</code> deja archivos en S3 cada ~15 s → <code>Snowpipe (auto-ingest)</code> los carga solo → <code>Dynamic Tables (lag 1 min)</code> mantienen los agregados frescos → el <code>dashboard</code> los lee y se actualiza solo. El instructor arranca el feeder al iniciar la sesión.</div>
-
-  <h3>3.1 · Ingesta continua con Snowpipe</h3>
-  <pre class="sql"><code>-- PIPE con auto-ingest sobre el prefijo del feed
-CREATE OR REPLACE PIPE pse_pipe
-  AUTO_INGEST = TRUE
-AS
-COPY INTO PSE_TRANSACTIONS
-FROM @stg_hol/pse_stream/
-FILE_FORMAT = (FORMAT_NAME = ff_csv_gz);
-
--- Obtén el ARN de la cola de notificación (columna notification_channel)
-SHOW PIPES LIKE 'pse_pipe';</code></pre>
-  <p>Toma el <code>notification_channel</code> (un ARN de SQS) y configura la notificación de eventos del bucket para el prefijo del feed (una sola vez, del lado AWS):</p>
-  <pre class="shell"><code># Configurar evento S3 -> SQS de Snowpipe (filtrado al prefijo del feed)
-aws s3api put-bucket-notification-configuration --bucket demosjparrado \
-  --notification-configuration '{"QueueConfigurations":[{
-    "QueueArn":"&lt;NOTIFICATION_CHANNEL_ARN&gt;",
-    "Events":["s3:ObjectCreated:*"],
-    "Filter":{"Key":{"FilterRules":[{"Name":"prefix","Value":"hol_ach_2/pse_stream/"}]}}}]}'</code></pre>
-  <div class="note"><strong>Alternativa sin notificaciones:</strong> si no puedes configurar el evento del bucket, reemplaza el PIPE por una <code>TASK</code> serverless cada 1 min con <code>COPY INTO PSE_TRANSACTIONS FROM @stg_hol/pse_stream/</code> — el historial de carga evita reprocesar archivos.</div>
-
-  <h3>3.2 · Dynamic Tables (agregados frescos)</h3>
-  <pre class="sql"><code>-- Volumen y monto por minuto / banco / estado
-CREATE OR REPLACE DYNAMIC TABLE DT_PSE_POR_MINUTO
-  TARGET_LAG = '1 minute' WAREHOUSE = HOL_WH AS
-SELECT DATE_TRUNC('minute', ts) AS minuto, banco, estado,
-       COUNT(*) AS txns, SUM(monto) AS monto_total
+-- Dynamic Tables
+CREATE OR REPLACE DYNAMIC TABLE DT_PSE_POR_MINUTO TARGET_LAG='1 minute' WAREHOUSE=HOL_WH AS
+SELECT DATE_TRUNC('minute',ts) minuto, banco, estado, COUNT(*) txns, SUM(monto) monto_total
 FROM PSE_TRANSACTIONS GROUP BY 1,2,3;
-
--- Tasa de rechazo por banco / hora
-CREATE OR REPLACE DYNAMIC TABLE DT_PSE_RECHAZOS
-  TARGET_LAG = '1 minute' WAREHOUSE = HOL_WH AS
-SELECT DATE_TRUNC('hour', ts) AS hora, banco,
-       COUNT(*) AS total,
-       SUM(IFF(estado='RECHAZADA',1,0)) AS rechazos,
-       ROUND(100*SUM(IFF(estado='RECHAZADA',1,0))/COUNT(*),1) AS pct_rechazo
+CREATE OR REPLACE DYNAMIC TABLE DT_PSE_RECHAZOS TARGET_LAG='1 minute' WAREHOUSE=HOL_WH AS
+SELECT DATE_TRUNC('hour',ts) hora, banco, COUNT(*) total,
+       SUM(IFF(estado='RECHAZADA',1,0)) rechazos,
+       ROUND(100*SUM(IFF(estado='RECHAZADA',1,0))/COUNT(*),1) pct_rechazo
 FROM PSE_TRANSACTIONS GROUP BY 1,2;
-
--- Concentracion por comercio / ventana 10 min
-CREATE OR REPLACE DYNAMIC TABLE DT_PSE_COMERCIO_ATAQUE
-  TARGET_LAG = '1 minute' WAREHOUSE = HOL_WH AS
-SELECT comercio_id, TIME_SLICE(ts, 10, 'MINUTE') AS ventana,
-       COUNT(*) AS txns, SUM(monto) AS monto_total
+CREATE OR REPLACE DYNAMIC TABLE DT_PSE_COMERCIO_ATAQUE TARGET_LAG='1 minute' WAREHOUSE=HOL_WH AS
+SELECT comercio_id, TIME_SLICE(ts,10,'MINUTE') ventana, COUNT(*) txns, SUM(monto) monto_total
 FROM PSE_TRANSACTIONS GROUP BY 1,2;</code></pre>
-  <div class="why"><strong>Comprobación en vivo:</strong> consulta <code>DT_PSE_POR_MINUTO</code> ordenando por minuto descendente varias veces — con el feeder corriendo verás minutos nuevos apareciendo sin que ejecutes ninguna carga.</div>
-
-  <div class="tabs" id="envtabs">
-    <div class="tabbar" role="tablist">
-      <button class="tabbtn" role="tab" id="tab-e1" aria-controls="panel-e1" aria-selected="true">Ambiente 1 · Dashboard (SiS / SPCS)</button>
-      <button class="tabbtn" role="tab" id="tab-e2" aria-controls="panel-e2" aria-selected="false">Ambiente 2 · Cortex Agent</button>
-    </div>
-
-    <div class="tabpanel" id="panel-e1" role="tabpanel" aria-labelledby="tab-e1" data-active="true">
-      <p class="env-hint">Coco Desktop · Node.js · Snowflake CLI · Podman</p>
-      <h3>3.3 · Dashboard de monitoreo en vivo</h3>
-      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Genera una app Streamlit-in-Snowflake que lea las Dynamic Tables <code>DT_PSE_*</code> y muestre KPIs de la última hora, volumen por minuto, bancos con rechazo anómalo y comercios bajo ataque, con auto-refresh cada 15 s."</p></div>
-      <p>El repo del lab incluye <code>scripts/app_pse_monitor.py</code> como referencia. Despliégalo en Snowsight (Projects › Streamlit) con warehouse <code>HOL_WH</code> sobre <code>HOL_SEC.INCIDENTE</code>, o contenerízalo en SPCS con el skill <code>deploy-to-spcs</code>.</p>
-      <pre class="shell"><code># Alternativa: contenerizar y desplegar en SPCS
-snow --version
+    <p>Configura la notificación del bucket hacia el <code>notification_channel</code> del pipe (una vez, del lado AWS):</p>
+    <pre class="shell"><code>aws s3api put-bucket-notification-configuration --bucket demosjparrado \
+  --notification-configuration '{"QueueConfigurations":[{
+    "QueueArn":"&lt;NOTIFICATION_CHANNEL_ARN&gt;","Events":["s3:ObjectCreated:*"],
+    "Filter":{"Key":{"FilterRules":[{"Name":"prefix","Value":"hol_ach_2/pse_stream/"}]}}}]}'</code></pre>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Genera una app Streamlit-in-Snowflake que lea las <code>DT_PSE_*</code> con KPIs, volumen por minuto y alertas de rechazo/comercio, auto-refresh 15s. Contenerízala con Podman y despliégala en SPCS (skill <code>deploy-to-spcs</code>)."</p></div>
+    <pre class="shell"><code>snow --version
 podman build -t ach-pse-monitor .
 snow spcs image-registry login
 podman push &lt;registry&gt;/ach-pse-monitor:latest
-snow spcs service create ...</code></pre>
-      <div class="why"><strong>Entregable:</strong> un tablero que muestra el fraude formándose en vivo mientras llegan las transacciones.</div>
-    </div>
+snow spcs service create ...   # Coco genera el spec.yaml</code></pre>
+    <div class="why"><strong>Entregable:</strong> dashboard en SPCS que muestra el fraude formándose en vivo. (El repo trae <code>scripts/app_pse_monitor.py</code> de referencia.)</div>
 
-    <div class="tabpanel" id="panel-e2" role="tabpanel" aria-labelledby="tab-e2" data-active="false">
-      <p class="env-hint">Snowflake vía navegador · Snowsight + Coco + CoWork</p>
-      <h3>3.3 · Semantic view + Cortex Agent</h3>
-      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> con métricas de transacciones, monto y % de rechazo, y dimensiones banco/comercio/ciudad/estado. Usa el skill <code>semantic-view</code>."</p></div>
-      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y regístralo en Snowflake CoWork."</p></div>
-      <div class="note"><strong>Recuerda:</strong> para que el agente aparezca en <strong>Snowflake CoWork</strong> hay que agregarlo en la pestaña de CoWork (Add existing agent); crearlo y hacer GRANT a PUBLIC no basta.</div>
-      <h3>3.4 · Pruébalo en CoWork</h3>
-      <ul>
-        <li>"¿Qué banco tuvo la mayor tasa de rechazo ayer de madrugada?"</li>
-        <li>"¿Qué comercio recibió más transacciones entre las 3 y las 4 AM?"</li>
-        <li>"Dame el monto total aprobado por banco hoy."</li>
-      </ul>
-      <h3>3.5 · Alerta programada (bonus)</h3>
-      <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea una ALERT que corra cada hora y notifique si algún banco supera 25% de rechazo o algún comercio supera un umbral de volumen. Usa el skill <code>alert</code>."</p></div>
-      <div class="why"><strong>Entregable:</strong> un agente conversacional de monitoreo PSE, gobernado y consultable desde CoWork.</div>
-    </div>
-  </div>
-
-  <!-- ======================= FLUJO ======================= -->
-  <h2 id="flujo">El incidente, de principio a fin</h2>
-  <pre class="mermaid">
-flowchart LR
-  A[Anillo de fraude 3AM<br/>comercio 9001] --> B[Acto 1: Detectar<br/>rechazos - velocity - monto - comercio]
-  B --> C[Acto 2: Contener<br/>clasificar - enmascarar - acceso por banco]
-  C --> D{Ambiente}
-  D -->|1 Full-stack| E[Dashboard en vivo<br/>Snowpipe + Dynamic Tables]
-  D -->|2 Solo UI| F[Cortex Agent<br/>en CoWork + Alert]
-  E --> G[Monitoreo continuo]
-  F --> G[Monitoreo continuo]
-  </pre>
-
-  <h2 id="cierre">Cierre</h2>
-  <p>En una hora recorriste el ciclo completo de un incidente de fraude PSE con artefactos reales:</p>
-  <ul>
-    <li><span class="persona p-sec">Seguridad</span> cuatro detecciones que convergen en el comercio y el anillo comprometidos.</li>
-    <li><span class="persona p-gov">Gobierno</span> documento enmascarado, acceso por entidad y alertas priorizadas con IA.</li>
-    <li><span class="persona p-dev">Desarrollo</span> ingesta en tiempo real y monitoreo continuo — dashboard o agente.</li>
-  </ul>
-  <p><strong>Hacia dónde escalarlo:</strong> conectar telemetría real de PSE/SOI/tesorería, integrar el Trust Center y versionar las políticas de gobierno como código con el skill <code>dcm</code>.</p>
-
-  <h3>Operación del feed y limpieza</h3>
-  <div class="warn"><strong>Costo:</strong> el feed en vivo mantiene Snowpipe y las Dynamic Tables activos. Arranca el feeder solo durante la sesión y <strong>deténlo al final</strong>; suspende las DT para no gotear créditos.</div>
-  <pre class="shell"><code># Feeder (desde el repo, requiere AWS SSO activo)
-cd scripts &amp;&amp; ./start_feeder.sh 15 800   # arrancar (cada 15s, 800 txns)
-./stop_feeder.sh                            # detener</code></pre>
-  <pre class="sql"><code>-- Suspender el flujo en vivo al terminar
-ALTER DYNAMIC TABLE DT_PSE_POR_MINUTO SUSPEND;
+    <h2><span class="step-num">A4.</span> Cierre y limpieza</h2>
+    <pre class="shell"><code>cd scripts &amp;&amp; ./stop_feeder.sh   # detener el feed al terminar</code></pre>
+    <pre class="sql"><code>ALTER DYNAMIC TABLE DT_PSE_POR_MINUTO SUSPEND;
 ALTER DYNAMIC TABLE DT_PSE_RECHAZOS SUSPEND;
 ALTER DYNAMIC TABLE DT_PSE_COMERCIO_ATAQUE SUSPEND;
 ALTER PIPE pse_pipe SET PIPE_EXECUTION_PAUSED = TRUE;
-
--- Limpieza total del lab
 DROP DATABASE IF EXISTS HOL_SEC;
 DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
+  </section>
+
+  <!-- ============================================================= -->
+  <!-- =====================  MÓDULO B  ============================= -->
+  <!-- ============================================================= -->
+  <section class="module" id="mod-b" data-active="false">
+    <span class="modtag tb">Módulo B · Solo navegador</span>
+    <p>Sin terminal ni contenedores: <strong>todo en Snowsight</strong>. Coco te asiste dentro de la UI. El dashboard se hace con Streamlit-in-Snowflake (sin Podman) o con un Cortex Agent en CoWork.</p>
+
+    <ul class="timeline">
+      <li><span class="t">00–06</span><span>Setup — entorno + carga del histórico PSE desde S3 (worksheet).</span></li>
+      <li><span class="t">06–24</span><span><span class="persona p-sec">Seguridad</span>Acto 1 · Detectar (4 señales de fraude PSE).</span></li>
+      <li><span class="t">24–42</span><span><span class="persona p-gov">Gobierno</span>Acto 2 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
+      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Acto 3 · Tiempo real + Cortex Agent en CoWork.</span></li>
+      <li><span class="t">56–60</span><span>Cierre y limpieza.</span></li>
+    </ul>
+
+    <div class="chartwrap">
+      <h3 style="margin-top:0">Lo que vas a ver en los datos</h3>
+      <p class="modhint">Rechazos PSE por hora — el pico de las 3:00 AM es el incidente.</p>
+      <canvas id="spikeB" width="860" height="280"></canvas>
+    </div>
+
+    <h2><span class="step-num">B0.</span> Setup — entorno y carga del histórico PSE</h2>
+    <p>En Snowsight abre una worksheet y ejecuta el bloque. Reemplaza las credenciales que te da el instructor.</p>
+    <pre class="sql"><code>CREATE DATABASE IF NOT EXISTS HOL_SEC;
+CREATE SCHEMA IF NOT EXISTS HOL_SEC.INCIDENTE;
+CREATE WAREHOUSE IF NOT EXISTS HOL_WH
+  WAREHOUSE_SIZE = XSMALL AUTO_SUSPEND = 60 AUTO_RESUME = TRUE;
+
+USE SCHEMA HOL_SEC.INCIDENTE;
+USE WAREHOUSE HOL_WH;
+
+CREATE OR REPLACE FILE FORMAT ff_csv_gz
+  TYPE = CSV FIELD_DELIMITER = ';' SKIP_HEADER = 1
+  FIELD_OPTIONALLY_ENCLOSED_BY = '"' COMPRESSION = GZIP;
+
+CREATE OR REPLACE STAGE stg_hol
+  URL = 's3://demosjparrado/hol_ach_2/'
+  CREDENTIALS = (AWS_KEY_ID = '&lt;AWS_KEY_ID&gt;' AWS_SECRET_KEY = '&lt;AWS_SECRET_KEY&gt;')
+  FILE_FORMAT = ff_csv_gz;
+
+CREATE OR REPLACE TABLE PSE_TRANSACTIONS (
+  txn_id NUMBER, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
+  monto NUMBER, canal STRING, estado STRING, tipo_persona STRING,
+  documento_hash STRING, ciudad STRING);
+CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER, nombre STRING, categoria STRING);
+CREATE OR REPLACE TABLE BANCOS (banco STRING, tipo STRING);
+INSERT INTO BANCOS VALUES
+ ('Bancolombia','Establecimiento'),('Davivienda','Establecimiento'),('BBVA Colombia','Establecimiento'),
+ ('Banco de Bogota','Establecimiento'),('Nequi','SEDPE'),('Daviplata','SEDPE'),
+ ('Banco de Occidente','Establecimiento'),('Scotiabank Colpatria','Establecimiento'),('Itau','Establecimiento'),
+ ('Banco Popular','Establecimiento'),('Banco Caja Social','Establecimiento'),('Banco AV Villas','Establecimiento'),
+ ('Banco Agrario','Establecimiento'),('Bancoomeva','Cooperativo'),('Banco Falabella','Establecimiento'),
+ ('Banco Pichincha','Establecimiento'),('GNB Sudameris','Establecimiento'),('Banco Serfinanza','Establecimiento'),
+ ('Lulo Bank','Neobanco'),('Nu Colombia','Neobanco');
+
+COPY INTO PSE_TRANSACTIONS FROM @stg_hol/pse_hist/;
+COPY INTO COMERCIOS        FROM @stg_hol/comercios/;
+SELECT COUNT(*) AS transacciones FROM PSE_TRANSACTIONS;  -- ~30.003.515</code></pre>
+
+    <h2><span class="persona p-sec">Seguridad</span><span class="step-num">B1.</span> Detectar — caza de fraude PSE</h2>
+    <p>Usa el asistente Cortex/Coco en Snowsight para redactar el SQL; debajo queda la referencia.</p>
+    <h3>B1.1 · Pico de rechazos por banco</h3>
+    <pre class="sql"><code>SELECT banco, DATE_TRUNC('hour', ts) AS hora, COUNT(*) AS total,
+       SUM(IFF(estado='RECHAZADA',1,0)) AS rechazos,
+       ROUND(100*SUM(IFF(estado='RECHAZADA',1,0))/COUNT(*),1) AS pct_rechazo
+FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING rechazos > 500 ORDER BY rechazos DESC;</code></pre>
+    <p>Esperado: <code>Scotiabank Colpatria</code> a las 03:00, ~1.605 rechazos (57,3%).</p>
+    <h3>B1.2 · Velocity por documento</h3>
+    <pre class="sql"><code>SELECT documento_hash, TIME_SLICE(ts,10,'MINUTE') AS ventana, COUNT(*) AS txns
+FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) >= 15 ORDER BY txns DESC;</code></pre>
+    <p>Esperado: anillo <code>DOC900000xx</code>, 20–25 txns en 10 minutos.</p>
+    <h3>B1.3 · Monto atípico por comercio</h3>
+    <pre class="sql"><code>WITH s AS (SELECT AVG(monto) mu, STDDEV(monto) sd FROM PSE_TRANSACTIONS)
+SELECT comercio_id, COUNT(*) n, ROUND(MAX(monto)/1e6,1) max_mcop
+FROM PSE_TRANSACTIONS, s WHERE monto > s.mu + 3*s.sd
+GROUP BY 1 ORDER BY max_mcop DESC;</code></pre>
+    <p>Esperado: comercio <code>9001</code> con hasta ~199 MCOP.</p>
+    <h3>B1.4 · Comercio bajo ataque</h3>
+    <pre class="sql"><code>SELECT comercio_id, TIME_SLICE(ts,10,'MINUTE') AS ventana, COUNT(*) AS txns,
+       COUNT(DISTINCT documento_hash) AS documentos, ROUND(SUM(monto)/1e6,1) AS mcop
+FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</code></pre>
+    <p>Esperado: comercio <code>9001</code> domina las ventanas 03:00–03:20.</p>
+    <div class="why"><strong>Conclusión:</strong> las 4 señales convergen en el comercio 9001 y el anillo <code>DOC900000xx</code>.</div>
+
+    <h2><span class="persona p-gov">Gobierno</span><span class="step-num">B2.</span> Contener — gobernar el dato sensible</h2>
+    <pre class="sql"><code>-- Clasificacion automatica
+SELECT SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
+
+-- Enmascarar documento
+CREATE OR REPLACE MASKING POLICY mask_doc AS (val STRING) RETURNS STRING -&gt;
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN val ELSE 'DOC-****' END;
+ALTER TABLE PSE_TRANSACTIONS MODIFY COLUMN documento_hash SET MASKING POLICY mask_doc;
+
+-- Acceso por fila por banco
+CREATE OR REPLACE ROW ACCESS POLICY rap_banco AS (banco STRING) RETURNS BOOLEAN -&gt;
+  CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SECURITYADMIN') THEN TRUE
+       WHEN CURRENT_ROLE() = 'ENTIDAD_BANCOLOMBIA' THEN banco = 'Bancolombia' ELSE FALSE END;
+ALTER TABLE PSE_TRANSACTIONS ADD ROW ACCESS POLICY rap_banco ON (banco);
+
+-- Triage de severidad con Cortex AI
+SELECT comercio_id,
+       AI_CLASSIFY('Comercio ' || comercio_id || ' con pico de transacciones y montos atipicos de madrugada',
+                   ['critico','alto','medio','bajo']):labels[0]::STRING AS severidad
+FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);</code></pre>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué depende de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime el impacto." (skill <code>lineage</code>)</p></div>
+
+    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">B3.</span> Prevenir — <span class="live"></span>tiempo real + Cortex Agent</h2>
+    <div class="note"><strong>Arquitectura:</strong> <code>feeder</code> → S3 <code>pse_stream/</code> → <code>Snowpipe</code> → <code>Dynamic Tables (1 min)</code> → agente/consulta. El feeder lo arranca el instructor; tú consumes el stream desde la UI.</div>
+    <pre class="sql"><code>-- PIPE con auto-ingest
+CREATE OR REPLACE PIPE pse_pipe AUTO_INGEST = TRUE AS
+COPY INTO PSE_TRANSACTIONS FROM @stg_hol/pse_stream/ FILE_FORMAT = (FORMAT_NAME = ff_csv_gz);
+
+-- Dynamic Tables
+CREATE OR REPLACE DYNAMIC TABLE DT_PSE_POR_MINUTO TARGET_LAG='1 minute' WAREHOUSE=HOL_WH AS
+SELECT DATE_TRUNC('minute',ts) minuto, banco, estado, COUNT(*) txns, SUM(monto) monto_total
+FROM PSE_TRANSACTIONS GROUP BY 1,2,3;
+CREATE OR REPLACE DYNAMIC TABLE DT_PSE_RECHAZOS TARGET_LAG='1 minute' WAREHOUSE=HOL_WH AS
+SELECT DATE_TRUNC('hour',ts) hora, banco, COUNT(*) total,
+       SUM(IFF(estado='RECHAZADA',1,0)) rechazos,
+       ROUND(100*SUM(IFF(estado='RECHAZADA',1,0))/COUNT(*),1) pct_rechazo
+FROM PSE_TRANSACTIONS GROUP BY 1,2;
+CREATE OR REPLACE DYNAMIC TABLE DT_PSE_COMERCIO_ATAQUE TARGET_LAG='1 minute' WAREHOUSE=HOL_WH AS
+SELECT comercio_id, TIME_SLICE(ts,10,'MINUTE') ventana, COUNT(*) txns, SUM(monto) monto_total
+FROM PSE_TRANSACTIONS GROUP BY 1,2;</code></pre>
+    <div class="note">La notificación del bucket (S3 → SQS) la deja lista el instructor. Si no hay auto-ingest, una <code>TASK</code> serverless cada 1 min con <code>COPY</code> mantiene la carga.</div>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado). Usa el skill <code>semantic-view</code>."</p></div>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y regístralo en Snowflake CoWork."</p></div>
+    <div class="note"><strong>Recuerda:</strong> para que el agente aparezca en <strong>Snowflake CoWork</strong> hay que agregarlo en la pestaña de CoWork (Add existing agent); crearlo y hacer GRANT a PUBLIC no basta.</div>
+    <p>Pruébalo en CoWork:</p>
+    <ul>
+      <li>"¿Qué banco tuvo la mayor tasa de rechazo ayer de madrugada?"</li>
+      <li>"¿Qué comercio recibió más transacciones entre las 3 y las 4 AM?"</li>
+      <li>"Dame el monto total aprobado por banco hoy."</li>
+    </ul>
+    <div class="coco"><span class="tag">Pídele a Coco (bonus)</span><p>"Crea una ALERT que corra cada hora y notifique si un banco supera 25% de rechazo o un comercio supera un umbral de volumen. Usa el skill <code>alert</code>."</p></div>
+    <div class="note"><strong>Dashboard sin código:</strong> también puedes desplegar la app <code>scripts/app_pse_monitor.py</code> como Streamlit-in-Snowflake desde Snowsight (Projects › Streamlit), sin Podman ni CLI.</div>
+    <div class="why"><strong>Entregable:</strong> un agente conversacional de monitoreo PSE, gobernado y consultable desde CoWork.</div>
+
+    <h2><span class="step-num">B4.</span> Cierre y limpieza</h2>
+    <pre class="sql"><code>ALTER DYNAMIC TABLE DT_PSE_POR_MINUTO SUSPEND;
+ALTER DYNAMIC TABLE DT_PSE_RECHAZOS SUSPEND;
+ALTER DYNAMIC TABLE DT_PSE_COMERCIO_ATAQUE SUSPEND;
+ALTER PIPE pse_pipe SET PIPE_EXECUTION_PAUSED = TRUE;
+DROP DATABASE IF EXISTS HOL_SEC;
+DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
+  </section>
 
   <footer>
     HOL para ACH Colombia · generado con Cortex Code · Datos 100% sintéticos, sin PII real · Snowflake +
@@ -404,62 +402,64 @@ DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
 
   <script src="/libs/chart.js@4.4.4/chart.umd.js"></script>
   <script>
-    (function () {
+    function drawSpike(id) {
+      var el = document.getElementById(id); if (!el || el._drawn) return; el._drawn = true;
       var hours = [], vals = [];
       for (var h = 0; h < 24; h++) {
         hours.push((h < 10 ? '0' + h : h) + ':00');
-        var base = 60 + Math.round(Math.sin(h / 3.5) * 20 + Math.random() * 30);
-        vals.push(h === 3 ? 1605 : base);
+        vals.push(h === 3 ? 1605 : 60 + Math.round(Math.sin(h/3.5)*20 + Math.random()*30));
       }
-      new Chart(document.getElementById('spike'), {
-        type: 'bar',
-        data: { labels: hours, datasets: [{
-          label: 'Rechazos PSE / hora', data: vals,
-          backgroundColor: vals.map(function (v) { return v > 500 ? '#ef4444' : '#29b5e8'; })
-        }] },
-        options: { responsive: false, plugins: { legend: { display: false } },
-          scales: { y: { title: { display: true, text: 'Rechazos' } } } }
-      });
-    })();
+      new Chart(el, { type:'bar',
+        data:{ labels:hours, datasets:[{ label:'Rechazos PSE / hora', data:vals,
+          backgroundColor: vals.map(function(v){return v>500?'#ef4444':'#29b5e8';}) }] },
+        options:{ responsive:false, plugins:{legend:{display:false}},
+          scales:{ y:{ title:{display:true,text:'Rechazos'} } } } });
+    }
+    drawSpike('spikeA');
   </script>
 
   <script>
     (function () {
-      var buttons = Array.prototype.slice.call(document.querySelectorAll('#envtabs .tabbtn'));
-      function activate(btn) {
-        buttons.forEach(function (b) {
-          var sel = b === btn;
-          b.setAttribute('aria-selected', sel ? 'true' : 'false');
-          var panel = document.getElementById(b.getAttribute('aria-controls'));
-          if (panel) panel.setAttribute('data-active', sel ? 'true' : 'false');
-        });
+      var A = document.getElementById('mod-a'), B = document.getElementById('mod-b');
+      var bA = document.getElementById('btn-a'), bB = document.getElementById('btn-b');
+      var hint = document.getElementById('modhint');
+      function show(which) {
+        var isA = which === 'a';
+        A.setAttribute('data-active', isA ? 'true' : 'false');
+        B.setAttribute('data-active', isA ? 'false' : 'true');
+        bA.setAttribute('aria-selected', isA ? 'true' : 'false');
+        bB.setAttribute('aria-selected', isA ? 'false' : 'true');
+        hint.innerHTML = isA
+          ? 'Estás viendo el <strong>Módulo A</strong>: ruta full-stack. Cada módulo es un lab completo de punta a punta.'
+          : 'Estás viendo el <strong>Módulo B</strong>: solo navegador. Cada módulo es un lab completo de punta a punta.';
+        if (!isA) drawSpike('spikeB');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      buttons.forEach(function (b) { b.addEventListener('click', function () { activate(b); }); });
+      bA.addEventListener('click', function(){ show('a'); });
+      bB.addEventListener('click', function(){ show('b'); });
     })();
   </script>
 
   <script>
     (function () {
       var btn = document.getElementById('dl-sql');
-      if (!btn) return;
       btn.addEventListener('click', function () {
-        var blocks = Array.prototype.slice.call(document.querySelectorAll('pre.sql code'));
+        var mod = document.querySelector('.module[data-active="true"]');
+        var isA = mod && mod.id === 'mod-a';
+        var blocks = Array.prototype.slice.call(mod.querySelectorAll('pre.sql code'));
         var body = blocks.map(function (b) { return b.textContent.trim(); }).join('\n\n');
         var header = '-- HOL ACH: El incidente de las 3:00 AM (PSE)\n' +
-          '-- Snowflake + Cortex Code\n' +
+          '-- Modulo ' + (isA ? 'A (full-stack)' : 'B (solo navegador)') + '\n' +
           '-- Reemplaza <AWS_KEY_ID> y <AWS_SECRET_KEY> antes de ejecutar.\n\n';
         var blob = new Blob([header + body + '\n'], { type: 'text/plain;charset=utf-8' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
-        a.href = url; a.download = 'hol_ach_pse.sql';
+        a.href = url; a.download = isA ? 'hol_ach_pse_moduloA.sql' : 'hol_ach_pse_moduloB.sql';
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
       });
     })();
   </script>
-
-  <script src="/libs/mermaid@10.9.6/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, securityLevel: 'strict' });</script>
 
 </body>
 </html>
