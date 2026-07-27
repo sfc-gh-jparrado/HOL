@@ -3,7 +3,7 @@
 HOL integrado (1 hora) para **ACH Colombia** sobre el dominio **PSE**: seguridad, gobierno y desarrollo con Snowflake + Cortex Code (Coco). **Todo en batch**: los datos se cargan desde S3 con `COPY` y se analizan. Sin Snowpipe ni tiempo real.
 
 - Guía: `index.html` → https://sfc-gh-jparrado.github.io/HOL/HOL_ACH_2/
-- Dos módulos con selector global: **A · Full-stack** (Node.js + Coco Desktop + CLI + Podman) y **B · Solo navegador**.
+- Dos rutas con selector global: **Opción 1 · Full-stack** (Node.js + Coco Desktop + CLI + Podman) y **Opción 2 · Solo navegador**.
 - Narrativa: un anillo de fraude golpea un comercio a las 3:00 AM y un banco dispara sus rechazos. Detectar → contener → prevenir.
 
 ## Datos (en S3 del instructor)
@@ -14,16 +14,17 @@ HOL integrado (1 hora) para **ACH Colombia** sobre el dominio **PSE**: seguridad
 - El estudiante **no toca AWS**: solo lee el bucket con la llave IAM read-only embebida en el `STAGE` (`COPY` desde S3). Sin `INSERT INTO` en el lab.
 
 ## Scripts
-- `scripts/pse_gen.sql` — (instructor) genera el histórico en Snowflake y lo descarga (UNLOAD) a S3, incluidas las dimensiones.
-- `scripts/app_pse_monitor.py` — dashboard Streamlit-in-Snowflake de monitoreo (KPIs, volumen, alertas) que lee `PSE_TRANSACTIONS` (Módulo A / SPCS).
-- `scripts/app_pse_explorer.py` — explorador visual Streamlit-in-Snowflake con **Plotly**: KPIs, gauges de % rechazo por banco, bar-race del volumen por comercio hora a hora, y mapa de calor día×hora. Detecta el día del incidente automáticamente (Módulo B por Snowsight; también sirve en A por SPCS). Requiere el paquete `plotly`.
+- `scripts/pse_gen.sql` — (instructor) genera el histórico en Snowflake, agrega PK/FK y lo descarga (UNLOAD) a S3, incluidas las dimensiones.
 - `scripts/feeder_pse.py`, `start_feeder.sh`, `stop_feeder.sh` — **OPCIONAL / avanzado**: simulan un feed de streaming a S3. **No forman parte del HOL batch**; se conservan por si se quiere demostrar ingesta continua (Snowpipe) por separado.
 
+> El Módulo 4 (desarrollo) no trae scripts de referencia: cada ruta lo construye con un **prompt de Coco** — Opción 1 crea una app **React en SPCS** con el skill externo [`snowflake-dashboard-viz`](https://github.com/sfc-gh-jparrado/cortex-code-skills); Opción 2 crea un **dashboard Streamlit-in-Snowflake** vía Coco en Snowsight.
+
 ## Cómo correr (estudiante)
-1. Ejecuta el bloque de Setup del `index.html` (crea entorno, stage y `COPY` de las 3 tablas desde S3).
-2. Acto 1: detecciones de fraude (rechazos por banco, velocity, monto atípico, comercio bajo ataque).
-3. Acto 2: gobierno (clasificar, enmascarar documento, acceso por banco, triage con IA).
-4. Acto 3: ambos módulos crean el **semantic view `sv_pse`** (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado, fecha, hora). Módulo A = capa semántica + dashboard (`app_pse_monitor.py`); Módulo B = semantic view + Cortex Agent en CoWork + explorador visual Plotly (`app_pse_explorer.py`).
+1. **Módulo 1 · Setup**: ejecuta el bloque del `index.html` (crea entorno, PK/FK, stage y `COPY` de las 3 tablas desde S3).
+2. **Módulo 2 · Detectar**: detecciones de fraude (rechazos por banco, velocity, monto atípico, comercio bajo ataque).
+3. **Módulo 3 · Contener**: gobierno (clasificar PII, enmascarar email/documento/nombre, acceso por banco, triage con Cortex AI).
+4. **Módulo 4 · Prevenir**: 4.1 crea el semantic view `sv_pse` por la **UI de Snowsight** (auto-detecta los joins desde las FK); 4.2 agente Cortex en CoWork. Luego, según la ruta: **Opción 1** = app React en SPCS (skill `snowflake-dashboard-viz`); **Opción 2** = dashboard Streamlit vía Coco en Snowsight.
+5. **Módulo 5 · Cierre**: limpieza (`DROP DATABASE`).
 
 ## Operación (instructor)
 - Regenerar/actualizar datos: correr `scripts/pse_gen.sql` (requiere AWS SSO y llave IAM con escritura temporal para el UNLOAD; revertir a read-only después).

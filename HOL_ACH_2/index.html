@@ -108,7 +108,7 @@
       <li><span class="t">00–06</span><span>Módulo 1 · Setup — entorno + carga del histórico PSE desde S3.</span></li>
       <li><span class="t">06–24</span><span><span class="persona p-sec">Seguridad</span>Módulo 2 · Detectar (4 señales de fraude PSE).</span></li>
       <li><span class="t">24–42</span><span><span class="persona p-gov">Gobierno</span>Módulo 3 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
-      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Módulo 4 · Dashboard de monitoreo (batch).</span></li>
+      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Módulo 4 · Capa semántica, agente y app React en SPCS.</span></li>
       <li><span class="t">56–60</span><span>Módulo 5 · Cierre y limpieza.</span></li>
     </ul>
 
@@ -219,51 +219,43 @@ SELECT AI_COMPLETE('claude-4-sonnet',
 FROM peak;</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime qué se rompería." (skill <code>lineage</code>)</p></div>
 
-    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y dashboard (batch)</h2>
-    <h3>Módulo 4.1 · Capa semántica (semantic view)</h3>
-    <p>Antes del tablero, crea una capa semántica reutilizable sobre las 3 tablas: defines métricas y dimensiones una sola vez para que el dashboard, Cortex Analyst y los agentes hablen el mismo idioma.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, tipo de banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
-    <pre class="sql"><code>CREATE OR REPLACE SEMANTIC VIEW sv_pse
-  TABLES (
-    transactions AS PSE_TRANSACTIONS PRIMARY KEY (txn_id),
-    bancos       AS BANCOS           PRIMARY KEY (banco),
-    comercios    AS COMERCIOS        PRIMARY KEY (comercio_id)
-  )
-  RELATIONSHIPS (
-    txn_to_banco    AS transactions (banco)       REFERENCES bancos (banco),
-    txn_to_comercio AS transactions (comercio_id) REFERENCES comercios (comercio_id)
-  )
-  DIMENSIONS (
-    transactions.banco    AS banco,
-    transactions.ciudad   AS ciudad,
-    transactions.estado   AS estado,
-    transactions.fecha    AS TO_DATE(ts),
-    transactions.hora     AS HOUR(ts),
-    bancos.tipo_banco     AS tipo,
-    comercios.comercio     AS nombre,
-    comercios.categoria    AS categoria
-  )
-  METRICS (
-    transactions.transacciones AS COUNT(txn_id),
-    transactions.monto_total   AS SUM(monto),
-    transactions.pct_rechazo   AS 100 * SUM(IFF(estado = 'RECHAZADA', 1, 0)) / COUNT(*)
-  );
+    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y app React (SPCS)</h2>
+    <h3>Módulo 4.1 · Capa semántica (en Snowsight, por UI)</h3>
+    <p>Crea una capa semántica reutilizable sobre las 3 tablas <strong>sin escribir DDL</strong>, para que el agente, Cortex Analyst y tu app hablen el mismo idioma.</p>
+    <ol>
+      <li>En Snowsight abre <strong>Create » Semantic View</strong> (editor guiado del modelo semántico).</li>
+      <li>Base de datos <code>HOL_SEC</code>, esquema <code>INCIDENTE</code>; agrega las tablas <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code>.</li>
+      <li><strong>Confirma las relaciones que el editor propone solo</strong>: las detecta desde las <code>FOREIGN KEY</code> del Setup (transacciones→bancos y transacciones→comercios).</li>
+      <li>Métricas: <em>transacciones</em> (conteo), <em>monto</em> (suma), <em>% rechazo</em>.</li>
+      <li>Dimensiones: banco, tipo de banco, comercio, ciudad, estado, hora.</li>
+      <li>Guarda como <code>sv_pse</code>.</li>
+    </ol>
+    <div class="why"><strong>Payoff:</strong> gracias a las <code>FOREIGN KEY</code> del Setup no defines los joins a mano — el editor los infiere.</div>
 
--- Pruébalo:
-SELECT * FROM SEMANTIC_VIEW(sv_pse METRICS transacciones, pct_rechazo DIMENSIONS banco)
-ORDER BY pct_rechazo DESC;</code></pre>
+    <h3>Módulo 4.2 · Agente Cortex en CoWork</h3>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>cortex-agent</code>, crea un agente sobre el semantic view <code>sv_pse</code> y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
+    <p>Pruébalo en CoWork:</p>
+    <ul>
+      <li>"¿Qué banco tuvo la mayor tasa de rechazo ayer de madrugada?"</li>
+      <li>"¿Qué comercio recibió más transacciones entre las 3 y las 4 AM?"</li>
+      <li>"Dame el monto total aprobado por banco."</li>
+    </ul>
 
-    <h3>Módulo 4.2 · Dashboard de monitoreo</h3>
-    <p>Con los ~30M de transacciones ya cargadas, construye un tablero que resuma el fraude: KPIs, volumen por banco/hora y las alertas del Módulo 2.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Genera una app Streamlit-in-Snowflake que lea <code>PSE_TRANSACTIONS</code> (con <code>BANCOS</code> y <code>COMERCIOS</code>) y muestre KPIs, volumen por banco/hora, bancos con rechazo anómalo y comercios bajo ataque. Contenerízala con Podman y despliégala en SPCS (skill <code>deploy-to-spcs</code>)."</p></div>
+    <h3>Módulo 4.3 · Tu app React de monitoreo en SPCS</h3>
+    <p>Construye <strong>tu propia app</strong> de monitoreo de fraude PSE en React y despliégala en Snowpark Container Services — con Coco Desktop haciendo el trabajo pesado a partir de un skill de visualización.</p>
+    <p>Instala el skill de visualización (una sola vez):</p>
+    <pre class="shell"><code>git clone https://github.com/sfc-gh-jparrado/cortex-code-skills.git
+cp -r cortex-code-skills/skills/* ~/.snowflake/cortex/skills/
+# reinicia Coco Desktop para que detecte el skill</code></pre>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>snowflake-dashboard-viz</code>, genera una app React/Next.js de monitoreo de fraude PSE (KPIs, mapa de calor día×hora, dona de canales, mapa de Colombia por actividad y volumen por comercio) que consulte <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (o el semantic view <code>sv_pse</code>) y, opcionalmente, embeba el panel de chat del agente. Luego contenerízala y despliégala en SPCS con endpoint público usando el skill <code>deploy-to-spcs</code> (o <code>kaniko-spcs</code> para construir la imagen dentro de Snowflake)."</p></div>
     <pre class="shell"><code>snow --version
-podman build -t ach-pse-monitor .
+podman build -t ach-pse-app .
 snow spcs image-registry login
-podman push &lt;registry&gt;/ach-pse-monitor:latest
-snow spcs service create ...   # Coco genera el spec.yaml</code></pre>
-    <div class="note">El repo trae <code>scripts/app_pse_monitor.py</code> (tablero base) y <code>scripts/app_pse_explorer.py</code> (explorador Plotly: gauges, bar-race y mapa de calor). Puedes contenerizar cualquiera con Podman → SPCS, o desplegarlo como Streamlit-in-Snowflake desde Snowsight sin Podman.</div>
+podman push &lt;registry&gt;/ach-pse-app:latest
+snow spcs service create ...   # Coco genera el spec.yaml (endpoint public + readinessProbe)</code></pre>
+    <div class="note"><strong>Cómo se conecta a los datos:</strong> dentro de SPCS la app usa el <em>token OAuth del servicio</em> (<code>/snowflake/session/token</code>) para consultar Snowflake — sin credenciales embebidas.</div>
     <div class="note"><strong>Refrescar los datos (opcional):</strong> este HOL es batch — para traer datos nuevos, re-ejecuta el <code>COPY</code> del Setup o prográmalo con una <code>TASK</code>.</div>
-    <div class="why"><strong>Entregable:</strong> un tablero de fraude PSE sobre los datos cargados desde S3.</div>
+    <div class="why"><strong>Entregable:</strong> tu propia app React de fraude PSE, desplegada en SPCS con endpoint público.</div>
 
     <h2><span class="step-num">Módulo 5.</span> Cierre y limpieza</h2>
     <pre class="sql"><code>-- Limpieza al terminar el lab
@@ -282,7 +274,7 @@ DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
       <li><span class="t">00–06</span><span>Módulo 1 · Setup — entorno + carga del histórico PSE desde S3 (worksheet).</span></li>
       <li><span class="t">06–24</span><span><span class="persona p-sec">Seguridad</span>Módulo 2 · Detectar (4 señales de fraude PSE).</span></li>
       <li><span class="t">24–42</span><span><span class="persona p-gov">Gobierno</span>Módulo 3 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
-      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Módulo 4 · Cortex Agent (batch) en CoWork.</span></li>
+      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Módulo 4 · Semántica, agente y dashboard Streamlit.</span></li>
       <li><span class="t">56–60</span><span>Módulo 5 · Cierre y limpieza.</span></li>
     </ul>
 
@@ -392,41 +384,20 @@ SELECT AI_COMPLETE('claude-4-sonnet',
 FROM peak;</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué depende de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime el impacto." (skill <code>lineage</code>)</p></div>
 
-    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — semántica, agente y explorador (batch)</h2>
-    <h3>Módulo 4.1 · Capa semántica (semantic view)</h3>
-    <p>Sobre los ~30M ya cargados, crea una capa semántica reutilizable: métricas y dimensiones definidas una vez, que luego consumen el agente y el explorador visual.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, tipo de banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
-    <pre class="sql"><code>CREATE OR REPLACE SEMANTIC VIEW sv_pse
-  TABLES (
-    transactions AS PSE_TRANSACTIONS PRIMARY KEY (txn_id),
-    bancos       AS BANCOS           PRIMARY KEY (banco),
-    comercios    AS COMERCIOS        PRIMARY KEY (comercio_id)
-  )
-  RELATIONSHIPS (
-    txn_to_banco    AS transactions (banco)       REFERENCES bancos (banco),
-    txn_to_comercio AS transactions (comercio_id) REFERENCES comercios (comercio_id)
-  )
-  DIMENSIONS (
-    transactions.banco    AS banco,
-    transactions.ciudad   AS ciudad,
-    transactions.estado   AS estado,
-    transactions.fecha    AS TO_DATE(ts),
-    transactions.hora     AS HOUR(ts),
-    bancos.tipo_banco     AS tipo,
-    comercios.comercio     AS nombre,
-    comercios.categoria    AS categoria
-  )
-  METRICS (
-    transactions.transacciones AS COUNT(txn_id),
-    transactions.monto_total   AS SUM(monto),
-    transactions.pct_rechazo   AS 100 * SUM(IFF(estado = 'RECHAZADA', 1, 0)) / COUNT(*)
-  );
+    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — semántica, agente y dashboard (batch)</h2>
+    <h3>Módulo 4.1 · Capa semántica (en Snowsight, por UI)</h3>
+    <p>Crea una capa semántica reutilizable sobre las 3 tablas <strong>sin escribir DDL</strong>, que luego consumen el agente y el dashboard.</p>
+    <ol>
+      <li>En Snowsight abre <strong>Create » Semantic View</strong> (editor guiado del modelo semántico).</li>
+      <li>Base de datos <code>HOL_SEC</code>, esquema <code>INCIDENTE</code>; agrega <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code>.</li>
+      <li><strong>Confirma las relaciones que el editor propone solo</strong>: las detecta desde las <code>FOREIGN KEY</code> del Setup.</li>
+      <li>Métricas: transacciones (conteo), monto (suma), % rechazo. Dimensiones: banco, tipo de banco, comercio, ciudad, estado, hora.</li>
+      <li>Guarda como <code>sv_pse</code>.</li>
+    </ol>
+    <div class="why"><strong>Payoff:</strong> gracias a las <code>FOREIGN KEY</code> del Setup no defines los joins a mano — el editor los infiere.</div>
 
--- Pruébalo:
-SELECT * FROM SEMANTIC_VIEW(sv_pse METRICS transacciones, pct_rechazo DIMENSIONS banco)
-ORDER BY pct_rechazo DESC;</code></pre>
-
-    <h3>Módulo 4.2 · Probar el agente en CoWork</h3>
+    <h3>Módulo 4.2 · Agente Cortex en CoWork</h3>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>cortex-agent</code>, crea un agente sobre el semantic view <code>sv_pse</code> y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
     <div class="note"><strong>Recuerda:</strong> para que el agente aparezca en <strong>Snowflake CoWork</strong> hay que agregarlo en la pestaña de CoWork (Add existing agent); crearlo y hacer GRANT a PUBLIC no basta.</div>
     <p>Pruébalo en CoWork:</p>
     <ul>
@@ -435,12 +406,13 @@ ORDER BY pct_rechazo DESC;</code></pre>
       <li>"Dame el monto total aprobado por banco."</li>
     </ul>
     <div class="coco"><span class="tag">Pídele a Coco (bonus)</span><p>"Crea una ALERT que corra cada hora y notifique si un banco supera 25% de rechazo o un comercio supera un umbral de volumen. Usa el skill <code>alert</code>."</p></div>
-    <h3>Módulo 4.3 · Explorador visual (Streamlit-in-Snowflake)</h3>
-    <p>Además del agente, monta un tablero interactivo para <em>ver</em> los ~30M cargados y contar la historia del incidente — todo desde el navegador, sin Podman ni CLI.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Genera una app Streamlit-in-Snowflake con Plotly que lea <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> y muestre: KPIs, <strong>gauges</strong> de % de rechazo por banco, una <strong>barra animada (bar-race)</strong> del volumen por comercio hora a hora, y un <strong>mapa de calor</strong> de % de rechazo por día y hora. Detecta el día del incidente automáticamente."</p></div>
-    <div class="note"><strong>Desde Snowsight:</strong> Projects › Streamlit › <em>+ Streamlit App</em>, base de datos <code>HOL_SEC</code>, esquema <code>INCIDENTE</code>, warehouse <code>HOL_WH</code>; en <em>Packages</em> agrega <code>plotly</code>. Pega el contenido de <code>scripts/app_pse_explorer.py</code> del repo y ejecútalo.</div>
+
+    <h3>Módulo 4.3 · Dashboard Streamlit (vía Coco en Snowsight)</h3>
+    <p>Sin terminal ni contenedores: pídele a Coco, dentro de Snowsight, que construya <strong>tu</strong> dashboard de fraude PSE como Streamlit-in-Snowflake.</p>
+    <div class="coco"><span class="tag">Pídele a Coco (en Snowsight)</span><p>"Crea una app Streamlit-in-Snowflake que lea <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> y muestre KPIs, volumen por banco/hora, bancos con rechazo anómalo, comercios bajo ataque y un mapa de calor día×hora. Detecta el día del incidente automáticamente."</p></div>
+    <div class="note"><strong>Desde Snowsight:</strong> Projects › Streamlit › <em>+ Streamlit App</em>, base de datos <code>HOL_SEC</code>, esquema <code>INCIDENTE</code>, warehouse <code>HOL_WH</code>. Coco escribe el código dentro del editor; agrega los paquetes que use (p.ej. <code>plotly</code>) en <em>Packages</em>.</div>
     <div class="note"><strong>Refrescar los datos (opcional):</strong> este HOL es batch — para traer datos nuevos, re-ejecuta el <code>COPY</code> del Setup o prográmalo con una <code>TASK</code>.</div>
-    <div class="why"><strong>Entregable:</strong> un agente conversacional en CoWork <em>y</em> un explorador visual Plotly, ambos gobernados, sobre los datos cargados desde S3.</div>
+    <div class="why"><strong>Entregable:</strong> un agente conversacional en CoWork <em>y</em> tu dashboard Streamlit, ambos gobernados, sobre los datos cargados desde S3.</div>
 
     <h2><span class="step-num">Módulo 5.</span> Cierre y limpieza</h2>
     <pre class="sql"><code>-- Limpieza al terminar el lab
