@@ -123,6 +123,14 @@ FROM PSE_TRANSACTIONS t,
 DROP TABLE PSE_TRANSACTIONS;
 ALTER TABLE PSE_TX_ENR RENAME TO PSE_TRANSACTIONS;
 
+-- Constraints (informativas en Snowflake): PK/FK autodocumentan el modelo y permiten
+-- que el generador de la vista semantica infiera los joins automaticamente.
+ALTER TABLE BANCOS           ADD PRIMARY KEY (banco);
+ALTER TABLE COMERCIOS        ADD PRIMARY KEY (comercio_id);
+ALTER TABLE PSE_TRANSACTIONS ADD PRIMARY KEY (txn_id);
+ALTER TABLE PSE_TRANSACTIONS ADD FOREIGN KEY (banco)       REFERENCES BANCOS (banco);
+ALTER TABLE PSE_TRANSACTIONS ADD FOREIGN KEY (comercio_id) REFERENCES COMERCIOS (comercio_id);
+
 -- ===================== UNLOAD a S3 =====================
 COPY INTO @stg_hol/pse_hist/data_ FROM PSE_TRANSACTIONS
   FILE_FORMAT=(TYPE=CSV FIELD_DELIMITER=';' COMPRESSION=GZIP) HEADER=TRUE MAX_FILE_SIZE=80000000 OVERWRITE=TRUE;

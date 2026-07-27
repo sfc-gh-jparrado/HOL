@@ -138,12 +138,16 @@ CREATE OR REPLACE STAGE stg_hol
   FILE_FORMAT = ff_csv_gz;
 
 CREATE OR REPLACE TABLE PSE_TRANSACTIONS (
-  txn_id NUMBER, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
+  txn_id NUMBER PRIMARY KEY, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
   monto NUMBER, canal STRING, estado STRING, tipo_persona STRING,
   documento_hash STRING, ciudad STRING,
   nombre STRING, email STRING, telefono STRING);
-CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER, nombre STRING, categoria STRING);
-CREATE OR REPLACE TABLE BANCOS (banco STRING, tipo STRING);
+CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER PRIMARY KEY, nombre STRING, categoria STRING);
+CREATE OR REPLACE TABLE BANCOS (banco STRING PRIMARY KEY, tipo STRING);
+
+-- Relaciones (FK informativas): habilitan que el modelo semantico infiera los joins
+ALTER TABLE PSE_TRANSACTIONS ADD FOREIGN KEY (banco)       REFERENCES BANCOS (banco);
+ALTER TABLE PSE_TRANSACTIONS ADD FOREIGN KEY (comercio_id) REFERENCES COMERCIOS (comercio_id);
 
 -- Carga por lotes (batch) desde S3 — sin INSERT, todo viene del bucket
 COPY INTO PSE_TRANSACTIONS FROM @stg_hol/pse_hist/;
@@ -210,7 +214,7 @@ FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);
     <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y dashboard (batch)</h2>
     <h3>Módulo 4.1 · Capa semántica (semantic view)</h3>
     <p>Antes del tablero, crea una capa semántica reutilizable sobre las 3 tablas: defines métricas y dimensiones una sola vez para que el dashboard, Cortex Analyst y los agentes hablen el mismo idioma.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, tipo de banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
     <pre class="sql"><code>CREATE OR REPLACE SEMANTIC VIEW sv_pse
   TABLES (
     transactions AS PSE_TRANSACTIONS PRIMARY KEY (txn_id),
@@ -227,6 +231,7 @@ FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);
     transactions.estado   AS estado,
     transactions.fecha    AS TO_DATE(ts),
     transactions.hora     AS HOUR(ts),
+    bancos.tipo_banco     AS tipo,
     comercios.comercio     AS nombre,
     comercios.categoria    AS categoria
   )
@@ -299,12 +304,16 @@ CREATE OR REPLACE STAGE stg_hol
   FILE_FORMAT = ff_csv_gz;
 
 CREATE OR REPLACE TABLE PSE_TRANSACTIONS (
-  txn_id NUMBER, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
+  txn_id NUMBER PRIMARY KEY, ts TIMESTAMP_NTZ, banco STRING, comercio_id NUMBER,
   monto NUMBER, canal STRING, estado STRING, tipo_persona STRING,
   documento_hash STRING, ciudad STRING,
   nombre STRING, email STRING, telefono STRING);
-CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER, nombre STRING, categoria STRING);
-CREATE OR REPLACE TABLE BANCOS (banco STRING, tipo STRING);
+CREATE OR REPLACE TABLE COMERCIOS (comercio_id NUMBER PRIMARY KEY, nombre STRING, categoria STRING);
+CREATE OR REPLACE TABLE BANCOS (banco STRING PRIMARY KEY, tipo STRING);
+
+-- Relaciones (FK informativas): habilitan que el modelo semantico infiera los joins
+ALTER TABLE PSE_TRANSACTIONS ADD FOREIGN KEY (banco)       REFERENCES BANCOS (banco);
+ALTER TABLE PSE_TRANSACTIONS ADD FOREIGN KEY (comercio_id) REFERENCES COMERCIOS (comercio_id);
 
 -- Carga por lotes (batch) desde S3 — sin INSERT, todo viene del bucket
 COPY INTO PSE_TRANSACTIONS FROM @stg_hol/pse_hist/;
@@ -370,7 +379,7 @@ FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);
     <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — semántica, agente y explorador (batch)</h2>
     <h3>Módulo 4.1 · Capa semántica (semantic view)</h3>
     <p>Sobre los ~30M ya cargados, crea una capa semántica reutilizable: métricas y dimensiones definidas una vez, que luego consumen el agente y el explorador visual.</p>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Crea un semantic view sobre <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (métricas: transacciones, monto, % rechazo; dimensiones: banco, tipo de banco, comercio, ciudad, estado, hora) con el skill <code>semantic-view</code>. Luego, con el skill <code>cortex-agent</code>, crea un agente sobre ese semantic view y déjalo <strong>registrado y listo para usar en Snowflake CoWork</strong> (añádelo en la pestaña de CoWork con <em>Add existing agent</em>)."</p></div>
     <pre class="sql"><code>CREATE OR REPLACE SEMANTIC VIEW sv_pse
   TABLES (
     transactions AS PSE_TRANSACTIONS PRIMARY KEY (txn_id),
@@ -387,6 +396,7 @@ FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);
     transactions.estado   AS estado,
     transactions.fecha    AS TO_DATE(ts),
     transactions.hora     AS HOUR(ts),
+    bancos.tipo_banco     AS tipo,
     comercios.comercio     AS nombre,
     comercios.categoria    AS categoria
   )
