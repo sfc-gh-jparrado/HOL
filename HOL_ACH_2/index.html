@@ -178,7 +178,7 @@ FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</co
 
     <h2><span class="persona p-gov">Gobierno</span><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
     <pre class="sql"><code>-- Clasificacion automatica
-SELECT SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
+CALL SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
 
 -- Enmascarar documento
 CREATE OR REPLACE MASKING POLICY mask_doc AS (val STRING) RETURNS STRING -&gt;
@@ -329,7 +329,7 @@ FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</co
 
     <h2><span class="persona p-gov">Gobierno</span><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
     <pre class="sql"><code>-- Clasificacion automatica
-SELECT SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
+CALL SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
 
 -- Enmascarar documento
 CREATE OR REPLACE MASKING POLICY mask_doc AS (val STRING) RETURNS STRING -&gt;
