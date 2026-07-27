@@ -63,10 +63,6 @@
     .timeline { list-style:none; padding:0; margin:20px 0; }
     .timeline li { display:flex; gap:14px; padding:8px 0; align-items:baseline; }
     .timeline .t { flex:0 0 74px; font-weight:700; color:var(--sf-blue); font-variant-numeric:tabular-nums; }
-    .persona { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 10px; border-radius:999px; margin-right:8px; vertical-align:middle; }
-    .p-sec { background:light-dark(#fee2e2,#3a1416); color:light-dark(#b91c1c,#fca5a5); }
-    .p-gov { background:light-dark(#dbeafe,#0e2036); color:light-dark(#1d4ed8,#93c5fd); }
-    .p-dev { background:light-dark(#dcfce7,#0d2a19); color:light-dark(#15803d,#86efac); }
     table { border-collapse:collapse; width:100%; margin:16px 0; font-size:.92em; }
     th,td { border:1px solid light-dark(#d1d5db,#263243); padding:8px 10px; text-align:left; vertical-align:top; }
     th { background:light-dark(#f3f4f6,#111a26); font-weight:700; }
@@ -85,9 +81,6 @@
     <div class="badges">
       <span class="badge">⏱ 60 minutos</span>
       <span class="badge">💳 PSE</span>
-      <span class="badge">🔐 Seguridad</span>
-      <span class="badge">🏛 Gobierno</span>
-      <span class="badge">🛠 Desarrollo</span>
       <span class="badge">☁️ ~30M txns en S3 (batch)</span>
     </div>
   </div>
@@ -110,9 +103,9 @@
 
     <ul class="timeline">
       <li><span class="t">00–06</span><span>Módulo 1 · Setup — entorno + carga del histórico PSE desde S3.</span></li>
-      <li><span class="t">06–24</span><span><span class="persona p-sec">Seguridad</span>Módulo 2 · Detectar (4 señales de fraude PSE).</span></li>
-      <li><span class="t">24–42</span><span><span class="persona p-gov">Gobierno</span>Módulo 3 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
-      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Módulo 4 · Capa semántica, agente y app React en SPCS.</span></li>
+      <li><span class="t">06–24</span><span>Módulo 2 · Detectar (4 señales de fraude PSE).</span></li>
+      <li><span class="t">24–42</span><span>Módulo 3 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
+      <li><span class="t">42–56</span><span>Módulo 4 · Capa semántica, agente y app React en SPCS.</span></li>
       <li><span class="t">56–60</span><span>Módulo 5 · Cierre y limpieza.</span></li>
     </ul>
 
@@ -159,7 +152,7 @@ COPY INTO COMERCIOS        FROM @stg_hol/comercios/;
 COPY INTO BANCOS           FROM @stg_hol/bancos/;
 SELECT COUNT(*) AS transacciones FROM PSE_TRANSACTIONS;  -- ~30.003.515</code></pre>
 
-    <h2><span class="persona p-sec">Seguridad</span><span class="step-num">Módulo 2.</span> Detectar — caza de fraude PSE</h2>
+    <h2><span class="step-num">Módulo 2.</span> Detectar — caza de fraude PSE</h2>
     <p>Descríbele a Coco qué buscas; debajo queda el SQL de referencia.</p>
     <h3>Módulo 2.1 · Pico de rechazos por banco</h3>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"Por banco y hora, dame rechazos y % de rechazo sobre <code>PSE_TRANSACTIONS</code>."</p></div>
@@ -185,7 +178,7 @@ FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</co
     <p>Esperado: comercio <code>9001</code> domina las ventanas 03:00–03:20.</p>
     <div class="why"><strong>Conclusión:</strong> las 4 señales convergen en el comercio 9001 y el anillo <code>DOC900000xx</code>.</div>
 
-    <h2><span class="persona p-gov">Gobierno</span><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
+    <h2><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
     <pre class="sql"><code>-- Clasificacion automatica de PII: descubre y taggea columnas sensibles
 -- (detecta EMAIL con confianza alta y le aplica semantic_category=EMAIL, privacy_category=IDENTIFIER)
 CALL SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
@@ -223,7 +216,7 @@ SELECT AI_COMPLETE('claude-4-sonnet',
 FROM peak;</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime qué se rompería." (skill <code>lineage</code>)</p></div>
 
-    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y app React (SPCS)</h2>
+    <h2><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y app React (SPCS)</h2>
     <h3>Módulo 4.1 · Capa semántica (en Snowsight, por UI)</h3>
     <p>Crea una capa semántica reutilizable sobre las 3 tablas <strong>sin escribir DDL</strong>, para que el agente, Cortex Analyst y tu app hablen el mismo idioma.</p>
     <ol>
@@ -270,9 +263,9 @@ DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
 
     <ul class="timeline">
       <li><span class="t">00–06</span><span>Módulo 1 · Setup — entorno + carga del histórico PSE desde S3 (worksheet).</span></li>
-      <li><span class="t">06–24</span><span><span class="persona p-sec">Seguridad</span>Módulo 2 · Detectar (4 señales de fraude PSE).</span></li>
-      <li><span class="t">24–42</span><span><span class="persona p-gov">Gobierno</span>Módulo 3 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
-      <li><span class="t">42–56</span><span><span class="persona p-dev">Desarrollo</span>Módulo 4 · Semántica, agente y dashboard Streamlit.</span></li>
+      <li><span class="t">06–24</span><span>Módulo 2 · Detectar (4 señales de fraude PSE).</span></li>
+      <li><span class="t">24–42</span><span>Módulo 3 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
+      <li><span class="t">42–56</span><span>Módulo 4 · Semántica, agente y dashboard Streamlit.</span></li>
       <li><span class="t">56–60</span><span>Módulo 5 · Cierre y limpieza.</span></li>
     </ul>
 
@@ -319,7 +312,7 @@ COPY INTO COMERCIOS        FROM @stg_hol/comercios/;
 COPY INTO BANCOS           FROM @stg_hol/bancos/;
 SELECT COUNT(*) AS transacciones FROM PSE_TRANSACTIONS;  -- ~30.003.515</code></pre>
 
-    <h2><span class="persona p-sec">Seguridad</span><span class="step-num">Módulo 2.</span> Detectar — caza de fraude PSE</h2>
+    <h2><span class="step-num">Módulo 2.</span> Detectar — caza de fraude PSE</h2>
     <p>Usa el asistente Cortex/Coco en Snowsight para redactar el SQL; debajo queda la referencia.</p>
     <h3>Módulo 2.1 · Pico de rechazos por banco</h3>
     <pre class="sql"><code>SELECT banco, DATE_TRUNC('hour', ts) AS hora, COUNT(*) AS total,
@@ -344,7 +337,7 @@ FROM PSE_TRANSACTIONS GROUP BY 1,2 HAVING COUNT(*) > 300 ORDER BY txns DESC;</co
     <p>Esperado: comercio <code>9001</code> domina las ventanas 03:00–03:20.</p>
     <div class="why"><strong>Conclusión:</strong> las 4 señales convergen en el comercio 9001 y el anillo <code>DOC900000xx</code>.</div>
 
-    <h2><span class="persona p-gov">Gobierno</span><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
+    <h2><span class="step-num">Módulo 3.</span> Contener — gobernar el dato sensible</h2>
     <pre class="sql"><code>-- Clasificacion automatica de PII: descubre y taggea columnas sensibles
 -- (detecta EMAIL con confianza alta y le aplica semantic_category=EMAIL, privacy_category=IDENTIFIER)
 CALL SYSTEM$CLASSIFY('HOL_SEC.INCIDENTE.PSE_TRANSACTIONS', {'auto_tag': true});
@@ -382,7 +375,7 @@ SELECT AI_COMPLETE('claude-4-sonnet',
 FROM peak;</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué depende de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime el impacto." (skill <code>lineage</code>)</p></div>
 
-    <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — semántica, agente y dashboard (batch)</h2>
+    <h2><span class="step-num">Módulo 4.</span> Prevenir — semántica, agente y dashboard (batch)</h2>
     <h3>Módulo 4.1 · Capa semántica (en Snowsight, por UI)</h3>
     <p>Crea una capa semántica reutilizable sobre las 3 tablas <strong>sin escribir DDL</strong>, que luego consumen el agente y el dashboard.</p>
     <ol>
