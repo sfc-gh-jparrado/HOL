@@ -22,7 +22,11 @@
     h3 { margin-top:1.6em; }
     a { color:light-dark(#0b6fa4,#60a5fa); }
     code { font-family:"SF Mono",ui-monospace,Menlo,monospace; background:light-dark(#f1f5f9,#16202e); padding:.12em .38em; border-radius:5px; font-size:.9em; }
-    pre { background:light-dark(#0f172a,#060b14); color:#e5e7eb; padding:16px 18px; border-radius:10px; overflow-x:auto; border:1px solid light-dark(#1e293b,#1f2b3a); font-size:.86em; line-height:1.5; }
+    pre { background:light-dark(#0f172a,#060b14); color:#e5e7eb; padding:30px 18px 16px; border-radius:10px; overflow-x:auto; border:1px solid light-dark(#1e293b,#1f2b3a); font-size:.86em; line-height:1.5; }
+    .pre-wrap { position:relative; }
+    .copy-btn { position:absolute; top:8px; right:8px; z-index:3; background:rgba(255,255,255,.08); color:#cbd5e1; border:1px solid rgba(255,255,255,.18); border-radius:6px; font-family:inherit; font-size:.72rem; font-weight:600; padding:3px 9px; cursor:pointer; opacity:.7; transition:opacity .15s, background .15s; }
+    .copy-btn:hover { opacity:1; background:rgba(255,255,255,.16); }
+    .copy-btn.copied { color:#86efac; border-color:#16a34a; }
     pre code { background:none; padding:0; color:inherit; }
     pre.sql { border-left:4px solid var(--sf-blue); }
     pre.shell { border-left:4px solid #a78bfa; }
@@ -247,12 +251,7 @@ FROM peak;</code></pre>
     <pre class="shell"><code>git clone https://github.com/sfc-gh-jparrado/cortex-code-skills.git
 cp -r cortex-code-skills/skills/* ~/.snowflake/cortex/skills/
 # reinicia Coco Desktop para que detecte el skill</code></pre>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>snowflake-dashboard-viz</code>, genera una app React/Next.js de monitoreo de fraude PSE (KPIs, mapa de calor día×hora, dona de canales, mapa de Colombia por actividad y volumen por comercio) que consulte <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (o el semantic view <code>sv_pse</code>) y, opcionalmente, embeba el panel de chat del agente. Luego contenerízala y despliégala en SPCS con endpoint público usando el skill <code>deploy-to-spcs</code> (o <code>kaniko-spcs</code> para construir la imagen dentro de Snowflake)."</p></div>
-    <pre class="shell"><code>snow --version
-podman build -t ach-pse-app .
-snow spcs image-registry login
-podman push &lt;registry&gt;/ach-pse-app:latest
-snow spcs service create ...   # Coco genera el spec.yaml (endpoint public + readinessProbe)</code></pre>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>snowflake-dashboard-viz</code>, genera una app React/Next.js de monitoreo de fraude PSE (KPIs, mapa de calor día×hora, dona de canales, mapa de Colombia por actividad y volumen por comercio) que consulte <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (o el semantic view <code>sv_pse</code>) y, opcionalmente, embeba el panel de chat del agente. Luego contenerízala y despliégala en SPCS con endpoint público usando el skill <code>deploy-to-spcs</code> (o <code>kaniko-spcs</code> para construir la imagen dentro de Snowflake). Coco genera el <code>Dockerfile</code> y el <code>spec.yaml</code> (endpoint <code>public</code> + <code>readinessProbe</code>)."</p></div>
     <div class="note"><strong>Cómo se conecta a los datos:</strong> dentro de SPCS la app usa el <em>token OAuth del servicio</em> (<code>/snowflake/session/token</code>) para consultar Snowflake — sin credenciales embebidas.</div>
     <div class="note"><strong>Refrescar los datos (opcional):</strong> este HOL es batch — para traer datos nuevos, re-ejecuta el <code>COPY</code> del Setup o prográmalo con una <code>TASK</code>.</div>
     <div class="why"><strong>Entregable:</strong> tu propia app React de fraude PSE, desplegada en SPCS con endpoint público.</div>
@@ -482,6 +481,40 @@ DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
         a.href = url; a.download = isA ? 'hol_ach_pse_opcion1.sql' : 'hol_ach_pse_opcion2.sql';
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      document.querySelectorAll('pre > code').forEach(function (code) {
+        var pre = code.parentNode;
+        var wrap = document.createElement('div');
+        wrap.className = 'pre-wrap';
+        pre.parentNode.insertBefore(wrap, pre);
+        wrap.appendChild(pre);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'copy-btn';
+        btn.textContent = 'Copiar';
+        function fallback(text) {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.focus(); ta.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          ta.remove();
+        }
+        btn.addEventListener('click', function () {
+          var text = code.textContent;
+          function done() {
+            btn.textContent = 'Copiado'; btn.classList.add('copied');
+            setTimeout(function () { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 1500);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () { fallback(text); done(); });
+          } else { fallback(text); done(); }
+        });
+        wrap.appendChild(btn);
       });
     })();
   </script>
