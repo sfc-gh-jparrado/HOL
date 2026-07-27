@@ -247,10 +247,9 @@ FROM peak;</code></pre>
 
     <h3>Módulo 4.3 · Tu app React de monitoreo en SPCS</h3>
     <p>Construye <strong>tu propia app</strong> de monitoreo de fraude PSE en React y despliégala en Snowpark Container Services — con Coco Desktop haciendo el trabajo pesado a partir de un skill de visualización.</p>
-    <p>Instala el skill de visualización (una sola vez):</p>
-    <pre class="shell"><code>git clone https://github.com/sfc-gh-jparrado/cortex-code-skills.git
-cp -r cortex-code-skills/skills/* ~/.snowflake/cortex/skills/
-# reinicia Coco Desktop para que detecte el skill</code></pre>
+    <p>Instala el skill de visualización <strong>una sola vez</strong> — pídeselo a Coco (no necesitas la terminal):</p>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Clona el repositorio <code>https://github.com/sfc-gh-jparrado/cortex-code-skills</code> y copia sus skills a <code>~/.snowflake/cortex/skills/</code>."</p></div>
+    <div class="note"><strong>Reinicia Coco Desktop</strong> tras instalarlo: los skills se cargan al iniciar, así que <code>snowflake-dashboard-viz</code> queda disponible después del reinicio.</div>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>snowflake-dashboard-viz</code>, genera una app React/Next.js de monitoreo de fraude PSE (KPIs, mapa de calor día×hora, dona de canales, mapa de Colombia por actividad y volumen por comercio) que consulte <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (o el semantic view <code>sv_pse</code>) y, opcionalmente, embeba el panel de chat del agente. Luego contenerízala y despliégala en SPCS con endpoint público usando el skill <code>deploy-to-spcs</code> (o <code>kaniko-spcs</code> para construir la imagen dentro de Snowflake). Coco genera el <code>Dockerfile</code> y el <code>spec.yaml</code> (endpoint <code>public</code> + <code>readinessProbe</code>)."</p></div>
     <div class="note"><strong>Cómo se conecta a los datos:</strong> dentro de SPCS la app usa el <em>token OAuth del servicio</em> (<code>/snowflake/session/token</code>) para consultar Snowflake — sin credenciales embebidas.</div>
     <div class="note"><strong>Refrescar los datos (opcional):</strong> este HOL es batch — para traer datos nuevos, re-ejecuta el <code>COPY</code> del Setup o prográmalo con una <code>TASK</code>.</div>
