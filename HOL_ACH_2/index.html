@@ -204,11 +204,19 @@ CREATE OR REPLACE ROW ACCESS POLICY rap_banco AS (banco STRING) RETURNS BOOLEAN 
        WHEN CURRENT_ROLE() = 'ENTIDAD_BANCOLOMBIA' THEN banco = 'Bancolombia' ELSE FALSE END;
 ALTER TABLE PSE_TRANSACTIONS ADD ROW ACCESS POLICY rap_banco ON (banco);
 
--- Triage de severidad con Cortex AI
-SELECT comercio_id,
-       AI_CLASSIFY('Comercio ' || comercio_id || ' con pico de transacciones y montos atipicos de madrugada',
-                   ['critico','alto','medio','bajo']):labels[0]::STRING AS severidad
-FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);</code></pre>
+-- Triage del incidente con Cortex AI: resumen + accion recomendada (lenguaje natural)
+-- Nota: si 'claude-4-sonnet' no esta disponible en tu region, usa p.ej. 'llama3.1-70b' o habilita cross-region inference.
+WITH w AS (
+  SELECT TIME_SLICE(ts,10,'MINUTE') AS ventana, COUNT(*) AS txns,
+         COUNT(DISTINCT documento_hash) AS documentos, ROUND(SUM(monto)/1e6,0) AS monto_mcop
+  FROM PSE_TRANSACTIONS WHERE comercio_id = 9001 GROUP BY 1
+),
+peak AS (SELECT * FROM w ORDER BY txns DESC LIMIT 1)
+SELECT AI_COMPLETE('claude-4-sonnet',
+  'Eres analista antifraude de PSE. En 1-2 frases indica la severidad (critico/alto/medio/bajo) y la accion recomendada. ' ||
+  'Alerta: el comercio 9001 recibio ' || txns || ' transacciones de ' || documentos ||
+  ' documentos distintos por ' || monto_mcop || ' millones COP en una ventana de 10 minutos (' || ventana || ').') AS triage
+FROM peak;</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime qué se rompería." (skill <code>lineage</code>)</p></div>
 
     <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y dashboard (batch)</h2>
@@ -369,11 +377,19 @@ CREATE OR REPLACE ROW ACCESS POLICY rap_banco AS (banco STRING) RETURNS BOOLEAN 
        WHEN CURRENT_ROLE() = 'ENTIDAD_BANCOLOMBIA' THEN banco = 'Bancolombia' ELSE FALSE END;
 ALTER TABLE PSE_TRANSACTIONS ADD ROW ACCESS POLICY rap_banco ON (banco);
 
--- Triage de severidad con Cortex AI
-SELECT comercio_id,
-       AI_CLASSIFY('Comercio ' || comercio_id || ' con pico de transacciones y montos atipicos de madrugada',
-                   ['critico','alto','medio','bajo']):labels[0]::STRING AS severidad
-FROM (SELECT DISTINCT comercio_id FROM PSE_TRANSACTIONS WHERE monto > 80000000);</code></pre>
+-- Triage del incidente con Cortex AI: resumen + accion recomendada (lenguaje natural)
+-- Nota: si 'claude-4-sonnet' no esta disponible en tu region, usa p.ej. 'llama3.1-70b' o habilita cross-region inference.
+WITH w AS (
+  SELECT TIME_SLICE(ts,10,'MINUTE') AS ventana, COUNT(*) AS txns,
+         COUNT(DISTINCT documento_hash) AS documentos, ROUND(SUM(monto)/1e6,0) AS monto_mcop
+  FROM PSE_TRANSACTIONS WHERE comercio_id = 9001 GROUP BY 1
+),
+peak AS (SELECT * FROM w ORDER BY txns DESC LIMIT 1)
+SELECT AI_COMPLETE('claude-4-sonnet',
+  'Eres analista antifraude de PSE. En 1-2 frases indica la severidad (critico/alto/medio/bajo) y la accion recomendada. ' ||
+  'Alerta: el comercio 9001 recibio ' || txns || ' transacciones de ' || documentos ||
+  ' documentos distintos por ' || monto_mcop || ' millones COP en una ventana de 10 minutos (' || ventana || ').') AS triage
+FROM peak;</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué depende de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime el impacto." (skill <code>lineage</code>)</p></div>
 
     <h2><span class="persona p-dev">Desarrollo</span><span class="step-num">Módulo 4.</span> Prevenir — semántica, agente y explorador (batch)</h2>
