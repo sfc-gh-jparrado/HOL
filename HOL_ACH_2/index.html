@@ -9,7 +9,7 @@
   {
     "generated": "2026-07-27",
     "client": "ACH Colombia",
-    "intent": "HOL PSE batch en 2 opciones de punta a punta con selector global: Opcion 1 (full-stack: Node.js + Coco Desktop + Snowflake CLI + Podman) y Opcion 2 (solo navegador). Datos PSE (~30M) cargados desde S3 con COPY (sin INSERT, sin Snowpipe). Boton Descargar SQL por opcion activa. Publicado en GitHub Pages HOL_ACH_2.",
+    "intent": "HOL PSE batch en 2 opciones de punta a punta con selector global: Opcion 1 (full-stack local: Node.js + Coco Desktop + Snowflake CLI, app React en local) y Opcion 2 (solo navegador, Streamlit-in-Snowflake en warehouse). Datos PSE (~30M) cargados desde S3 con COPY (sin INSERT, sin Snowpipe). Boton Descargar SQL por opcion activa. Publicado en GitHub Pages HOL_ACH_2.",
     "validated": "PSE_TRANSACTIONS=30.003.515. Rechazos Scotiabank 03:00=1605 (57.3%), velocity anillo DOC900000xx, comercio 9001 monto max 199.3 MCOP, comercio 9001 pico 03:00-03:20. Snowpipe auto-ingest + 3 Dynamic Tables validadas."
   }
   </script>
@@ -87,7 +87,7 @@
 
   <div class="modbar">
     <div class="modrow">
-      <button class="modbtn" id="btn-a" aria-controls="mod-a" aria-selected="true">Opción 1 · Full-stack (Node.js + Coco Desktop + CLI + Podman)</button>
+      <button class="modbtn" id="btn-a" aria-controls="mod-a" aria-selected="true">Opción 1 · Full-stack (Node.js + Coco Desktop + CLI)</button>
       <button class="modbtn" id="btn-b" aria-controls="mod-b" aria-selected="false">Opción 2 · Solo navegador</button>
       <button class="btn" id="dl-sql" type="button">⬇ Descargar SQL</button>
     </div>
@@ -99,13 +99,13 @@
   <!-- ============================================================= -->
   <section class="module" id="mod-a" data-active="true">
     <span class="modtag ta">Opción 1 · Full-stack</span>
-    <p>Requisitos: <strong>Coco Desktop, Node.js, Snowflake CLI (<code>snow</code>) y Podman</strong>. Usas Coco para escribir el SQL, el CLI para operar y, en el Módulo 4, contenerizas y despliegas el dashboard en SPCS.</p>
+    <p>Requisitos: <strong>Coco Desktop, Node.js y Snowflake CLI (<code>snow</code>)</strong>. Usas Coco para escribir el SQL, el CLI para operar y, en el Módulo 4, construyes y corres en tu máquina una app React que consulta Snowflake.</p>
 
     <ul class="timeline">
       <li><span class="t">00–06</span><span>Módulo 1 · Setup — entorno + carga del histórico PSE desde S3.</span></li>
       <li><span class="t">06–24</span><span>Módulo 2 · Detectar (4 señales de fraude PSE).</span></li>
       <li><span class="t">24–42</span><span>Módulo 3 · Contener (clasificar, enmascarar, acceso por banco).</span></li>
-      <li><span class="t">42–56</span><span>Módulo 4 · Capa semántica, agente y app React en SPCS.</span></li>
+      <li><span class="t">42–56</span><span>Módulo 4 · Capa semántica, agente y app React local.</span></li>
       <li><span class="t">56–60</span><span>Módulo 5 · Cierre y limpieza.</span></li>
     </ul>
 
@@ -216,7 +216,7 @@ SELECT AI_COMPLETE('claude-4-sonnet',
 FROM peak;</code></pre>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"¿Qué vistas, tablas dinámicas o dashboards dependen de <code>PSE_TRANSACTIONS</code>? Antes de bloquear el comercio, dime qué se rompería." (skill <code>lineage</code>)</p></div>
 
-    <h2><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y app React (SPCS)</h2>
+    <h2><span class="step-num">Módulo 4.</span> Prevenir — capa semántica, agente y app React (local)</h2>
     <h3>Módulo 4.1 · Capa semántica (en Snowsight, por UI)</h3>
     <p>Crea una capa semántica reutilizable sobre las 3 tablas <strong>sin escribir DDL</strong>, para que el agente, Cortex Analyst y tu app hablen el mismo idioma.</p>
     <ol>
@@ -238,15 +238,15 @@ FROM peak;</code></pre>
       <li>"Dame el monto total aprobado por banco."</li>
     </ul>
 
-    <h3>Módulo 4.3 · Tu app React de monitoreo en SPCS</h3>
-    <p>Construye <strong>tu propia app</strong> de monitoreo de fraude PSE en React y despliégala en Snowpark Container Services — con Coco Desktop haciendo el trabajo pesado a partir de un skill de visualización.</p>
+    <h3>Módulo 4.3 · Tu app React de monitoreo (local)</h3>
+    <p>Construye <strong>tu propia app</strong> de monitoreo de fraude PSE en React y córrela <strong>localmente en tu máquina</strong> con Coco Desktop — sin contenedores. <em>Las cuentas trial no permiten SPCS, así que la app corre en local y consulta Snowflake de forma remota.</em></p>
     <p>Instala el skill de visualización <strong>una sola vez</strong> — pídeselo a Coco (no necesitas la terminal):</p>
     <div class="coco"><span class="tag">Pídele a Coco</span><p>"Clona el repositorio <code>https://github.com/sfc-gh-jparrado/cortex-code-skills</code> y copia sus skills a <code>~/.snowflake/cortex/skills/</code>."</p></div>
     <div class="note"><strong>Reinicia Coco Desktop</strong> tras instalarlo: los skills se cargan al iniciar, así que <code>snowflake-dashboard-viz</code> queda disponible después del reinicio.</div>
-    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>snowflake-dashboard-viz</code>, genera una app React/Next.js de monitoreo de fraude PSE (KPIs, mapa de calor día×hora, dona de canales, mapa de Colombia por actividad y volumen por comercio) que consulte <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (o el semantic view <code>sv_pse</code>) y, opcionalmente, embeba el panel de chat del agente. Luego contenerízala y despliégala en SPCS con endpoint público usando el skill <code>deploy-to-spcs</code> (o <code>kaniko-spcs</code> para construir la imagen dentro de Snowflake). Coco genera el <code>Dockerfile</code> y el <code>spec.yaml</code> (endpoint <code>public</code> + <code>readinessProbe</code>)."</p></div>
-    <div class="note"><strong>Cómo se conecta a los datos:</strong> dentro de SPCS la app usa el <em>token OAuth del servicio</em> (<code>/snowflake/session/token</code>) para consultar Snowflake — sin credenciales embebidas.</div>
+    <div class="coco"><span class="tag">Pídele a Coco</span><p>"Con el skill <code>snowflake-dashboard-viz</code>, genera una app React/Next.js de monitoreo de fraude PSE (KPIs, mapa de calor día×hora, dona de canales, mapa de Colombia por actividad y volumen por comercio) que consulte <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> (o el semantic view <code>sv_pse</code>) y, opcionalmente, embeba el panel de chat del agente. Córrela en local con <code>npm run dev</code>. Para consultar Snowflake, crea una <em>API route</em> de Next.js (lado servidor) que use el conector de Snowflake para Node con una conexión <strong>key-pair o PAT</strong>; nunca pongas credenciales en el navegador. No uses SPCS ni el token de servicio."</p></div>
+    <div class="note"><strong>Cómo se conecta a los datos:</strong> la app corre en tu máquina (<code>http://localhost:3000</code>) y consulta Snowflake desde una ruta de <em>backend</em> con el conector de Node usando tu conexión <strong>key-pair/PAT</strong>. El navegador nunca ve las credenciales. Sin SPCS.</div>
     <div class="note"><strong>Refrescar los datos (opcional):</strong> este HOL es batch — para traer datos nuevos, re-ejecuta el <code>COPY</code> del Setup o prográmalo con una <code>TASK</code>.</div>
-    <div class="why"><strong>Entregable:</strong> tu propia app React de fraude PSE, desplegada en SPCS con endpoint público.</div>
+    <div class="why"><strong>Entregable:</strong> tu propia app React de fraude PSE corriendo en local, consultando Snowflake sin SPCS.</div>
 
     <h2><span class="step-num">Módulo 5.</span> Cierre y limpieza</h2>
     <pre class="sql"><code>-- Limpieza al terminar el lab
@@ -259,7 +259,7 @@ DROP WAREHOUSE IF EXISTS HOL_WH;</code></pre>
   <!-- ============================================================= -->
   <section class="module" id="mod-b" data-active="false">
     <span class="modtag tb">Opción 2 · Solo navegador</span>
-    <p>Sin terminal ni contenedores: <strong>todo en Snowsight</strong>. Coco te asiste dentro de la UI. El dashboard se hace con Streamlit-in-Snowflake (sin Podman) o con un Cortex Agent en CoWork.</p>
+    <p>Sin terminal ni contenedores: <strong>todo en Snowsight</strong>. Coco te asiste dentro de la UI. El dashboard se hace con Streamlit-in-Snowflake (sobre el warehouse <code>HOL_WH</code>) o con un Cortex Agent en CoWork.</p>
 
     <ul class="timeline">
       <li><span class="t">00–06</span><span>Módulo 1 · Setup — entorno + carga del histórico PSE desde S3 (worksheet).</span></li>
@@ -398,9 +398,9 @@ FROM peak;</code></pre>
     </ul>
     <div class="coco"><span class="tag">Pídele a Coco (bonus)</span><p>"Crea una ALERT que corra cada hora y notifique si un banco supera 25% de rechazo o un comercio supera un umbral de volumen. Usa el skill <code>alert</code>."</p></div>
 
-    <h3>Módulo 4.3 · Dashboard Streamlit (vía Coco en Snowsight)</h3>
-    <p>Sin terminal ni contenedores: pídele a Coco, dentro de Snowsight, que construya <strong>tu</strong> dashboard de fraude PSE como Streamlit-in-Snowflake.</p>
-    <div class="coco"><span class="tag">Pídele a Coco (en Snowsight)</span><p>"Crea una app Streamlit-in-Snowflake que lea <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> y muestre KPIs, volumen por banco/hora, bancos con rechazo anómalo, comercios bajo ataque y un mapa de calor día×hora. Detecta el día del incidente automáticamente."</p></div>
+    <h3>Módulo 4.3 · Dashboard Streamlit-in-Snowflake (en un warehouse, vía Coco)</h3>
+    <p>Sin terminal ni contenedores: pídele a Coco, dentro de Snowsight, que construya <strong>tu</strong> dashboard de fraude PSE como Streamlit-in-Snowflake — corre sobre el warehouse <code>HOL_WH</code> y debe verse <strong>visualmente potente</strong>.</p>
+    <div class="coco"><span class="tag">Pídele a Coco (en Snowsight)</span><p>"Crea una app Streamlit-in-Snowflake <strong>visualmente potente</strong> (tema oscuro, KPIs grandes tipo tarjeta y gráficos interactivos con Plotly: gauges de % de rechazo por banco, barras animadas de volumen por hora, treemap de comercios y un mapa de calor día×hora) que lea <code>PSE_TRANSACTIONS</code>, <code>BANCOS</code> y <code>COMERCIOS</code> y muestre bancos con rechazo anómalo y comercios bajo ataque. Detecta el día del incidente automáticamente."</p></div>
     <div class="note"><strong>Desde Snowsight:</strong> Projects › Streamlit › <em>+ Streamlit App</em>, base de datos <code>HOL_SEC</code>, esquema <code>INCIDENTE</code>, warehouse <code>HOL_WH</code>. Coco escribe el código dentro del editor; agrega los paquetes que use (p.ej. <code>plotly</code>) en <em>Packages</em>.</div>
     <div class="note"><strong>Refrescar los datos (opcional):</strong> este HOL es batch — para traer datos nuevos, re-ejecuta el <code>COPY</code> del Setup o prográmalo con una <code>TASK</code>.</div>
     <div class="why"><strong>Entregable:</strong> un agente conversacional en CoWork <em>y</em> tu dashboard Streamlit, ambos gobernados, sobre los datos cargados desde S3.</div>
