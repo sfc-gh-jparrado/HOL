@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T2 - Ingenieria de datos | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T2 &middot; Ingenieria de datos</h1>
+  <div class="sub">Un solo pipeline con las tres modalidades que pide el pliego: carga batch del archivo nocturno, CDC del maestro de comercios y flujo continuo de eventos de autorizacion, con calidad embebida y linaje automatico.</div>
+  <div class="chips"><span class="chip">Track 2</span><span class="chip">30 minutos</span><span class="chip">Criterios 4, 5 y 16</span><span class="chip">Cuenta CTA_INGENIERIA</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Lo ejecuta el equipo de <b>Data & Analytics</b>. Snowflake dejo el <i>deployment</i> de Openflow aprovisionado antes de la sesion, porque levantar la infraestructura del runtime tarda mas que el track completo. Todo lo demas &mdash;runtime, conector, pipeline, calidad y linaje&mdash; lo construye el equipo en vivo.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>4. Ingenieria de datos</b> &mdash; creacion de un pipeline batch, streaming y CDC con calidad embebida y linaje automatico end-to-end.</li><li><b>5. Ciclo de vida de la informacion</b> &mdash; retencion, expiracion, tiering y archivado aplicados automaticamente.</li><li><b>16. Experiencia de uso</b> &mdash; autonomia real del equipo.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>1.1 Ingesta batch, streaming en tiempo real y CDC sobre fuentes heterogeneas bajo un mismo pipeline.</li><li>1.2 Pipelines declarativos con orquestacion, batch y streaming.</li><li>1.3 Calidad embebida con reglas y validacion, con linaje automatico.</li><li>1.4 Patron por capas medallion flexible.</li><li>1.5 Aceleracion de la ingenieria con IA y lenguaje natural.</li><li>4.10 Gestion automatizada del ciclo de vida: retencion, archivado y tiering.</li></ul>
+  </div>
+
+  
+  <div class="caja">
+    <h3>Con que arranca esta cuenta y que falta a proposito</h3>
+    <p style="margin:0 0 8px">La instalacion dejo <b>23 meses</b> de autorizaciones ya
+    conformadas (38,8 millones de filas), las tres dimensiones completas y los productos
+    de datos de la capa oro.</p>
+    <p style="margin:0"><b>Diciembre de 2025 esta vacio</b> y las <b>45.000 operaciones
+    de CDC estan sin aplicar</b>. No es un descuido: es el trabajo de este track. Si
+    viniera cargado, no habria nada que construir.</p>
+  </div>
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Batch: el archivo del cierre nocturno</h2><div class="obj">Cargar el mes faltante desde los archivos crudos y medir el resultado.</div></div>
+    <div class="min">5 min</div>
+  </header>
+  <div class="cuerpo"><p>Los ocho archivos del cierre de diciembre estan en la capa de aterrizaje, comprimidos, tal como los deja el proceso actual.</p><pre data-titulo="T2 paso 1: Batch: el archivo del cierre nocturno"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+
+<span class="c">-- que hay en la capa cruda</span>
+<span class="k">LIST</span> @CB_RAW.LANDING.STG_HOL/raw/;</code></pre><pre data-titulo="T2 paso 1: Batch: el archivo del cierre nocturno"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- tabla de aterrizaje: se recibe TODO como texto y sin reglas.</span>
+<span class="c">-- Rechazar en la puerta obliga a reprocesar el archivo completo; aterrizar</span>
+<span class="c">-- primero y validar despues permite aislar la fila mala.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_RAW.LANDING.AUTORIZACIONES_BRONZE (
+    AUTORIZACION_ID     VARCHAR,
+    FECHA_HORA          VARCHAR,
+    TERMINAL_ID         VARCHAR,
+    COMERCIO_ID         VARCHAR,
+    TARJETAHABIENTE_ID  VARCHAR,
+    PAN                 VARCHAR,
+    FRANQUICIA          VARCHAR,
+    MODO_ENTRADA        VARCHAR,
+    MONTO_COP           VARCHAR,
+    CODIGO_RESPUESTA    VARCHAR,
+    NUMERO_CUOTAS       VARCHAR,
+    ARCHIVO_ORIGEN      VARCHAR,
+    FILA_EN_ARCHIVO     NUMBER,
+    CARGADO_EN          TIMESTAMP_LTZ DEFAULT <span class="k">CURRENT_TIMESTAMP</span>()
+) <span class="k">COMMENT</span> = <span class="s">&#x27;Aterrizaje crudo del cierre nocturno, sin tipar&#x27;</span>;
+
+<span class="k">COPY INTO</span> CB_RAW.LANDING.AUTORIZACIONES_BRONZE
+    (AUTORIZACION_ID, FECHA_HORA, TERMINAL_ID, COMERCIO_ID, TARJETAHABIENTE_ID,
+     PAN, FRANQUICIA, MODO_ENTRADA, MONTO_COP, CODIGO_RESPUESTA, NUMERO_CUOTAS,
+     ARCHIVO_ORIGEN, FILA_EN_ARCHIVO)
+<span class="k">FROM</span> (
+    <span class="k">SELECT</span> $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+           METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+    <span class="k">FROM</span> @CB_RAW.LANDING.STG_HOL/raw/
+)
+<span class="k">FILE_FORMAT</span> = (FORMAT_NAME = <span class="s">&#x27;CB_RAW.LANDING.FF_CSV_GZ&#x27;</span>)
+ON_ERROR = CONTINUE;</code></pre><div class="esp"><b>Resultado esperado.</b> Ocho archivos cargados, alrededor de 1,6 millones de filas. Cada fila sabe de que archivo y de que linea vino: eso es lo que hace auditable un reproceso.</div><pre data-titulo="T2 paso 1: Batch: el archivo del cierre nocturno"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- resultado de la carga, archivo por archivo</span>
+<span class="k">SELECT</span> ARCHIVO_ORIGEN,
+       <span class="k">COUNT</span>(*)              <span class="k">AS</span> FILAS,
+       <span class="k">MIN</span>(FILA_EN_ARCHIVO)  <span class="k">AS</span> PRIMERA_LINEA,
+       <span class="k">MAX</span>(FILA_EN_ARCHIVO)  <span class="k">AS</span> ULTIMA_LINEA
+<span class="k">FROM</span> CB_RAW.LANDING.AUTORIZACIONES_BRONZE
+<span class="k">GROUP BY</span> ARCHIVO_ORIGEN
+<span class="k">ORDER BY</span> ARCHIVO_ORIGEN;
+
+<span class="c">-- historial de carga: que archivos entraron, cuantos errores y cuando</span>
+<span class="k">SELECT</span> FILE_NAME, STATUS, ROW_COUNT, ROW_PARSED, ERROR_COUNT, LAST_LOAD_TIME
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_RAW.INFORMATION_SCHEMA.COPY_HISTORY(
+           TABLE_NAME =&gt; <span class="s">&#x27;CB_RAW.LANDING.AUTORIZACIONES_BRONZE&#x27;</span>,
+           START_TIME =&gt; DATEADD(<span class="s">&#x27;hour&#x27;</span>, -2, <span class="k">CURRENT_TIMESTAMP</span>())))
+<span class="k">ORDER BY</span> LAST_LOAD_TIME <span class="k">DESC</span>;</code></pre><div class="nota"><b>Atencion.</b> El mismo <code>COPY</code> vuelto a correr no duplica: la plataforma recuerda que archivos ya cargo. Es el control que en la plataforma actual hay que implementar a mano con banderas <code>_SUCCESS</code> y tablas de control.</div><pre data-titulo="T2 paso 1: Batch: el archivo del cierre nocturno"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T2&#x27;</span>,
+    <span class="s">&#x27;Carga batch del cierre nocturno con trazabilidad por archivo y linea&#x27;</span>,
+    <span class="s">&#x27;CB_RAW.LANDING.AUTORIZACIONES_BRONZE desde 8 archivos CSV comprimidos&#x27;</span>,
+    <span class="s">&#x27;Cerca de 1,6 millones de filas aterrizadas con archivo y numero de linea de origen, mas historial de carga con conteo de errores&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.1 ingesta batch y 1.4 patron medallion&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que pasa si el mismo archivo se carga dos veces.</b> Pidan repetir la carga y contar filas. Si la plataforma no lleva el registro de archivos procesados, la idempotencia queda en manos del equipo y cada reproceso es un riesgo de duplicados. Pregunten tambien como se aisla una sola fila corrupta sin rechazar el archivo entero.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Flujo continuo de eventos de autorizacion</h2><div class="obj">Ingerir eventos JSON de forma continua, sin programar una ventana.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>El autorizador publica cada evento a un topico. En produccion ese topico lo consume el <b>conector de Kafka de Openflow</b>, que escribe usando la arquitectura de alto rendimiento de Snowpipe Streaming. Aqui se construye el destino y el mecanismo de ingesta continua, que es la parte que se puede verificar en la sesion.</p><pre data-titulo="T2 paso 2: Flujo continuo de eventos de autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+
+<span class="c">-- destino de los eventos: el JSON se guarda completo y las claves de uso</span>
+<span class="c">-- frecuente se exponen como columnas calculadas</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_RAW.LANDING.EVENTOS_AUTORIZACION (
+    EVENTO          VARIANT,
+    ARCHIVO_ORIGEN  VARCHAR,
+    RECIBIDO_EN     TIMESTAMP_LTZ DEFAULT <span class="k">CURRENT_TIMESTAMP</span>()
+) <span class="k">COMMENT</span> = <span class="s">&#x27;Eventos del topico de autorizaciones tal como llegan&#x27;</span>;
+
+<span class="c">-- el pipe es declarativo: se define una vez y queda vivo</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">PIPE</span> CB_RAW.LANDING.PIPE_EVENTOS
+    AUTO_INGEST = <span class="k">FALSE</span>
+<span class="k">AS</span>
+<span class="k">COPY INTO</span> CB_RAW.LANDING.EVENTOS_AUTORIZACION (EVENTO, ARCHIVO_ORIGEN)
+<span class="k">FROM</span> (
+    <span class="k">SELECT</span> $1, METADATA$FILENAME
+    <span class="k">FROM</span> @CB_RAW.LANDING.STG_HOL/kafka_sim/
+)
+<span class="k">FILE_FORMAT</span> = (FORMAT_NAME = <span class="s">&#x27;CB_RAW.LANDING.FF_JSON_GZ&#x27;</span>);
+
+<span class="k">ALTER</span> <span class="k">PIPE</span> CB_RAW.LANDING.PIPE_EVENTOS REFRESH;</code></pre><div class="nota"><b>Atencion.</b> En el workshop el pipe queda con <code>AUTO_INGEST = TRUE</code> y lo alimenta el runtime de Openflow contra el topico real. Se deja en <code>FALSE</code> con <code>REFRESH</code> manual para que el paso sea verificable sin depender de que haya un broker publicando durante la sesion.</div><pre data-titulo="T2 paso 2: Flujo continuo de eventos de autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el pipe procesa por su cuenta: se consulta su estado</span>
+<span class="k">SELECT</span> SYSTEM$PIPE_STATUS(<span class="s">&#x27;CB_RAW.LANDING.PIPE_EVENTOS&#x27;</span>) <span class="k">AS</span> ESTADO_DEL_PIPE;</code></pre><pre data-titulo="T2 paso 2: Flujo continuo de eventos de autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- llegaron los eventos</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> EVENTOS <span class="k">FROM</span> CB_RAW.LANDING.EVENTOS_AUTORIZACION;
+
+<span class="c">-- el JSON se consulta sin aplanarlo primero ni declarar un esquema</span>
+<span class="k">SELECT</span> EVENTO:eventId::STRING                        <span class="k">AS</span> EVENTO_ID,
+       EVENTO:eventTimestamp::TIMESTAMP_NTZ          <span class="k">AS</span> MOMENTO,
+       EVENTO:schemaVersion::STRING                  <span class="k">AS</span> VERSION_ESQUEMA,
+       EVENTO:payload:comercioId::NUMBER             <span class="k">AS</span> COMERCIO_ID,
+       EVENTO:payload:montoCop::NUMBER               <span class="k">AS</span> MONTO_COP,
+       EVENTO:payload:modoEntrada::STRING            <span class="k">AS</span> MODO_ENTRADA,
+       EVENTO:payload:codigoRespuesta::STRING        <span class="k">AS</span> CODIGO_RESPUESTA
+<span class="k">FROM</span> CB_RAW.LANDING.EVENTOS_AUTORIZACION
+<span class="k">LIMIT</span> 5;</code></pre><div class="esp"><b>Resultado esperado.</b> Cerca de 300.000 eventos disponibles y consultables por atributo anidado sin declarar un esquema previo.</div><pre data-titulo="T2 paso 2: Flujo continuo de eventos de autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- agregacion sobre el flujo: tasa de aprobacion por modo de entrada</span>
+<span class="k">SELECT</span> EVENTO:payload:modoEntrada::STRING <span class="k">AS</span> MODO_ENTRADA,
+       <span class="k">COUNT</span>(*)                                                       <span class="k">AS</span> EVENTOS,
+       ROUND(100.0 * COUNT_IF(EVENTO:payload:aprobada::BOOLEAN) / <span class="k">COUNT</span>(*), 2) <span class="k">AS</span> PCT_APROBACION
+<span class="k">FROM</span> CB_RAW.LANDING.EVENTOS_AUTORIZACION
+<span class="k">GROUP BY</span> MODO_ENTRADA
+<span class="k">ORDER BY</span> EVENTOS <span class="k">DESC</span>;</code></pre><div class="nota"><b>Atencion.</b> El esquema del evento incluye <code>schemaVersion</code>. Un cambio de version no rompe la ingesta porque el JSON se almacena completo: se ajusta la proyeccion, no la carga. Esa es la diferencia practica frente a un pipeline con esquema rigido, donde un campo nuevo detiene el flujo.</div><pre data-titulo="T2 paso 2: Flujo continuo de eventos de autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T2&#x27;</span>,
+    <span class="s">&#x27;Ingesta continua de eventos JSON con pipe declarativo&#x27;</span>,
+    <span class="s">&#x27;CB_RAW.LANDING.PIPE_EVENTOS y EVENTOS_AUTORIZACION&#x27;</span>,
+    <span class="s">&#x27;Cerca de 300.000 eventos ingeridos por un pipe declarativo y consultados por atributo anidado, con la version de esquema conservada&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.1 ingesta streaming y 1.2 pipelines declarativos&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que pasa cuando el productor agrega un campo al evento.</b> Es el incidente mas comun de un pipeline de streaming. Pidan publicar un evento con un campo nuevo y ver si el flujo se detiene, si descarta el registro o si lo absorbe. Pregunten tambien quien gobierna el registro de esquemas y si la ingesta valida contra el.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>CDC: aplicar 45.000 cambios al maestro</h2><div class="obj">Consumir la salida de un CDC y aplicarla sin perder ni duplicar operaciones.</div></div>
+    <div class="min">5 min</div>
+  </header>
+  <div class="cuerpo"><p>La instalacion dejo 45.000 operaciones de CDC del core sin aplicar: altas, modificaciones y retiros de comercio. Aplicarlas exige resolver el orden y quedarse con la ultima version de cada llave.</p><pre data-titulo="T2 paso 3: CDC: aplicar 45.000 cambios al maestro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+
+<span class="c">-- que trae el CDC</span>
+<span class="k">SELECT</span> CDC_OPERACION, <span class="k">COUNT</span>(*) <span class="k">AS</span> OPERACIONES
+<span class="k">FROM</span> CB_RAW.LANDING.COMERCIOS_CDC
+<span class="k">GROUP BY</span> CDC_OPERACION
+<span class="k">ORDER BY</span> OPERACIONES <span class="k">DESC</span>;
+
+<span class="c">-- estado del maestro antes de aplicar</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> COMERCIOS,
+       COUNT_IF(ESTADO = <span class="s">&#x27;ACTIVO&#x27;</span>)   <span class="k">AS</span> ACTIVOS,
+       COUNT_IF(ESTADO = <span class="s">&#x27;RETIRADO&#x27;</span>) <span class="k">AS</span> RETIRADOS,
+       ROUND(<span class="k">AVG</span>(TASA_DESCUENTO_PCT), 4) <span class="k">AS</span> TASA_PROMEDIO
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.COMERCIOS;</code></pre><pre data-titulo="T2 paso 3: CDC: aplicar 45.000 cambios al maestro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- un stream sobre la tabla de CDC: marca que se ha consumido y que no.</span>
+<span class="c">-- Sin esto habria que llevar a mano una marca de agua, que es el patron que</span>
+<span class="c">-- falla cuando un proceso se cae a mitad de camino.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">STREAM</span> CB_RAW.LANDING.STR_COMERCIOS_CDC
+    <span class="k">ON</span> <span class="k">TABLE</span> CB_RAW.LANDING.COMERCIOS_CDC
+    SHOW_INITIAL_ROWS = <span class="k">TRUE</span>;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> PENDIENTES_EN_EL_STREAM <span class="k">FROM</span> CB_RAW.LANDING.STR_COMERCIOS_CDC;</code></pre><pre data-titulo="T2 paso 3: CDC: aplicar 45.000 cambios al maestro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- aplicar: una sola sentencia resuelve alta, cambio y retiro.</span>
+<span class="c">-- <span class="k">QUALIFY</span> se queda con la ultima operacion por comercio segun el LSN, que es lo</span>
+<span class="c">-- que evita aplicar un cambio viejo encima de uno nuevo.</span>
+<span class="k">MERGE</span> INTO CB_SILVER.ADQUIRENCIA.COMERCIOS t
+<span class="k">USING</span> (
+    <span class="k">SELECT</span> * <span class="k">FROM</span> CB_RAW.LANDING.STR_COMERCIOS_CDC
+    <span class="k">QUALIFY</span> ROW_NUMBER() <span class="k">OVER</span> (<span class="k">PARTITION BY</span> COMERCIO_ID <span class="k">ORDER BY</span> CDC_LSN <span class="k">DESC</span>) = 1
+) s
+<span class="k">ON</span> t.COMERCIO_ID = s.COMERCIO_ID
+<span class="k">WHEN</span> <span class="k">MATCHED</span> <span class="k">AND</span> s.CDC_OPERACION = <span class="s">&#x27;<span class="k">DELETE</span>&#x27;</span> <span class="k">THEN</span>
+    <span class="k">UPDATE</span> <span class="k">SET</span> t.ESTADO = <span class="s">&#x27;RETIRADO&#x27;</span>
+<span class="k">WHEN</span> <span class="k">MATCHED</span> <span class="k">AND</span> s.CDC_OPERACION = <span class="s">&#x27;<span class="k">UPDATE</span>&#x27;</span> <span class="k">THEN</span>
+    <span class="k">UPDATE</span> <span class="k">SET</span> t.RAZON_SOCIAL       = s.RAZON_SOCIAL,
+               t.MCC                = s.MCC,
+               t.CIUDAD             = s.CIUDAD,
+               t.SEGMENTO           = s.SEGMENTO,
+               t.ESTADO             = s.ESTADO,
+               t.TASA_DESCUENTO_PCT = s.TASA_DESCUENTO_PCT,
+               t.EMAIL_CONTACTO     = s.EMAIL_CONTACTO,
+               t.TELEFONO_CONTACTO  = s.TELEFONO_CONTACTO
+<span class="k">WHEN</span> <span class="k">NOT</span> <span class="k">MATCHED</span> <span class="k">AND</span> s.CDC_OPERACION &lt;&gt; <span class="s">&#x27;<span class="k">DELETE</span>&#x27;</span> <span class="k">THEN</span>
+    <span class="k">INSERT</span> (COMERCIO_ID, NIT, RAZON_SOCIAL, MCC, CIUDAD, SEGMENTO, ESTADO,
+            TASA_DESCUENTO_PCT, EMAIL_CONTACTO, TELEFONO_CONTACTO)
+    VALUES (s.COMERCIO_ID, s.NIT, s.RAZON_SOCIAL, s.MCC, s.CIUDAD, s.SEGMENTO,
+            s.ESTADO, s.TASA_DESCUENTO_PCT, s.EMAIL_CONTACTO, s.TELEFONO_CONTACTO);</code></pre><div class="esp"><b>Resultado esperado.</b> El <code>MERGE</code> reporta filas insertadas y actualizadas. Las tres operaciones del CDC se resolvieron en una sentencia.</div><pre data-titulo="T2 paso 3: CDC: aplicar 45.000 cambios al maestro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el stream queda vacio: lo consumido no se vuelve a consumir</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> PENDIENTES_DESPUES <span class="k">FROM</span> CB_RAW.LANDING.STR_COMERCIOS_CDC;
+
+<span class="c">-- estado del maestro despues</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> COMERCIOS,
+       COUNT_IF(ESTADO = <span class="s">&#x27;ACTIVO&#x27;</span>)   <span class="k">AS</span> ACTIVOS,
+       COUNT_IF(ESTADO = <span class="s">&#x27;RETIRADO&#x27;</span>) <span class="k">AS</span> RETIRADOS,
+       ROUND(<span class="k">AVG</span>(TASA_DESCUENTO_PCT), 4) <span class="k">AS</span> TASA_PROMEDIO
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.COMERCIOS;</code></pre><div class="esp"><b>Resultado esperado.</b> <code>PENDIENTES_DESPUES</code> es 0 y el maestro cambio: hay comercios retirados y la tasa promedio se movio. El stream se consumio de forma transaccional junto con el MERGE.</div><pre data-titulo="T2 paso 3: CDC: aplicar 45.000 cambios al maestro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- si el CDC se aplico mal, el dato anterior sigue disponible sin backup</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> COMERCIOS_HACE_UN_MINUTO
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.COMERCIOS AT(OFFSET =&gt; -60);</code></pre><div class="nota"><b>Atencion.</b> El <code>AT(OFFSET)</code> es la red de seguridad del pipeline: si el MERGE aplico algo indebido, el estado anterior se consulta y se restaura sin recurrir a un respaldo. Es el requisito 2.10 de data versioning funcionando sobre un caso real, no sobre una demo aparte.</div><pre data-titulo="T2 paso 3: CDC: aplicar 45.000 cambios al maestro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T2&#x27;</span>,
+    <span class="s">&#x27;CDC aplicado al maestro de comercios con stream y <span class="k">MERGE</span>&#x27;</span>,
+    <span class="s">&#x27;STR_COMERCIOS_CDC sobre COMERCIOS_CDC hacia CB_SILVER.ADQUIRENCIA.COMERCIOS&#x27;</span>,
+    <span class="s">&#x27;45.000 operaciones de alta, cambio y retiro aplicadas en una sentencia, con deduplicacion por LSN y consumo transaccional del stream&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.1 ingesta CDC bajo el mismo pipeline&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Como se garantiza que un cambio viejo no sobreescriba uno nuevo.</b> Pidan aplicar un lote de CDC con operaciones desordenadas para la misma llave. Pregunten si el consumo del origen es transaccional con la escritura del destino: si no lo es, una caida a mitad del proceso significa reprocesar o perder cambios, y ahi nacen las diferencias entre el core y la bodega.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">4</div>
+    <div class="tit"><h2>Conformar el mes con una tabla dinamica</h2><div class="obj">Declarar la transformacion y dejar que la plataforma la mantenga.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>Aqui se cierra el hueco: la capa cruda tiene diciembre y la capa conformada no. En vez de escribir un job programado, se declara el resultado deseado y se fija la frescura.</p><pre data-titulo="T2 paso 4: Conformar el mes con una tabla dinamica"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+
+<span class="c">-- se declara QUE se quiere, no COMO ni CUANDO refrescarlo</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">DYNAMIC</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES_DIC2025
+    TARGET_LAG = <span class="s">&#x27;1 minute&#x27;</span>
+    <span class="k">WAREHOUSE</span> = WH_ETL_BATCH
+<span class="k">AS</span>
+<span class="k">SELECT</span> b.AUTORIZACION_ID,
+       TRY_TO_TIMESTAMP_NTZ(b.FECHA_HORA)          <span class="k">AS</span> FECHA_HORA,
+       TRY_TO_DATE(<span class="k">LEFT</span>(b.FECHA_HORA, 10))         <span class="k">AS</span> FECHA,
+       b.TERMINAL_ID,
+       TRY_TO_NUMBER(b.COMERCIO_ID)                <span class="k">AS</span> COMERCIO_ID,
+       c.MCC,
+       c.SECTOR,
+       c.CIUDAD                                    <span class="k">AS</span> CIUDAD_COMERCIO,
+       c.DEPARTAMENTO,
+       c.SEGMENTO                                  <span class="k">AS</span> SEGMENTO_COMERCIO,
+       TRY_TO_NUMBER(b.TARJETAHABIENTE_ID)         <span class="k">AS</span> TARJETAHABIENTE_ID,
+       b.PAN,
+       b.FRANQUICIA,
+       b.MODO_ENTRADA,
+       TRY_TO_NUMBER(b.MONTO_COP, 18, 2)           <span class="k">AS</span> MONTO_COP,
+       b.CODIGO_RESPUESTA,
+       b.CODIGO_RESPUESTA = <span class="s">&#x27;00&#x27;</span>                   <span class="k">AS</span> APROBADA,
+       c.DEPARTAMENTO = <span class="s">&#x27;EXTERIOR&#x27;</span>                 <span class="k">AS</span> ES_INTERNACIONAL,
+       TRY_TO_NUMBER(b.NUMERO_CUOTAS)              <span class="k">AS</span> NUMERO_CUOTAS,
+       b.ARCHIVO_ORIGEN
+<span class="k">FROM</span> CB_RAW.LANDING.AUTORIZACIONES_BRONZE b
+<span class="k">JOIN</span> CB_SILVER.ADQUIRENCIA.COMERCIOS c
+  <span class="k">ON</span> c.COMERCIO_ID = TRY_TO_NUMBER(b.COMERCIO_ID)
+<span class="k">WHERE</span> TRY_TO_NUMBER(b.MONTO_COP, 18, 2) &gt; 0
+  <span class="k">AND</span> b.AUTORIZACION_ID <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>;</code></pre><div class="nota"><b>Atencion.</b> Se usa <code>TRY_TO_*</code> en vez de <code>TO_*</code> a proposito: una fila con monto ilegible entra como nulo y se puede auditar despues, en vez de tumbar la carga completa. En un cierre nocturno de siete horas esa diferencia decide si el proceso termina.</div><pre data-titulo="T2 paso 4: Conformar el mes con una tabla dinamica"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el refresco lo hace la plataforma; aca solo se consulta</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS_CONFORMADAS,
+       <span class="k">MIN</span>(FECHA) <span class="k">AS</span> DESDE,
+       <span class="k">MAX</span>(FECHA) <span class="k">AS</span> HASTA,
+       COUNT_IF(MONTO_COP <span class="k">IS</span> <span class="k">NULL</span>) <span class="k">AS</span> MONTOS_ILEGIBLES
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES_DIC2025;
+
+<span class="c">-- que descarto la conformacion y por que</span>
+<span class="k">SELECT</span> (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> CB_RAW.LANDING.AUTORIZACIONES_BRONZE) <span class="k">AS</span> EN_CRUDO,
+       (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES_DIC2025) <span class="k">AS</span> CONFORMADAS,
+       (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> CB_RAW.LANDING.AUTORIZACIONES_BRONZE)
+         - (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES_DIC2025) <span class="k">AS</span> DESCARTADAS;</code></pre><pre data-titulo="T2 paso 4: Conformar el mes con una tabla dinamica"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- estado del refresco: la plataforma reporta si va incremental</span>
+<span class="k">SELECT</span> NAME, SCHEDULING_STATE:state::STRING <span class="k">AS</span> ESTADO,
+       TARGET_LAG_SEC, MEAN_LAG_SEC, MAXIMUM_LAG_SEC,
+       LAST_COMPLETED_REFRESH_STATE
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_SILVER.INFORMATION_SCHEMA.DYNAMIC_TABLES(
+           NAME =&gt; <span class="s">&#x27;AUTORIZACIONES_DIC2025&#x27;</span>));</code></pre><pre data-titulo="T2 paso 4: Conformar el mes con una tabla dinamica"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- promocion a la tabla historica: el mes queda integrado</span>
+<span class="k">INSERT</span> INTO CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    (AUTORIZACION_ID, FECHA_HORA, FECHA, TERMINAL_ID, COMERCIO_ID, MCC, SECTOR,
+     CIUDAD_COMERCIO, DEPARTAMENTO, SEGMENTO_COMERCIO, TARJETAHABIENTE_ID, PAN,
+     FRANQUICIA, MODO_ENTRADA, MONTO_COP, CODIGO_RESPUESTA, DESCRIPCION_RESPUESTA,
+     APROBADA, ES_INTERNACIONAL, MARCA_FRAUDE, NUMERO_CUOTAS)
+<span class="k">SELECT</span> AUTORIZACION_ID, FECHA_HORA, FECHA, TERMINAL_ID, COMERCIO_ID, MCC, SECTOR,
+       CIUDAD_COMERCIO, DEPARTAMENTO, SEGMENTO_COMERCIO, TARJETAHABIENTE_ID, PAN,
+       FRANQUICIA, MODO_ENTRADA, MONTO_COP, CODIGO_RESPUESTA,
+       <span class="k">IFF</span>(APROBADA, <span class="s">&#x27;Aprobada&#x27;</span>, <span class="s">&#x27;Declinada&#x27;</span>), APROBADA, ES_INTERNACIONAL,
+       <span class="k">FALSE</span>, NUMERO_CUOTAS
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES_DIC2025;
+
+<span class="c">-- el hueco de diciembre quedo cerrado</span>
+<span class="k">SELECT</span> DATE_TRUNC(<span class="s">&#x27;month&#x27;</span>, FECHA) <span class="k">AS</span> MES, <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> FECHA &gt;= <span class="s">&#x27;2025-10-01&#x27;</span>
+<span class="k">GROUP BY</span> MES
+<span class="k">ORDER BY</span> MES;</code></pre><div class="esp"><b>Resultado esperado.</b> Los tres ultimos meses aparecen con volumen comparable. Diciembre ya no esta vacio y lo cargo el equipo, no la instalacion.</div><pre data-titulo="T2 paso 4: Conformar el mes con una tabla dinamica"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T2&#x27;</span>,
+    <span class="s">&#x27;Conformacion declarativa de la capa silver con tabla dinamica&#x27;</span>,
+    <span class="s">&#x27;CB_SILVER.ADQUIRENCIA.AUTORIZACIONES_DIC2025 con TARGET_LAG de 1 minuto&#x27;</span>,
+    <span class="s">&#x27;Transformacion declarada una vez y mantenida por la plataforma, con conteo de filas descartadas y promocion del mes a la tabla historica&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.2 pipelines declarativos y 1.4 medallion&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Cuanto codigo de orquestacion hay que escribir para mantener una capa conformada.</b> En la plataforma actual esto son un script de Hive, un workflow de Oozie, un coordinador y una tabla de control. Pidan contar los objetos que hay que crear y mantener, y pregunten quien decide si el refresco puede ser incremental o tiene que ser completo.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">5</div>
+    <div class="tit"><h2>Calidad embebida que corre sola</h2><div class="obj">Adjuntar reglas de calidad al dato, no a un job aparte.</div></div>
+    <div class="min">5 min</div>
+  </header>
+  <div class="cuerpo"><p>El requisito 1.3 pide calidad embebida. Embebida significa que la regla vive con la tabla y se evalua por si sola, no que exista un proceso nocturno que revisa y manda un correo.</p><pre data-titulo="T2 paso 5: Calidad embebida que corre sola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+
+<span class="c">-- frecuencia de evaluacion de las reglas sobre esta tabla</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    <span class="k">SET</span> DATA_METRIC_SCHEDULE = <span class="s">&#x27;5 MINUTE&#x27;</span>;
+
+<span class="c">-- reglas de sistema: nulos en la llave y duplicados</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    ADD DATA METRIC <span class="k">FUNCTION</span> SNOWFLAKE.CORE.NULL_COUNT <span class="k">ON</span> (AUTORIZACION_ID);
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    ADD DATA METRIC <span class="k">FUNCTION</span> SNOWFLAKE.CORE.DUPLICATE_COUNT <span class="k">ON</span> (AUTORIZACION_ID);
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    ADD DATA METRIC <span class="k">FUNCTION</span> SNOWFLAKE.CORE.NULL_COUNT <span class="k">ON</span> (MONTO_COP);</code></pre><pre data-titulo="T2 paso 5: Calidad embebida que corre sola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- regla propia del negocio: una autorizacion aprobada con codigo</span>
+<span class="c">-- distinto de 00 es una inconsistencia que ningun chequeo generico detecta</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> DATA METRIC <span class="k">FUNCTION</span> CB_PLATAFORMA.GOBIERNO.DMF_APROBACION_COHERENTE(
+    ARG_T <span class="k">TABLE</span>(ARG_APROBADA BOOLEAN, ARG_CODIGO VARCHAR))
+<span class="k">RETURNS</span> NUMBER
+<span class="k">COMMENT</span> = <span class="s">&#x27;Cuenta autorizaciones donde la marca de aprobacion no concuerda con el codigo de respuesta ISO 8583&#x27;</span>
+<span class="k">AS</span>
+$$
+    <span class="k">SELECT</span> <span class="k">COUNT</span>(*)
+    <span class="k">FROM</span> ARG_T
+    <span class="k">WHERE</span> (ARG_APROBADA = <span class="k">TRUE</span>  <span class="k">AND</span> ARG_CODIGO &lt;&gt; <span class="s">&#x27;00&#x27;</span>)
+       <span class="k">OR</span> (ARG_APROBADA = <span class="k">FALSE</span> <span class="k">AND</span> ARG_CODIGO =  <span class="s">&#x27;00&#x27;</span>)
+$$;
+
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    ADD DATA METRIC <span class="k">FUNCTION</span> CB_PLATAFORMA.GOBIERNO.DMF_APROBACION_COHERENTE
+    <span class="k">ON</span> (APROBADA, CODIGO_RESPUESTA);</code></pre><pre data-titulo="T2 paso 5: Calidad embebida que corre sola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- que reglas quedaron adjuntas a la tabla</span>
+<span class="k">SELECT</span> METRIC_NAME, REF_ARGUMENTS, SCHEDULE, SCHEDULE_STATUS
+<span class="k">FROM</span> <span class="k">TABLE</span>(INFORMATION_SCHEMA.DATA_METRIC_FUNCTION_REFERENCES(
+           REF_ENTITY_NAME =&gt; <span class="s">&#x27;CB_SILVER.ADQUIRENCIA.AUTORIZACIONES&#x27;</span>,
+           REF_ENTITY_DOMAIN =&gt; <span class="s">&#x27;<span class="k">TABLE</span>&#x27;</span>));</code></pre><div class="esp"><b>Resultado esperado.</b> Cuatro reglas adjuntas y programadas cada cinco minutos. Nadie tiene que acordarse de ejecutarlas.</div><pre data-titulo="T2 paso 5: Calidad embebida que corre sola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- ejecutar una regla ahora mismo, sin esperar la programacion</span>
+<span class="k">SELECT</span> SNOWFLAKE.CORE.NULL_COUNT(
+           <span class="k">SELECT</span> AUTORIZACION_ID <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES)
+       <span class="k">AS</span> NULOS_EN_LA_LLAVE;
+
+<span class="k">SELECT</span> SNOWFLAKE.CORE.DUPLICATE_COUNT(
+           <span class="k">SELECT</span> AUTORIZACION_ID <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES)
+       <span class="k">AS</span> DUPLICADOS;
+
+<span class="k">SELECT</span> CB_PLATAFORMA.GOBIERNO.DMF_APROBACION_COHERENTE(
+           <span class="k">SELECT</span> APROBADA, CODIGO_RESPUESTA <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES)
+       <span class="k">AS</span> INCOHERENCIAS_DE_APROBACION;</code></pre><div class="esp"><b>Resultado esperado.</b> Cero nulos en la llave, cero duplicados y cero incoherencias entre la marca de aprobacion y el codigo ISO. La regla del negocio se ejecuta igual que las de sistema.</div><div class="nota"><b>Atencion.</b> Los resultados historicos de las reglas programadas se acumulan en <code>SNOWFLAKE.LOCAL.DATA_QUALITY_MONITORING_RESULTS</code>, que tarda en poblarse. En la sesion se ejecutan las metricas de forma directa, que da el mismo numero al instante.</div><pre data-titulo="T2 paso 5: Calidad embebida que corre sola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T2&#x27;</span>,
+    <span class="s">&#x27;Calidad embebida con reglas de sistema y una regla propia del negocio&#x27;</span>,
+    <span class="s">&#x27;Cuatro metricas adjuntas a CB_SILVER.ADQUIRENCIA.AUTORIZACIONES cada 5 minutos&#x27;</span>,
+    <span class="s">&#x27;Nulos, duplicados y coherencia entre marca de aprobacion y codigo ISO 8583 evaluados por la plataforma sin proceso externo&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.3 calidad embebida con reglas y validacion&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Donde vive la regla de calidad.</b> Si vive en una herramienta aparte, hay que mantener sincronizados el catalogo de tablas y el catalogo de reglas, y cada tabla nueva nace sin control. Pidan adjuntar una regla propia &mdash;no una de catalogo&mdash; y ver que se ejecute sola sobre una tabla de 40 millones de filas.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">6</div>
+    <div class="tit"><h2>Linaje que nadie declaro</h2><div class="obj">Ver el recorrido del dato de punta a punta sin haberlo documentado.</div></div>
+    <div class="min">3 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T2 paso 6: Linaje que nadie declaro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+
+<span class="c">-- aguas abajo: que se construyo a partir de la tabla cruda</span>
+<span class="k">SELECT</span> SOURCE_OBJECT_NAME, SOURCE_OBJECT_DOMAIN,
+       TARGET_OBJECT_NAME, TARGET_OBJECT_DOMAIN, DISTANCE
+<span class="k">FROM</span> <span class="k">TABLE</span>(SNOWFLAKE.CORE.GET_LINEAGE(
+           <span class="s">&#x27;CB_RAW.LANDING.AUTORIZACIONES_BRONZE&#x27;</span>, <span class="s">&#x27;<span class="k">TABLE</span>&#x27;</span>, <span class="s">&#x27;DOWNSTREAM&#x27;</span>, 3))
+<span class="k">ORDER BY</span> DISTANCE, TARGET_OBJECT_NAME;</code></pre><pre data-titulo="T2 paso 6: Linaje que nadie declaro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- aguas arriba: de donde sale el producto de datos que consume BI</span>
+<span class="k">SELECT</span> SOURCE_OBJECT_NAME, SOURCE_OBJECT_DOMAIN,
+       TARGET_OBJECT_NAME, DISTANCE
+<span class="k">FROM</span> <span class="k">TABLE</span>(SNOWFLAKE.CORE.GET_LINEAGE(
+           <span class="s">&#x27;CB_GOLD.PRODUCTOS.VW_AUTORIZACIONES_360&#x27;</span>, <span class="s">&#x27;<span class="k">VIEW</span>&#x27;</span>, <span class="s">&#x27;UPSTREAM&#x27;</span>, 3))
+<span class="k">ORDER BY</span> DISTANCE, SOURCE_OBJECT_NAME;</code></pre><div class="esp"><b>Resultado esperado.</b> El recorrido aparece completo: archivo crudo, tabla de aterrizaje, tabla dinamica, tabla conformada y vista de consumo. <b>Nadie escribio esta documentacion.</b> Sale de como se definieron los objetos.</div><div class="nota"><b>Atencion.</b> El linaje <b>columna a columna</b> vive en <code>SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY</code>, con latencia de hasta tres horas, asi que en la sesion se muestra a nivel de objeto. Vale decirlo: el criterio 1 pide linaje columna a columna y existe, pero no se puebla en treinta minutos.</div><pre data-titulo="T2 paso 6: Linaje que nadie declaro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T2&#x27;</span>,
+    <span class="s">&#x27;Linaje automatico end-to-end sin declaracion manual&#x27;</span>,
+    <span class="s">&#x27;GET_LINEAGE desde AUTORIZACIONES_BRONZE y hacia VW_AUTORIZACIONES_360&#x27;</span>,
+    <span class="s">&#x27;Recorrido completo del dato desde el archivo crudo hasta la vista de consumo, derivado de la definicion de los objetos&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.3 linaje automatico y 2.2 linaje de tabla y columna&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Si el linaje se deriva del motor o de un escaneo externo.</b> Un catalogo que escanea periodicamente muestra el linaje de ayer y no ve las transformaciones que ocurren dentro de un job de Spark. Pidan crear una tabla nueva a partir de otra durante la sesion y ver si aparece en el linaje de inmediato y sin configurar un conector.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Al terminar quedan: el mes faltante cargado desde la capa cruda, el CDC aplicado al maestro, las reglas de calidad corriendo solas, la tabla dinamica refrescandose y el linaje visible sin haberlo declarado.</p>
+  <pre data-titulo="T2: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T2&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T2&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T2 Ingenieria de datos<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T2';
+var SQL_NOMBRE='T2_ingenieria_de_datos.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T2 - Ingenieria de datos\n\n   Equipo    : Data & Analytics\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_ingenieria.sql en esta cuenta\n\n   Un solo pipeline con las tres modalidades que pide el pliego: carga batch del archivo nocturno, CDC del maestro de comercios y flujo continuo de eventos de autorizacion, con calidad embebida y linaje automatico.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T2'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T2';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

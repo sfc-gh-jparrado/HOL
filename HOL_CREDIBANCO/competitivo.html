@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Preguntas verificables para comparar proveedores | Workshop CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; RFP 10010806</div>
+  <h1>Preguntas verificables</h1>
+  <div class="sub">Consolidado de los recuadros de los nueve modulos. Estan planteadas para
+  responderse operando la plataforma en la sesion, no discutiendo arquitecturas.</div>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Por que este documento existe</h3>
+    <p style="margin:0">El Anexo 11 dice que <i>"toda capacidad declarada en la propuesta
+    que no pueda demostrarse operando la plataforma se calificara como no acreditada"</i>.
+    Estas preguntas sirven para eso: cada una se responde con una accion en pantalla y un
+    numero, no con una lamina. Son las mismas para todos los proveedores, incluido el
+    actual.</p>
+  </div>
+
+  <h2 class="sec">Las diez que mas discriminan</h2>
+  <div class="tabla-scroll">
+  <table>
+    <tr><th>#</th><th>Pregunta</th><th>Como se verifica en la sesion</th><th>Track</th></tr>
+    <tr><td>1</td><td>Como agrego <i>cedula</i> y <i>NIT</i> como categorias de primera
+      clase del clasificador, y cuantos objetos hay que tocar para que esa deteccion se
+      convierta en proteccion.</td>
+      <td>Agregar la regla en vivo y ver la columna quedar protegida sin escribir una
+      politica nueva.</td><td>T1</td></tr>
+    <tr><td>2</td><td>Cuantos objetos hay que crear para proteger una columna nueva que
+      contiene PAN.</td>
+      <td>Agregar la columna a una tabla y cronometrar hasta que quede enmascarada.</td>
+      <td>T1</td></tr>
+    <tr><td>3</td><td>Donde vive el control cuando el consumidor es un agente de IA.</td>
+      <td>Pedirle al modelo que repita el numero de tarjeta y ver que recibe.</td>
+      <td>T1</td></tr>
+    <tr><td>4</td><td>Que pasa si el mismo archivo del cierre se carga dos veces, y como se
+      aisla una sola fila corrupta.</td>
+      <td>Repetir la carga y contar filas.</td><td>T2</td></tr>
+    <tr><td>5</td><td>Que pasa cuando el productor agrega un campo al evento del
+      autorizador.</td>
+      <td>Publicar un evento con un campo nuevo y ver si el flujo se detiene.</td>
+      <td>T2</td></tr>
+    <tr><td>6</td><td>Cual es la ruta del <code>metadata.json</code> y de quien es el bucket
+      donde quedan los archivos.</td>
+      <td>Pedir la ruta en pantalla y confirmar la cuenta de nube propietaria.</td>
+      <td>T3</td></tr>
+    <tr><td>7</td><td>Puede un rol de dominio publicar un producto y dar acceso a otro
+      dominio sin el equipo central.</td>
+      <td>Hacerlo en vivo con el rol del dominio.</td><td>T3</td></tr>
+    <tr><td>8</td><td>Se puede revocar el acceso de un tercero y comprobar que pierde el
+      dato de inmediato.</td>
+      <td>Cambiar un dato del origen, verlo en el consumidor, revocar y volver a
+      consultar.</td><td>T5</td></tr>
+    <tr><td>9</td><td>Que porcentaje del gasto del mes pasado puede imputar a un dominio de
+      negocio.</td>
+      <td>Pedir el informe y el credito sin atribuir.</td><td>T7</td></tr>
+    <tr><td>10</td><td>Que NO se puede migrar y que exige reescritura.</td>
+      <td>Pedir el porcentaje de conversion automatica por patron, no por archivo.</td>
+      <td>T8</td></tr>
+  </table>
+  </div>
+
+  <div class="caja">
+    <h3>Dos senales de alerta</h3>
+    <ul style="margin:6px 0 0">
+      <li><b>"Todo se migra automaticamente".</b> Significa que nadie miro los procesadores
+      NAR propios de NiFi ni las UDF de Spark de la linea base. En esta muestra, cerca del
+      45% de las lineas exige reescritura o desaparece.</li>
+      <li><b>Un total que cuadra sin reconciliacion fila por fila.</b> Dos errores que se
+      compensan dejan el total intacto. La prueba util es un <code>FULL OUTER JOIN</code>
+      por la llave de negocio que muestre filas sobrantes, faltantes y diferentes.</li>
+    </ul>
+  </div>
+
+  <h2 class="sec">Donde esta cada recuadro</h2>
+  <p>Cada guia de track trae su propio recuadro <i>Que preguntar al otro proveedor</i> al
+  final de cada paso, con el detalle y el porque. Este documento es el resumen para llevar
+  impreso a la sala.</p>
+  <ul>
+    <li><a href="T0_modulo_general_transversal.html">T0 Modulo general</a></li>
+    <li><a href="T1_gobierno_y_zero_trust.html">T1 Gobierno y Zero Trust</a></li>
+    <li><a href="T2_ingenieria_de_datos.html">T2 Ingenieria de datos</a></li>
+    <li><a href="T3_arquitectura_y_data_fabric.html">T3 Arquitectura y Data Fabric</a></li>
+    <li><a href="T4_analitica_ml_e_ia.html">T4 Analitica, ML e IA</a></li>
+    <li><a href="T5_monetizacion_y_exposicion.html">T5 Monetizacion y exposicion</a></li>
+    <li><a href="T6_autoservicio_y_aprovisionamiento.html">T6 Autoservicio y aprovisionamiento</a></li>
+    <li><a href="T7_administracion_dataops_y_finops.html">T7 Administracion, DataOps y FinOps</a></li>
+    <li><a href="T8_migracion_desde_cloudera.html">T8 Migracion desde Cloudera</a></li>
+  </ul>
+</div>
+
+<footer>Snowflake Colombia &middot; RFP 10010806 &middot; Preguntas verificables</footer>
+</body>
+</html>

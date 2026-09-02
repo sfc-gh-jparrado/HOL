@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T0 - Modulo general transversal | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T0 &middot; Modulo general transversal</h1>
+  <div class="sub">Arquitectura objetivo, navegacion, modelo de dominios y el recorrido completo de una autorizacion desde el archivo hasta la respuesta del agente. Es el mapa que hace falta para que los ocho tracks siguientes se entiendan.</div>
+  <div class="chips"><span class="chip">Modulo general</span><span class="chip">25 minutos</span><span class="chip">Todos los equipos</span><span class="chip">Se ejecuta en la cuenta de cada equipo</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Snowflake <b>presenta y habilita</b> este modulo, que es lo que el Anexo 11 pide. Aun asi cada asistente ejecuta las consultas en su cuenta: el objetivo es que al terminar sepa moverse, no que haya visto una presentacion.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li>Prepara los ocho tracks: arquitectura objetivo, navegacion de la plataforma, modelo de dominios y flujo end-to-end del dato.</li><li><b>16. Experiencia de uso</b> &mdash; primera medicion de la curva de aprendizaje.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>5.1 Lakehouse unificado sin fragmentacion.</li><li>5.9 Separacion de almacenamiento y computo con escalado independiente.</li><li>12.5 Consola unificada de administracion.</li></ul>
+  </div>
+
+  
+  <div class="caja">
+    <h3>Como esta armado el workshop</h3>
+    <p style="margin:0 0 8px">Un modulo general de 25 minutos y <b>ocho tracks de 30
+    minutos cada uno</b>, con la misma duracion, como exige el Anexo 11. Total: 4 horas
+    40 minutos.</p>
+    <p style="margin:0 0 8px">Cada equipo trabaja en <b>su propia cuenta</b>, con el
+    ambiente ya cargado. Los tracks estan encadenados por el dato: lo que un equipo
+    produce es lo que otro recibe. Por eso el equipo de Seguridad nunca instala Openflow
+    &mdash;recibe la capa conformada&mdash; y el de Ingenieria si construye el pipeline.</p>
+    <p style="margin:0">Snowflake habilita y acompana. <b>Ejecutan ustedes.</b> La unica
+    excepcion es el Track 8, donde el pliego pide que el proveedor ejecute la muestra de
+    migracion junto con el equipo.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Los ocho tracks y quien los ejecuta</h3>
+    <table>
+      <tr><th>Track</th><th>Equipo</th><th>Que se demuestra</th></tr>
+      <tr><td>1. Gobierno y Zero Trust</td><td>Seguridad de la Informacion</td>
+          <td>Clasificacion automatica, enmascaramiento por etiqueta, politica de fila, borrado seguro</td></tr>
+      <tr><td>2. Ingenieria de datos</td><td>Data &amp; Analytics</td>
+          <td>Batch, streaming y CDC en un pipeline, calidad embebida, linaje</td></tr>
+      <tr><td>3. Arquitectura y Data Fabric</td><td>Arquitectura</td>
+          <td>Iceberg sobre el bucket propio, dominios federados, catalogo de casos de uso</td></tr>
+      <tr><td>4. Analitica, ML e IA</td><td>Data &amp; Analytics</td>
+          <td>Modelo de churn explicable, lectura de documentos, capa semantica</td></tr>
+      <tr><td>5. Monetizacion y exposicion</td><td>Arquitectura</td>
+          <td>Share sin copia entre cuentas, cruce sin exponer identidades, API</td></tr>
+      <tr><td>6. Autoservicio y aprovisionamiento</td><td>Infraestructura y Experiencia</td>
+          <td>Descubrir-solicitar-consumir, aprovisionamiento sin intervencion, lenguaje natural</td></tr>
+      <tr><td>7. Administracion, DataOps y FinOps</td><td>Infraestructura</td>
+          <td>Aislamiento de cargas, chargeback por dominio, cuotas, ambientes</td></tr>
+      <tr><td>8. Migracion desde Cloudera</td><td>Arquitectura</td>
+          <td>Assessment por patron, conversion ejecutada y reconciliada</td></tr>
+    </table>
+  </div>
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Donde esta el dato y como esta organizado</h2><div class="obj">Recorrer las cuatro capas y entender por que estan separadas.</div></div>
+    <div class="min">7 min</div>
+  </header>
+  <div class="cuerpo"><p>El modelo es el mismo de la arquitectura objetivo: aterrizaje, conformado, productos de datos y plataforma. Una base por capa, no una base por sistema origen.</p><pre data-titulo="T0 paso 1: Donde esta el dato y como esta organizado"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- las cuatro capas</span>
+<span class="k">SHOW</span> DATABASES <span class="k">LIKE</span> <span class="s">&#x27;CB\_%&#x27;</span>;
+<span class="k">SELECT</span> &quot;name&quot; <span class="k">AS</span> BASE, &quot;comment&quot; <span class="k">AS</span> PARA_QUE_SIRVE
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()))
+<span class="k">ORDER BY</span> &quot;name&quot;;</code></pre><pre data-titulo="T0 paso 1: Donde esta el dato y como esta organizado"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- que hay en cada una y con que volumen</span>
+<span class="k">SELECT</span> TABLE_CATALOG <span class="k">AS</span> CAPA,
+       TABLE_SCHEMA  <span class="k">AS</span> DOMINIO,
+       TABLE_NAME    <span class="k">AS</span> OBJETO,
+       TABLE_TYPE    <span class="k">AS</span> TIPO,
+       ROW_COUNT     <span class="k">AS</span> FILAS,
+       ROUND(BYTES / POWER(1024, 3), 2) <span class="k">AS</span> GB
+<span class="k">FROM</span> CB_SILVER.INFORMATION_SCHEMA.TABLES
+<span class="k">WHERE</span> TABLE_SCHEMA &lt;&gt; <span class="s">&#x27;INFORMATION_SCHEMA&#x27;</span>
+<span class="k">UNION ALL</span>
+<span class="k">SELECT</span> TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, ROW_COUNT,
+       ROUND(BYTES / POWER(1024, 3), 2)
+<span class="k">FROM</span> CB_GOLD.INFORMATION_SCHEMA.TABLES
+<span class="k">WHERE</span> TABLE_SCHEMA &lt;&gt; <span class="s">&#x27;INFORMATION_SCHEMA&#x27;</span>
+<span class="k">ORDER BY</span> FILAS <span class="k">DESC</span> NULLS LAST;</code></pre><div class="esp"><b>Resultado esperado.</b> La tabla de autorizaciones domina el volumen. Es el equivalente de <code>autorizaciones_master_rt</code>, que en la linea base tiene mas de 3.100 millones de filas.</div><pre data-titulo="T0 paso 1: Donde esta el dato y como esta organizado"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el computo esta separado del dato: se apaga y el dato sigue ahi</span>
+<span class="k">SHOW</span> WAREHOUSES <span class="k">LIKE</span> <span class="s">&#x27;WH\_%&#x27;</span>;
+<span class="k">SELECT</span> &quot;name&quot; <span class="k">AS</span> COMPUTO, &quot;size&quot; <span class="k">AS</span> TALLA, &quot;state&quot; <span class="k">AS</span> ESTADO,
+       &quot;auto_suspend&quot; <span class="k">AS</span> SEGUNDOS_PARA_APAGARSE, &quot;comment&quot; <span class="k">AS</span> PARA_QUE_SIRVE
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()))
+<span class="k">ORDER BY</span> &quot;name&quot;;</code></pre><div class="nota"><b>Atencion.</b> Seis computos, uno por patron de carga, no uno por equipo. Los que nadie usa estan suspendidos y no facturan. En la linea base actual los 792 vCores estan encendidos las 24 horas, con 57,2% de contenedores inactivos.</div><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>La pregunta de arranque: que se apaga cuando nadie trabaja.</b> Es el eje del criterio de costos, que vale 25% de la evaluacion tecnica. Pidan a cada proveedor mostrar el estado del computo en reposo y su facturacion asociada.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>El recorrido completo de una autorizacion</h2><div class="obj">Seguir un mismo registro desde el archivo crudo hasta la respuesta al negocio.</div></div>
+    <div class="min">10 min</div>
+  </header>
+  <div class="cuerpo"><p>Es el flujo end-to-end que pide el Anexo 11. Se hace con una sola autorizacion para que se vea el camino, no el volumen.</p><pre data-titulo="T0 paso 2: El recorrido completo de una autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- 1. el dato conformado: una autorizacion cualquiera</span>
+<span class="k">SELECT</span> AUTORIZACION_ID, FECHA_HORA, MONTO_COP, MODO_ENTRADA,
+       CODIGO_RESPUESTA, DESCRIPCION_RESPUESTA, APROBADA,
+       COMERCIO_ID, CIUDAD_COMERCIO, SECTOR
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> APROBADA = <span class="k">FALSE</span>
+<span class="k">LIMIT</span> 1;</code></pre><pre data-titulo="T0 paso 2: El recorrido completo de una autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- 2. enriquecido: comercio, terminal y tarjetahabiente en una vista</span>
+<span class="k">SELECT</span> AUTORIZACION_ID, FECHA, MONTO_COP, PAN, RAZON_SOCIAL, SECTOR,
+       CIUDAD_COMERCIO, TIPO_TERMINAL, SEGMENTO_CLIENTE, BANCO_EMISOR
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VW_AUTORIZACIONES_360
+<span class="k">LIMIT</span> 3;</code></pre><div class="nota"><b>Atencion.</b> El PAN aparece completo porque este modulo corre con el rol administrador y todavia no hay politicas: las aplica el Track 1. Es deliberado que se vea el antes y el despues.</div><pre data-titulo="T0 paso 2: El recorrido completo de una autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- 3. agregado al nivel del negocio</span>
+<span class="k">SELECT</span> SECTOR,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID)                  <span class="k">AS</span> COMERCIOS,
+       <span class="k">SUM</span>(TRX_TOTAL)                               <span class="k">AS</span> TRANSACCIONES,
+       ROUND(<span class="k">SUM</span>(MONTO_APROBADO_COP) / 1e9, 2)      <span class="k">AS</span> MILES_MILLONES_COP,
+       ROUND(100.0 * <span class="k">SUM</span>(TRX_APROBADAS) / <span class="k">SUM</span>(TRX_TOTAL), 2) <span class="k">AS</span> TASA_APROBACION_PCT
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO
+<span class="k">GROUP BY</span> SECTOR
+<span class="k">ORDER BY</span> MILES_MILLONES_COP <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><pre data-titulo="T0 paso 2: El recorrido completo de una autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- 4. la pregunta de negocio que motiva todo el workshop:</span>
+<span class="c">-- donde se estan cayendo las transacciones y cuanto cuesta</span>
+<span class="k">SELECT</span> DESCRIPCION_RESPUESTA                              <span class="k">AS</span> MOTIVO,
+       <span class="k">COUNT</span>(*)                                           <span class="k">AS</span> DECLINACIONES,
+       ROUND(<span class="k">SUM</span>(MONTO_COP) / 1e9, 2)                     <span class="k">AS</span> MILES_MILLONES_NO_VENDIDOS,
+       ROUND(100.0 * <span class="k">COUNT</span>(*) / <span class="k">SUM</span>(<span class="k">COUNT</span>(*)) <span class="k">OVER</span> (), 2) <span class="k">AS</span> PCT
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> APROBADA = <span class="k">FALSE</span>
+<span class="k">GROUP BY</span> DESCRIPCION_RESPUESTA
+<span class="k">ORDER BY</span> DECLINACIONES <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> Fondos insuficientes encabeza, seguido de <i>no honrar</i>. La columna de miles de millones no vendidos es el tamano del problema en pesos, y es la cifra que sostiene el caso de negocio de los ocho tracks.</div><pre data-titulo="T0 paso 2: El recorrido completo de una autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- 5. la ventana de recuperacion viene configurada en cada capa:</span>
+<span class="c">-- cualquier estado anterior se consulta sin restaurar un respaldo</span>
+<span class="k">SHOW</span> PARAMETERS <span class="k">LIKE</span> <span class="s">&#x27;DATA_RETENTION_TIME_IN_DAYS&#x27;</span> <span class="k">IN</span> <span class="k">DATABASE</span> CB_SILVER;
+<span class="k">SELECT</span> &quot;key&quot; <span class="k">AS</span> PARAMETRO, &quot;value&quot; <span class="k">AS</span> DIAS_DE_RECUPERACION, &quot;description&quot; <span class="k">AS</span> QUE_SIGNIFICA
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()));</code></pre><div class="nota"><b>Atencion.</b> La recuperacion de un dato borrado se demuestra donde el borrado ocurre: en el <b>Track 2</b>, consultando el maestro de comercios antes de aplicar el CDC, y en el <b>Track 3</b>, recuperando filas eliminadas de una tabla Iceberg. Aqui solo se comprueba que la ventana existe: este ambiente se acaba de instalar y todavia no tiene historia que mostrar.</div><pre data-titulo="T0 paso 2: El recorrido completo de una autorizacion"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T0&#x27;</span>,
+    <span class="s">&#x27;Recorrido end-to-end de una autorizacion y flujo de las cuatro capas&#x27;</span>,
+    <span class="s">&#x27;CB_SILVER.ADQUIRENCIA.AUTORIZACIONES hasta CB_GOLD.PRODUCTOS&#x27;</span>,
+    <span class="s">&#x27;Recorrido de una autorizacion desde la capa conformada hasta el agregado de negocio, con el costo de las declinaciones cuantificado y Time Travel disponible&#x27;</span>,
+    <span class="s">&#x27;Anexo 11 - modulo general: flujo end-to-end del dato&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Cuenten los saltos.</b> En el modulo general de cada proveedor cuenten cuantas herramientas distintas hay que abrir para recorrer el dato desde el archivo hasta el agregado, y cuantos lenguajes hacen falta. Ese numero predice bastante bien la curva de aprendizaje que van a medir en los ocho tracks.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Con que rol entra cada equipo</h2><div class="obj">Ver el modelo de roles y comprobar que cada uno ve lo suyo.</div></div>
+    <div class="min">8 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T0 paso 3: Con que rol entra cada equipo"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+
+<span class="c">-- los roles del workshop, uno por equipo del pliego</span>
+<span class="k">SHOW</span> ROLES <span class="k">LIKE</span> <span class="s">&#x27;RL\_%&#x27;</span>;
+<span class="k">SELECT</span> &quot;name&quot; <span class="k">AS</span> ROL, &quot;comment&quot; <span class="k">AS</span> EQUIPO
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()))
+<span class="k">ORDER BY</span> &quot;name&quot;;</code></pre><pre data-titulo="T0 paso 3: Con que rol entra cada equipo"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- que puede hacer un rol concreto: es auditable sin abrir otra consola</span>
+<span class="k">SHOW</span> GRANTS <span class="k">TO</span> <span class="k">ROLE</span> RL_ANALISTA;</code></pre><pre data-titulo="T0 paso 3: Con que rol entra cada equipo"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- las etiquetas de gobierno que van a usar todos los tracks</span>
+<span class="k">SHOW</span> TAGS <span class="k">IN</span> <span class="k">SCHEMA</span> CB_PLATAFORMA.GOBIERNO;
+<span class="k">SELECT</span> &quot;name&quot; <span class="k">AS</span> ETIQUETA, &quot;allowed_values&quot; <span class="k">AS</span> VALORES_PERMITIDOS, &quot;comment&quot; <span class="k">AS</span> PARA_QUE_SIRVE
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()))
+<span class="k">ORDER BY</span> &quot;name&quot;;</code></pre><div class="esp"><b>Resultado esperado.</b> Seis etiquetas. Tres describen la naturaleza del dato (clasificacion, confidencialidad, entorno de tarjeta) y tres sostienen la atribucion de costos (dominio, proyecto, caso de uso). Las mismas etiquetas gobiernan la seguridad y el gasto.</div><pre data-titulo="T0 paso 3: Con que rol entra cada equipo"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la bitacora de evidencia: cada paso de cada track queda registrado</span>
+<span class="k">SELECT</span> TRACK, PASOS_EJECUTADOS, REQUISITOS_ACREDITADOS, PARTICIPANTES, DURACION_MIN
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">ORDER BY</span> INICIO;</code></pre><div class="nota"><b>Atencion.</b> El Anexo 11 exige entregar la evidencia de lo ejecutado al cierre de cada track. Esta bitacora se llena sola mientras ustedes trabajan: cada paso de cada lab registra que se hizo, con que usuario, con que rol y a que requisito del Anexo 10 corresponde.</div><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Pidan la evidencia en formato consultable, no en capturas de pantalla.</b> El Anexo 11 pide configuraciones y artefactos al cierre de cada track. Si la evidencia son fotos de una pantalla, comparar dos proveedores en frio, una semana despues, va a ser imposible.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Al terminar este modulo cada equipo sabe donde esta su dato, con que rol entra y como se recorre la plataforma. Los tracks arrancan sin volver a explicar la arquitectura.</p>
+  <pre data-titulo="T0: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T0&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T0&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T0 Modulo general transversal<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T0';
+var SQL_NOMBRE='T0_modulo_general_transversal.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T0 - Modulo general transversal\n\n   Equipo    : Todos los equipos\n   Duracion  : 25 minutos\n   Prerrequisito: haber ejecutado install_seguridad.sql en esta cuenta\n\n   Arquitectura objetivo, navegacion, modelo de dominios y el recorrido completo de una autorizacion desde el archivo hasta la respuesta del agente. Es el mapa que hace falta para que los ocho tracks siguientes se entiendan.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T0'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T0';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T7 - Administracion, DataOps y FinOps | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T7 &middot; Administracion, DataOps y FinOps</h1>
+  <div class="sub">Operar la plataforma sin ayuda del proveedor: escalar bajo carga variable, atribuir cada credito a un dominio y un caso de uso, poner cuotas que frenen de verdad, y promover un cambio entre ambientes sin copiar datos.</div>
+  <div class="chips"><span class="chip">Track 7</span><span class="chip">30 minutos</span><span class="chip">Criterios 11, 12, 13 y 16</span><span class="chip">Cuenta CTA_INFRA</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Lo ejecuta el equipo de <b>Infraestructura</b>. El criterio 11 califica explicitamente <i>la facilidad con que el equipo de CredibanCo opera directamente</i>, asi que Snowflake no ejecuta ningun paso de este track.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>11. Administracion y operacion</b> &mdash; capacidad de administrar y facilidad con que el equipo opera directamente.</li><li><b>12. DataOps</b> &mdash; CI/CD de datos, versionamiento, ambientes, pruebas y observabilidad de pipelines.</li><li><b>13. FinOps</b> &mdash; trazabilidad de costos por dominio, proyecto y carga; alertas, cuotas y palancas de optimizacion.</li><li><b>16. Experiencia de uso</b> &mdash; autonomia real del equipo.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>12.1 Observabilidad y monitoreo de uso, consultas, usuarios y anomalias.</li><li>12.2 Computo elastico que escale desde cero y se apague sin uso, con evidencia del consumo real.</li><li>12.3 Limites, cuotas y atribucion de costos por caso de uso y area.</li><li>12.5 Consola unificada de administracion.</li><li>12.7 SLA de rendimiento por tipo de carga y aislamiento de workloads sin afectacion mutua.</li><li>1.6 CI/CD para pipelines con promocion entre ambientes.</li><li>2.10 Data versioning y Time Travel con branching para sandboxes.</li></ul>
+  </div>
+
+  
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Aislamiento de cargas: la prueba que duele</h2><div class="obj">Verificar que una carga pesada no degrada a la de al lado.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>El requisito 12.7 pide aislamiento de workloads <b>sin afectacion mutua</b>. La forma de comprobarlo no es leer una arquitectura: es lanzar una consulta brutal en un computo y medir la de otro equipo al mismo tiempo.</p><pre data-titulo="T7 paso 1: Aislamiento de cargas: la prueba que duele"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+
+<span class="c">-- consulta de referencia del equipo de negocio, sobre computo pequeno</span>
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO;
+<span class="k">ALTER</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO RESUME <span class="k">IF</span> SUSPENDED;
+
+<span class="k">SELECT</span> SECTOR, <span class="k">COUNT</span>(*) <span class="k">AS</span> TRX, ROUND(<span class="k">SUM</span>(MONTO_COP)/1e9, 2) <span class="k">AS</span> MILES_MILLONES_COP
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> FECHA &gt;= DATEADD(<span class="s">&#x27;month&#x27;</span>, -1, (<span class="k">SELECT</span> <span class="k">MAX</span>(FECHA) <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES))
+<span class="k">GROUP BY</span> SECTOR
+<span class="k">ORDER BY</span> MILES_MILLONES_COP <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><p>Anoten el tiempo. Ahora se lanza la carga pesada en el computo de ETL y se repite la consulta de negocio <b>sin esperar</b>.</p><pre data-titulo="T7 paso 1: Aislamiento de cargas: la prueba que duele"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- carga pesada: recorrido completo con ordenamiento por tarjetahabiente</span>
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+<span class="k">ALTER</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH RESUME <span class="k">IF</span> SUSPENDED;
+
+<span class="k">SELECT</span> TARJETAHABIENTE_ID,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> TRX,
+       <span class="k">SUM</span>(MONTO_COP) <span class="k">AS</span> MONTO,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID) <span class="k">AS</span> COMERCIOS,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> CIUDAD_COMERCIO) <span class="k">AS</span> CIUDADES
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">GROUP BY</span> TARJETAHABIENTE_ID
+<span class="k">ORDER BY</span> MONTO <span class="k">DESC</span>
+<span class="k">LIMIT</span> 100;</code></pre><pre data-titulo="T7 paso 1: Aislamiento de cargas: la prueba que duele"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la misma consulta de negocio, mientras la pesada corre</span>
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO;
+<span class="k">SELECT</span> SECTOR, <span class="k">COUNT</span>(*) <span class="k">AS</span> TRX, ROUND(<span class="k">SUM</span>(MONTO_COP)/1e9, 2) <span class="k">AS</span> MILES_MILLONES_COP
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> FECHA &gt;= DATEADD(<span class="s">&#x27;month&#x27;</span>, -1, (<span class="k">SELECT</span> <span class="k">MAX</span>(FECHA) <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES))
+<span class="k">GROUP BY</span> SECTOR
+<span class="k">ORDER BY</span> MILES_MILLONES_COP <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><div class="esp"><b>Resultado esperado.</b> El tiempo de la consulta de negocio no cambia de forma apreciable. Los dos computos leen la misma tabla y no compiten por recursos, porque el almacenamiento esta separado del computo y cada warehouse tiene el suyo.</div><pre data-titulo="T7 paso 1: Aislamiento de cargas: la prueba que duele"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- evidencia medida, no percibida.</span>
+<span class="c">-- QUEUED_OVERLOAD_TIME es la metrica que delata la falta de aislamiento: es el</span>
+<span class="c">-- tiempo que una consulta espero porque el computo estaba ocupado con otra.</span>
+<span class="k">SELECT</span> WAREHOUSE_NAME,
+       WAREHOUSE_SIZE,
+       TOTAL_ELAPSED_TIME / 1000              <span class="k">AS</span> SEGUNDOS,
+       QUEUED_OVERLOAD_TIME / 1000            <span class="k">AS</span> SEGUNDOS_EN_COLA,
+       ROUND(BYTES_SCANNED / POWER(1024, 3), 2) <span class="k">AS</span> GB_LEIDOS,
+       ROWS_PRODUCED
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.QUERY_HISTORY(RESULT_LIMIT =&gt; 50))
+<span class="k">WHERE</span> WAREHOUSE_NAME <span class="k">IN</span> (<span class="s">&#x27;WH_NEGOCIO&#x27;</span>, <span class="s">&#x27;WH_ETL_BATCH&#x27;</span>)
+  <span class="k">AND</span> QUERY_TEXT <span class="k">ILIKE</span> <span class="s">&#x27;%AUTORIZACIONES%&#x27;</span>
+  <span class="k">AND</span> EXECUTION_STATUS = <span class="s">&#x27;SUCCESS&#x27;</span>
+<span class="k">ORDER BY</span> START_TIME <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><div class="esp"><b>Resultado esperado.</b> Las dos consultas de <code>WH_NEGOCIO</code> tardan practicamente lo mismo, antes y durante la carga pesada, y <code>SEGUNDOS_EN_COLA</code> es cero. Los dos computos leen la misma tabla sin competir, porque el almacenamiento esta separado del computo y cada warehouse tiene el suyo.</div><p>El detalle de particiones leidas no esta en el historial de consultas: se obtiene del perfil de la consulta, que es inmediato.</p><pre data-titulo="T7 paso 1: Aislamiento de cargas: la prueba que duele"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- pruning: cuantas particiones toco realmente la consulta</span>
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO;
+<span class="k">ALTER</span> SESSION <span class="k">SET</span> USE_CACHED_RESULT = <span class="k">FALSE</span>;
+
+<span class="k">SELECT</span> MCC, <span class="k">SUM</span>(MONTO_COP) <span class="k">AS</span> MONTO, <span class="k">COUNT</span>(*) <span class="k">AS</span> TRX
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> FECHA <span class="k">BETWEEN</span> <span class="s">&#x27;2025-12-05&#x27;</span> <span class="k">AND</span> <span class="s">&#x27;2025-12-20&#x27;</span>
+<span class="k">GROUP BY</span> MCC
+<span class="k">ORDER BY</span> MONTO <span class="k">DESC</span>
+<span class="k">LIMIT</span> 5;
+
+<span class="k">SELECT</span> OPERATOR_TYPE,
+       OPERATOR_STATISTICS:pruning:partitions_scanned::NUMBER <span class="k">AS</span> PARTICIONES_LEIDAS,
+       OPERATOR_STATISTICS:pruning:partitions_total::NUMBER   <span class="k">AS</span> PARTICIONES_TOTAL,
+       ROUND(100 * OPERATOR_STATISTICS:pruning:partitions_scanned::NUMBER
+                 / NULLIF(OPERATOR_STATISTICS:pruning:partitions_total::NUMBER, 0), 1) <span class="k">AS</span> PCT_LEIDO,
+       OPERATOR_STATISTICS:io:bytes_scanned::NUMBER           <span class="k">AS</span> BYTES_LEIDOS
+<span class="k">FROM</span> <span class="k">TABLE</span>(GET_QUERY_OPERATOR_STATS(LAST_QUERY_ID()))
+<span class="k">WHERE</span> OPERATOR_TYPE = <span class="s">&#x27;TableScan&#x27;</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> El <code>TableScan</code> muestra que la consulta leyo solo una fraccion de las particiones: filtra 15 dias sobre 24 meses y la tabla esta agrupada por <code>FECHA</code>. El pruning es visible en numeros, no en teoria.</div><div class="nota"><b>Atencion.</b> Si en el perfil aparece un operador <code>DynamicSecureView</code> en vez de <code>TableScan</code>, es porque la tabla tiene una politica de fila adjunta y el perfil oculta el detalle interno del escaneo. En la cuenta de este track no hay politicas de fila; si aparece, medir el pruning sobre <code>CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO</code>.</div><pre data-titulo="T7 paso 1: Aislamiento de cargas: la prueba que duele"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T7&#x27;</span>,
+    <span class="s">&#x27;Aislamiento de cargas verificado con dos computos simultaneos&#x27;</span>,
+    <span class="s">&#x27;WH_NEGOCIO y WH_ETL_BATCH sobre la misma tabla&#x27;</span>,
+    <span class="s">&#x27;La carga pesada no degrado la consulta de negocio. Pruning y derrame medidos en QUERY_HISTORY&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 12.7 aislamiento de workloads sin afectacion mutua&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Hagan la prueba al mismo tiempo, no en secuencia.</b> Es la unica forma de ver si el aislamiento es real o si hay una cola compartida debajo. Pregunten tambien que pasa cuando dos equipos escriben en la misma tabla a la vez, y si hay que coordinar ventanas para evitarlo.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Escalar desde cero y apagarse sin uso</h2><div class="obj">Medir el consumo real de una carga y comprobar que no se paga por inactividad.</div></div>
+    <div class="min">5 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T7 paso 2: Escalar desde cero y apagarse sin uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+
+<span class="c">-- el computo arranca suspendido y se apaga solo al minuto de inactividad</span>
+<span class="k">SHOW</span> WAREHOUSES <span class="k">LIKE</span> <span class="s">&#x27;WH\_%&#x27;</span>;
+<span class="k">SELECT</span> &quot;name&quot;, &quot;state&quot;, &quot;size&quot;, &quot;auto_suspend&quot;, &quot;auto_resume&quot;, &quot;started_clusters&quot;
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()))
+<span class="k">ORDER BY</span> &quot;name&quot;;</code></pre><div class="esp"><b>Resultado esperado.</b> Los computos que nadie esta usando aparecen en <code>SUSPENDED</code> con <code>auto_suspend = 60</code>. Suspendido no factura.</div><pre data-titulo="T7 paso 2: Escalar desde cero y apagarse sin uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- misma consulta, dos tamanos: se mide cuanto compra el credito extra</span>
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+<span class="k">ALTER</span> <span class="k">WAREHOUSE</span> WH_ANALITICA <span class="k">SET</span> WAREHOUSE_SIZE = <span class="s">&#x27;XSMALL&#x27;</span>;
+
+<span class="k">SELECT</span> COMERCIO_ID, <span class="k">COUNT</span>(*) <span class="k">AS</span> TRX, <span class="k">SUM</span>(MONTO_COP) <span class="k">AS</span> MONTO
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">GROUP BY</span> COMERCIO_ID
+<span class="k">ORDER BY</span> MONTO <span class="k">DESC</span>
+<span class="k">LIMIT</span> 50;</code></pre><pre data-titulo="T7 paso 2: Escalar desde cero y apagarse sin uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el cambio de tamano no requiere recrear nada ni mover datos</span>
+<span class="k">ALTER</span> <span class="k">WAREHOUSE</span> WH_ANALITICA <span class="k">SET</span> WAREHOUSE_SIZE = <span class="s">&#x27;LARGE&#x27;</span>;
+
+<span class="k">SELECT</span> COMERCIO_ID, <span class="k">COUNT</span>(*) <span class="k">AS</span> TRX, <span class="k">SUM</span>(MONTO_COP) <span class="k">AS</span> MONTO
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">GROUP BY</span> COMERCIO_ID
+<span class="k">ORDER BY</span> MONTO <span class="k">DESC</span>
+<span class="k">LIMIT</span> 50;
+
+<span class="k">ALTER</span> <span class="k">WAREHOUSE</span> WH_ANALITICA <span class="k">SET</span> WAREHOUSE_SIZE = <span class="s">&#x27;SMALL&#x27;</span>;</code></pre><pre data-titulo="T7 paso 2: Escalar desde cero y apagarse sin uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- consumo real por consulta, para decidir con datos y no por intuicion</span>
+<span class="k">SELECT</span> WAREHOUSE_SIZE,
+       TOTAL_ELAPSED_TIME / 1000 <span class="k">AS</span> SEGUNDOS,
+       QUEUED_PROVISIONING_TIME / 1000 <span class="k">AS</span> SEGUNDOS_APROVISIONANDO,
+       ROUND(CREDITS_USED_CLOUD_SERVICES, 6) <span class="k">AS</span> CREDITOS_SERVICIOS,
+       ROUND(BYTES_SCANNED / POWER(1024, 3), 2) <span class="k">AS</span> GB_LEIDOS
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.QUERY_HISTORY(RESULT_LIMIT =&gt; 30))
+<span class="k">WHERE</span> QUERY_TEXT <span class="k">ILIKE</span> <span class="s">&#x27;%<span class="k">GROUP BY</span> COMERCIO_ID%&#x27;</span>
+  <span class="k">AND</span> EXECUTION_STATUS = <span class="s">&#x27;SUCCESS&#x27;</span>
+<span class="k">ORDER BY</span> START_TIME <span class="k">DESC</span>
+<span class="k">LIMIT</span> 6;</code></pre><div class="nota"><b>Atencion.</b> Comparen segundos contra tamano. Si duplicar el computo no reduce el tiempo a la mitad, la consulta no es el cuello de botella y subir de talla es gasto puro. Esa es la palanca de optimizacion que pide el criterio 13, y aca se puede medir en la sesion.</div><pre data-titulo="T7 paso 2: Escalar desde cero y apagarse sin uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T7&#x27;</span>,
+    <span class="s">&#x27;Escalado elastico con evidencia de consumo real&#x27;</span>,
+    <span class="s">&#x27;WH_ANALITICA de XSMALL a LARGE y de vuelta&#x27;</span>,
+    <span class="s">&#x27;Cambio de talla en caliente sin recrear objetos ni mover datos, con tiempos y creditos medidos por consulta&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 12.2 computo elastico con evidencia del consumo real&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Cuanto tarda en estar listo el computo y que pasa cuando nadie lo usa.</b> Pidan apagar todo y volver a lanzar una consulta cronometrando el arranque. Pregunten si el redimensionamiento exige reiniciar el cluster, si hay que mover o reparticionar datos, y si el minimo facturable es por segundo, por minuto o por hora.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Cada credito con dueno: chargeback por dominio</h2><div class="obj">Atribuir el consumo a dominio, proyecto y caso de uso, no a un warehouse anonimo.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>El criterio 13 pide trazabilidad por <b>dominio, proyecto y carga</b>. Eso no sale de la nada: exige que el computo este etiquetado desde el dia uno. La instalacion ya dejo esas etiquetas puestas; aca se convierten en un informe de costos.</p><pre data-titulo="T7 paso 3: Cada credito con dueno: chargeback por dominio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- las etiquetas de costo que trae cada computo</span>
+<span class="k">SELECT</span> OBJECT_NAME <span class="k">AS</span> <span class="k">WAREHOUSE</span>, TAG_NAME, TAG_VALUE
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;WH_ETL_BATCH&#x27;</span>, <span class="s">&#x27;<span class="k">WAREHOUSE</span>&#x27;</span>))
+<span class="k">ORDER BY</span> TAG_NAME;</code></pre><div class="nota"><b>Atencion.</b> <code>SYSTEM$GET_TAG()</code> exige el nombre del objeto como literal, asi que no se puede usar dentro de un join contra el consumo. Por eso el mapa de etiquetas se materializa en una vista.</div><pre data-titulo="T7 paso 3: Cada credito con dueno: chargeback por dominio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- mapa de etiquetas de computo</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">VIEW</span> CB_PLATAFORMA.TELEMETRIA.VW_ETIQUETAS_COMPUTO <span class="k">AS</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;WH_ETL_BATCH&#x27;</span>,<span class="s">&#x27;<span class="k">WAREHOUSE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;WH_ANALITICA&#x27;</span>,<span class="s">&#x27;<span class="k">WAREHOUSE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;WH_GOBIERNO&#x27;</span>,<span class="s">&#x27;<span class="k">WAREHOUSE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;WH_ML&#x27;</span>,<span class="s">&#x27;<span class="k">WAREHOUSE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;WH_NEGOCIO&#x27;</span>,<span class="s">&#x27;<span class="k">WAREHOUSE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;WH_SANDBOX&#x27;</span>,<span class="s">&#x27;<span class="k">WAREHOUSE</span>&#x27;</span>));
+
+<span class="c">-- chargeback: credito, dominio, proyecto, caso de uso y costo en dolares</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">VIEW</span> CB_PLATAFORMA.TELEMETRIA.VW_CHARGEBACK <span class="k">AS</span>
+<span class="k">WITH</span> consumo <span class="k">AS</span> (
+    <span class="k">SELECT</span> WAREHOUSE_NAME, <span class="k">SUM</span>(CREDITS_USED_COMPUTE) <span class="k">AS</span> CREDITOS
+    <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.WAREHOUSE_METERING_HISTORY(
+               DATEADD(<span class="s">&#x27;day&#x27;</span>, -7, CURRENT_DATE())))
+    <span class="k">GROUP BY</span> 1
+),
+etq <span class="k">AS</span> (
+    <span class="k">SELECT</span> OBJECT_NAME <span class="k">AS</span> WAREHOUSE_NAME,
+           <span class="k">MAX</span>(<span class="k">IFF</span>(TAG_NAME = <span class="s">&#x27;DOMINIO&#x27;</span>,  TAG_VALUE, <span class="k">NULL</span>)) <span class="k">AS</span> DOMINIO,
+           <span class="k">MAX</span>(<span class="k">IFF</span>(TAG_NAME = <span class="s">&#x27;PROYECTO&#x27;</span>, TAG_VALUE, <span class="k">NULL</span>)) <span class="k">AS</span> PROYECTO,
+           <span class="k">MAX</span>(<span class="k">IFF</span>(TAG_NAME = <span class="s">&#x27;CASO_USO&#x27;</span>, TAG_VALUE, <span class="k">NULL</span>)) <span class="k">AS</span> CASO_USO
+    <span class="k">FROM</span> CB_PLATAFORMA.TELEMETRIA.VW_ETIQUETAS_COMPUTO
+    <span class="k">GROUP BY</span> 1
+)
+<span class="k">SELECT</span> COALESCE(e.DOMINIO,  <span class="s">&#x27;SIN_ETIQUETA&#x27;</span>) <span class="k">AS</span> DOMINIO,
+       COALESCE(e.PROYECTO, <span class="s">&#x27;SIN_ETIQUETA&#x27;</span>) <span class="k">AS</span> PROYECTO,
+       COALESCE(e.CASO_USO, <span class="s">&#x27;SIN_ETIQUETA&#x27;</span>) <span class="k">AS</span> CASO_USO,
+       c.WAREHOUSE_NAME,
+       ROUND(c.CREDITOS, 4)     <span class="k">AS</span> CREDITOS,
+       ROUND(c.CREDITOS * 4, 2) <span class="k">AS</span> COSTO_USD
+<span class="k">FROM</span> consumo c
+<span class="k">LEFT</span> <span class="k">JOIN</span> etq e <span class="k">ON</span> e.WAREHOUSE_NAME = c.WAREHOUSE_NAME
+<span class="k">WHERE</span> e.WAREHOUSE_NAME <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.TELEMETRIA.VW_CHARGEBACK <span class="k">ORDER BY</span> CREDITOS <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> Cada linea de consumo queda imputada a un dominio, un proyecto y un caso de uso, con su costo en dolares. El consumo del track anterior ya aparece atribuido a <code>PLATAFORMA / GOBIERNO_ZERO_TRUST</code>.</div><pre data-titulo="T7 paso 3: Cada credito con dueno: chargeback por dominio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- resumen por dominio: es la vista que va al comite</span>
+<span class="k">SELECT</span> DOMINIO,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> WAREHOUSE_NAME) <span class="k">AS</span> COMPUTOS,
+       ROUND(<span class="k">SUM</span>(CREDITOS), 4)        <span class="k">AS</span> CREDITOS,
+       ROUND(<span class="k">SUM</span>(COSTO_USD), 2)       <span class="k">AS</span> COSTO_USD,
+       ROUND(100 * <span class="k">SUM</span>(CREDITOS) / <span class="k">SUM</span>(<span class="k">SUM</span>(CREDITOS)) <span class="k">OVER</span> (), 1) <span class="k">AS</span> PCT_DEL_TOTAL
+<span class="k">FROM</span> CB_PLATAFORMA.TELEMETRIA.VW_CHARGEBACK
+<span class="k">GROUP BY</span> DOMINIO
+<span class="k">ORDER BY</span> CREDITOS <span class="k">DESC</span>;</code></pre><pre data-titulo="T7 paso 3: Cada credito con dueno: chargeback por dominio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- lo que no esta etiquetado es lo que no se puede cobrar a nadie</span>
+<span class="k">WITH</span> consumo <span class="k">AS</span> (
+    <span class="k">SELECT</span> WAREHOUSE_NAME, <span class="k">SUM</span>(CREDITS_USED_COMPUTE) <span class="k">AS</span> CREDITOS
+    <span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.WAREHOUSE_METERING_HISTORY(
+               DATEADD(<span class="s">&#x27;day&#x27;</span>, -7, CURRENT_DATE())))
+    <span class="k">GROUP BY</span> 1
+)
+<span class="k">SELECT</span> c.WAREHOUSE_NAME, ROUND(c.CREDITOS, 4) <span class="k">AS</span> CREDITOS_SIN_ATRIBUIR
+<span class="k">FROM</span> consumo c
+<span class="k">WHERE</span> c.WAREHOUSE_NAME <span class="k">NOT</span> <span class="k">IN</span> (
+        <span class="k">SELECT</span> <span class="k">DISTINCT</span> WAREHOUSE_NAME <span class="k">FROM</span> CB_PLATAFORMA.TELEMETRIA.VW_CHARGEBACK)
+<span class="k">ORDER BY</span> CREDITOS_SIN_ATRIBUIR <span class="k">DESC</span>;</code></pre><div class="nota"><b>Atencion.</b> Este ultimo resultado es el mas util del track: mide la <b>cobertura</b> del modelo de chargeback. Un computo sin etiqueta es gasto que nadie reclama. El indicador que hay que llevar a produccion es el porcentaje de credito atribuido, no el numero de tableros de costos.</div><pre data-titulo="T7 paso 3: Cada credito con dueno: chargeback por dominio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T7&#x27;</span>,
+    <span class="s">&#x27;Chargeback por dominio, proyecto y caso de uso&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.TELEMETRIA.VW_CHARGEBACK&#x27;</span>,
+    <span class="s">&#x27;Cada credito imputado a un dominio y un caso de uso, mas la medicion del credito sin atribuir como indicador de cobertura&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 12.3 limites cuotas y atribucion de costos&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que la atribucion llegue hasta el caso de uso y se pueda medir la cobertura.</b> Casi cualquier plataforma muestra costo por cluster. La pregunta dificil es: que porcentaje del gasto del mes pasado puede imputar a un dominio de negocio, y como se entera de que apareceio un computo nuevo sin etiquetar. Pidan tambien el costo de una consulta puntual, no del cluster que la ejecuto.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">4</div>
+    <div class="tit"><h2>Cuotas que frenan de verdad</h2><div class="obj">Poner un limite de consumo con disparadores y comprobar que aplica.</div></div>
+    <div class="min">4 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T7 paso 4: Cuotas que frenan de verdad"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+
+<span class="c">-- cuota mensual para el sandbox del dominio, con aviso y freno</span>
+<span class="k">CREATE</span> RESOURCE MONITOR <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> RM_SANDBOX_ADQUIRENCIA
+    <span class="k">WITH</span> CREDIT_QUOTA = 50
+    FREQUENCY = MONTHLY
+    START_TIMESTAMP = IMMEDIATELY
+    TRIGGERS <span class="k">ON</span> 75  PERCENT DO NOTIFY
+             <span class="k">ON</span> 100 PERCENT DO SUSPEND
+             <span class="k">ON</span> 110 PERCENT DO SUSPEND_IMMEDIATE;
+
+<span class="k">ALTER</span> <span class="k">WAREHOUSE</span> WH_SANDBOX <span class="k">SET</span> RESOURCE_MONITOR = RM_SANDBOX_ADQUIRENCIA;
+
+<span class="k">SHOW</span> RESOURCE MONITORS <span class="k">LIKE</span> <span class="s">&#x27;RM_SANDBOX%&#x27;</span>;
+<span class="k">SELECT</span> &quot;name&quot;, &quot;credit_quota&quot;, &quot;used_credits&quot;, &quot;remaining_credits&quot;, &quot;level&quot;, &quot;frequency&quot;
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()));</code></pre><div class="esp"><b>Resultado esperado.</b> La cuota queda en 50 creditos mensuales con tres disparadores. <code>SUSPEND</code> deja terminar las consultas en curso; <code>SUSPEND_IMMEDIATE</code> las corta.</div><div class="nota"><b>Atencion.</b> La diferencia entre los dos disparadores importa para un adquirente: en el sandbox se puede cortar en seco, pero un computo que sirve al autorizador nunca deberia tener <code>SUSPEND_IMMEDIATE</code> como unico freno. La cuota es una decision de negocio, no una configuracion tecnica.</div><pre data-titulo="T7 paso 4: Cuotas que frenan de verdad"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- que computos quedaron sin cuota: el hueco por donde se escapa el gasto</span>
+<span class="k">SHOW</span> WAREHOUSES <span class="k">LIKE</span> <span class="s">&#x27;WH\_%&#x27;</span>;
+<span class="k">SELECT</span> &quot;name&quot; <span class="k">AS</span> <span class="k">WAREHOUSE</span>,
+       <span class="k">IFF</span>(&quot;resource_monitor&quot; = <span class="s">&#x27;null&#x27;</span>, <span class="s">&#x27;SIN CUOTA&#x27;</span>, &quot;resource_monitor&quot;) <span class="k">AS</span> CUOTA
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()))
+<span class="k">ORDER BY</span> CUOTA, <span class="k">WAREHOUSE</span>;</code></pre><pre data-titulo="T7 paso 4: Cuotas que frenan de verdad"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T7&#x27;</span>,
+    <span class="s">&#x27;Cuota de consumo con disparadores de aviso y suspension&#x27;</span>,
+    <span class="s">&#x27;RM_SANDBOX_ADQUIRENCIA aplicado a WH_SANDBOX&#x27;</span>,
+    <span class="s">&#x27;Cuota de 50 creditos mensuales con avisos al 75% y suspension al 100% y 110%, mas inventario de computos sin cuota&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 12.3 limites y cuotas&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que el limite lo aplique la plataforma y no un tablero.</b> Muchas soluciones de FinOps <i>avisan</i> cuando ya se gasto. Pidan configurar un limite y comprobar que el computo efectivamente se detiene al alcanzarlo, sin que intervenga una persona ni un script externo.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">5</div>
+    <div class="tit"><h2>Ambientes y promocion sin copiar datos</h2><div class="obj">Crear un ambiente de desarrollo completo, probar un cambio y promoverlo.</div></div>
+    <div class="min">5 min</div>
+  </header>
+  <div class="cuerpo"><p>El criterio 12 pide ambientes, pruebas y promocion. La friccion habitual es que un ambiente de desarrollo realista exige copiar terabytes, asi que en la practica se prueba contra datos de juguete y los errores aparecen en produccion.</p><pre data-titulo="T7 paso 5: Ambientes y promocion sin copiar datos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- ambiente de desarrollo con TODO el dato, sin copiarlo</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">DATABASE</span> CB_SILVER_DEV CLONE CB_SILVER;
+
+<span class="c">-- cuanto tardo y cuanto ocupa</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS_EN_DEV <span class="k">FROM</span> CB_SILVER_DEV.ADQUIRENCIA.AUTORIZACIONES;</code></pre><div class="esp"><b>Resultado esperado.</b> El clon tiene exactamente las mismas filas que produccion y se creo en segundos, porque no copio datos: comparte las micro particiones hasta que alguien escriba. Un ambiente de desarrollo con el volumen real deja de ser un problema de presupuesto.</div><pre data-titulo="T7 paso 5: Ambientes y promocion sin copiar datos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- un cambio en desarrollo: nueva columna derivada</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER_DEV.ADQUIRENCIA.AUTORIZACIONES
+    ADD COLUMN <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> FRANJA_HORARIA VARCHAR(20);
+
+<span class="k">UPDATE</span> CB_SILVER_DEV.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">SET</span> FRANJA_HORARIA = <span class="k">CASE</span>
+        <span class="k">WHEN</span> HOUR(FECHA_HORA) <span class="k">BETWEEN</span> 0  <span class="k">AND</span> 5  <span class="k">THEN</span> <span class="s">&#x27;MADRUGADA&#x27;</span>
+        <span class="k">WHEN</span> HOUR(FECHA_HORA) <span class="k">BETWEEN</span> 6  <span class="k">AND</span> 11 <span class="k">THEN</span> <span class="s">&#x27;MANANA&#x27;</span>
+        <span class="k">WHEN</span> HOUR(FECHA_HORA) <span class="k">BETWEEN</span> 12 <span class="k">AND</span> 17 <span class="k">THEN</span> <span class="s">&#x27;TARDE&#x27;</span>
+        <span class="k">ELSE</span> <span class="s">&#x27;NOCHE&#x27;</span> <span class="k">END</span>
+<span class="k">WHERE</span> FECHA &gt;= DATEADD(<span class="s">&#x27;month&#x27;</span>, -1, (<span class="k">SELECT</span> <span class="k">MAX</span>(FECHA) <span class="k">FROM</span> CB_SILVER_DEV.ADQUIRENCIA.AUTORIZACIONES));</code></pre><pre data-titulo="T7 paso 5: Ambientes y promocion sin copiar datos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- prueba antes de promover: la regla se cumple o no se promueve</span>
+<span class="k">SELECT</span> FRANJA_HORARIA,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS,
+       <span class="k">MIN</span>(HOUR(FECHA_HORA)) <span class="k">AS</span> HORA_MIN,
+       <span class="k">MAX</span>(HOUR(FECHA_HORA)) <span class="k">AS</span> HORA_MAX,
+       <span class="k">IFF</span>(FRANJA_HORARIA = <span class="s">&#x27;MADRUGADA&#x27;</span> <span class="k">AND</span> <span class="k">MAX</span>(HOUR(FECHA_HORA)) &gt; 5, <span class="s">&#x27;FALLA&#x27;</span>,
+       <span class="k">IFF</span>(FRANJA_HORARIA = <span class="s">&#x27;MANANA&#x27;</span>    <span class="k">AND</span> (<span class="k">MIN</span>(HOUR(FECHA_HORA)) &lt; 6  <span class="k">OR</span> <span class="k">MAX</span>(HOUR(FECHA_HORA)) &gt; 11), <span class="s">&#x27;FALLA&#x27;</span>,
+       <span class="k">IFF</span>(FRANJA_HORARIA = <span class="s">&#x27;TARDE&#x27;</span>     <span class="k">AND</span> (<span class="k">MIN</span>(HOUR(FECHA_HORA)) &lt; 12 <span class="k">OR</span> <span class="k">MAX</span>(HOUR(FECHA_HORA)) &gt; 17), <span class="s">&#x27;FALLA&#x27;</span>,
+       <span class="k">IFF</span>(FRANJA_HORARIA = <span class="s">&#x27;NOCHE&#x27;</span>     <span class="k">AND</span> <span class="k">MIN</span>(HOUR(FECHA_HORA)) &lt; 18, <span class="s">&#x27;FALLA&#x27;</span>, <span class="s">&#x27;PASA&#x27;</span>)))) <span class="k">AS</span> PRUEBA
+<span class="k">FROM</span> CB_SILVER_DEV.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> FRANJA_HORARIA <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+<span class="k">GROUP BY</span> FRANJA_HORARIA
+<span class="k">ORDER BY</span> FRANJA_HORARIA;</code></pre><div class="esp"><b>Resultado esperado.</b> Las cuatro franjas dicen <code>PASA</code>. Si alguna dijera <code>FALLA</code>, el cambio no se promueve. Esa es la puerta de calidad del pipeline, expresada como una consulta.</div><pre data-titulo="T7 paso 5: Ambientes y promocion sin copiar datos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- promocion del cambio de estructura a produccion</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    ADD COLUMN <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> FRANJA_HORARIA VARCHAR(20);
+
+<span class="c">-- verificar que produccion quedo con la estructura nueva y sin datos perdidos</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS, <span class="k">COUNT</span>(FRANJA_HORARIA) <span class="k">AS</span> CON_FRANJA
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES;
+
+<span class="c">-- el ambiente de desarrollo se descarta sin costo</span>
+<span class="k">DROP</span> <span class="k">DATABASE</span> CB_SILVER_DEV;</code></pre><div class="nota"><b>Atencion.</b> Este paso demuestra ambientes, pruebas y promocion con objetos nativos. Para el <b>CI/CD completo con versionamiento en git</b> &mdash;que es como CredibanCo anoto que quiere evaluar DataOps&mdash; el camino es dbt Projects on Snowflake o DCM con el repositorio conectado, y se cubre en la sesion de arquitectura. Aqui se demuestra la parte que se puede ejecutar y verificar en cinco minutos.</div><pre data-titulo="T7 paso 5: Ambientes y promocion sin copiar datos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T7&#x27;</span>,
+    <span class="s">&#x27;Ambiente de desarrollo con volumen real, prueba y promocion&#x27;</span>,
+    <span class="s">&#x27;Clon CB_SILVER_DEV, prueba de franja horaria y promocion a CB_SILVER&#x27;</span>,
+    <span class="s">&#x27;Clon de 40 millones de filas en segundos sin copiar datos, puerta de calidad como consulta y promocion de estructura verificada&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.6 CI/CD de pipelines y 2.10 data versioning para sandboxes&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Cuanto cuesta y cuanto tarda un ambiente de desarrollo con el volumen de produccion.</b> Pidan clonar la tabla mas grande y cronometren. Si la respuesta es una copia fisica, comparen el costo de almacenamiento y el tiempo: eso determina si el equipo prueba con datos reales o con una muestra, y de ahi salen la mitad de los incidentes de un lakehouse.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">6</div>
+    <div class="tit"><h2>Todo desde una sola consola</h2><div class="obj">Comprobar que la operacion no exige saltar entre herramientas.</div></div>
+    <div class="min">4 min</div>
+  </header>
+  <div class="cuerpo"><p>El requisito 12.5 pide una consola unificada. La forma de verificarlo es hacer en un solo lugar lo que en la plataforma actual requiere Cloudera Manager, Ranger, YARN y Hue.</p><pre data-titulo="T7 paso 6: Todo desde una sola consola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- inventario de consumo por usuario y rol, sin instalar nada</span>
+<span class="k">SELECT</span> USER_NAME,
+       ROLE_NAME,
+       WAREHOUSE_NAME,
+       <span class="k">COUNT</span>(*)                              <span class="k">AS</span> CONSULTAS,
+       ROUND(<span class="k">SUM</span>(TOTAL_ELAPSED_TIME)/1000, 1) <span class="k">AS</span> SEGUNDOS_TOTALES,
+       ROUND(<span class="k">SUM</span>(BYTES_SCANNED)/POWER(1024,3), 2) <span class="k">AS</span> GB_LEIDOS
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.QUERY_HISTORY(RESULT_LIMIT =&gt; 500))
+<span class="k">WHERE</span> EXECUTION_STATUS = <span class="s">&#x27;SUCCESS&#x27;</span>
+<span class="k">GROUP BY</span> 1, 2, 3
+<span class="k">ORDER BY</span> SEGUNDOS_TOTALES <span class="k">DESC</span>
+<span class="k">LIMIT</span> 20;</code></pre><pre data-titulo="T7 paso 6: Todo desde una sola consola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- deteccion de anomalias de operacion: consultas que fallan y por que</span>
+<span class="k">SELECT</span> ERROR_CODE,
+       ANY_VALUE(ERROR_MESSAGE) <span class="k">AS</span> MENSAJE_EJEMPLO,
+       <span class="k">COUNT</span>(*)                 <span class="k">AS</span> OCURRENCIAS
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.QUERY_HISTORY(RESULT_LIMIT =&gt; 500))
+<span class="k">WHERE</span> EXECUTION_STATUS = <span class="s">&#x27;FAIL&#x27;</span>
+<span class="k">GROUP BY</span> ERROR_CODE
+<span class="k">ORDER BY</span> OCURRENCIAS <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><pre data-titulo="T7 paso 6: Todo desde una sola consola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- derrame a disco: la senal mas clara de mal dimensionamiento.</span>
+<span class="c">-- No esta en el historial de consultas; se lee del perfil de la consulta.</span>
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+<span class="k">ALTER</span> SESSION <span class="k">SET</span> USE_CACHED_RESULT = <span class="k">FALSE</span>;
+
+<span class="c">-- ordenamiento masivo, el patron que tipicamente derrama</span>
+<span class="k">SELECT</span> TARJETAHABIENTE_ID, COMERCIO_ID, MONTO_COP, FECHA_HORA
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">ORDER BY</span> MONTO_COP <span class="k">DESC</span>, TARJETAHABIENTE_ID
+<span class="k">LIMIT</span> 200;
+
+<span class="k">SELECT</span> OPERATOR_TYPE,
+       ROUND(COALESCE(OPERATOR_STATISTICS:spilling:bytes_spilled_local_storage::NUMBER, 0)
+             / POWER(1024, 2), 2) <span class="k">AS</span> MB_DERRAME_LOCAL,
+       ROUND(COALESCE(OPERATOR_STATISTICS:spilling:bytes_spilled_remote_storage::NUMBER, 0)
+             / POWER(1024, 2), 2) <span class="k">AS</span> MB_DERRAME_REMOTO,
+       OPERATOR_STATISTICS:input_rows::NUMBER  <span class="k">AS</span> FILAS_ENTRADA,
+       EXECUTION_TIME_BREAKDOWN:overall_percentage::FLOAT <span class="k">AS</span> PCT_DEL_TIEMPO
+<span class="k">FROM</span> <span class="k">TABLE</span>(GET_QUERY_OPERATOR_STATS(LAST_QUERY_ID()))
+<span class="k">ORDER BY</span> PCT_DEL_TIEMPO <span class="k">DESC</span> NULLS LAST;</code></pre><div class="esp"><b>Resultado esperado.</b> El perfil muestra que operador consumio el tiempo y si hubo derrame. Con esta talla de computo el ordenamiento cabe en memoria y el derrame es cero; si se baja a <code>XSMALL</code> aparece derrame local.</div><div class="nota"><b>Atencion.</b> El derrame remoto es la senal que hay que perseguir: significa que la consulta se quedo sin memoria y sin disco local. Es la unica metrica de esta lista que casi siempre justifica subir de talla.</div><pre data-titulo="T7 paso 6: Todo desde una sola consola"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T7&#x27;</span>,
+    <span class="s">&#x27;Observabilidad de operacion desde un solo plano&#x27;</span>,
+    <span class="s">&#x27;INFORMATION_SCHEMA.QUERY_HISTORY: consumo por usuario, errores y derrame&#x27;</span>,
+    <span class="s">&#x27;Consumo por usuario y rol, taxonomia de errores y deteccion de mal dimensionamiento por derrame, sin instalar agentes ni exportar logs&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 12.1 observabilidad y 12.5 consola unificada de administracion&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Cuantas consolas hacen falta para responder una pregunta de operacion.</b> Tomen una sola pregunta &mdash;quien consumio mas la semana pasada y en que se le fue el tiempo&mdash; y cuenten cuantas herramientas hay que abrir y si los datos se pueden cruzar en una consulta. En la plataforma actual esa pregunta cruza Cloudera Manager, YARN y Ranger.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Este track deja como evidencia el detalle de costos por dominio, la cuota configurada con sus disparadores y la promocion de un cambio entre ambientes con su verificacion.</p>
+  <pre data-titulo="T7: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T7&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T7&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T7 Administracion, DataOps y FinOps<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T7';
+var SQL_NOMBRE='T7_administracion_dataops_y_finops.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T7 - Administracion, DataOps y FinOps\n\n   Equipo    : Infraestructura\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_infra.sql en esta cuenta\n\n   Operar la plataforma sin ayuda del proveedor: escalar bajo carga variable, atribuir cada credito a un dominio y un caso de uso, poner cuotas que frenen de verdad, y promover un cambio entre ambientes sin copiar datos.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T7'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T7';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

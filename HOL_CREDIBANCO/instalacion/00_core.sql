@@ -1,0 +1,363 @@
+/* ============================================================================
+   HOL CredibanCo - RFP 10010806
+   00_core.sql : cimiento comun a las cuatro cuentas del workshop
+
+   Este script lo ejecuta CADA cuenta (Seguridad, Ingenieria, Arquitectura,
+   Infraestructura) antes de su script de instalacion especifico. Crea las
+   capas, los roles, los warehouses etiquetados para costeo y el esquema de
+   evidencia que exige el Anexo 11 ("entregar la evidencia de lo ejecutado al
+   cierre de cada track").
+
+   Es idempotente: se puede volver a correr completo sin romper nada ni perder
+   la evidencia ya registrada.
+   ==========================================================================*/
+
+USE ROLE ACCOUNTADMIN;
+
+/* ----------------------------------------------------------------------------
+   1. Bases de datos por capa
+   El modelo medallion del Anexo 10 requisito 1.4, mas una base de plataforma
+   que concentra gobierno, evidencia y telemetria.
+   --------------------------------------------------------------------------*/
+CREATE DATABASE IF NOT EXISTS CB_RAW
+    COMMENT = 'Capa de aterrizaje: archivos crudos tal como llegan del origen';
+CREATE DATABASE IF NOT EXISTS CB_SILVER
+    COMMENT = 'Capa conformada: tipada, deduplicada y con calidad verificada';
+CREATE DATABASE IF NOT EXISTS CB_GOLD
+    COMMENT = 'Capa de productos de datos publicados a los dominios';
+CREATE DATABASE IF NOT EXISTS CB_PLATAFORMA
+    COMMENT = 'Gobierno, evidencia del workshop y telemetria de la plataforma';
+
+CREATE SCHEMA IF NOT EXISTS CB_RAW.LANDING;
+CREATE SCHEMA IF NOT EXISTS CB_SILVER.ADQUIRENCIA;
+CREATE SCHEMA IF NOT EXISTS CB_GOLD.PRODUCTOS;
+CREATE SCHEMA IF NOT EXISTS CB_PLATAFORMA.GOBIERNO;
+CREATE SCHEMA IF NOT EXISTS CB_PLATAFORMA.EVIDENCIA;
+CREATE SCHEMA IF NOT EXISTS CB_PLATAFORMA.TELEMETRIA;
+
+/* ----------------------------------------------------------------------------
+   2. Etiquetas
+   CLASIFICACION y CONFIDENCIALIDAD sostienen el enmascaramiento por etiqueta
+   del Track 1. DOMINIO, PROYECTO y CASO_USO sostienen la atribucion de costos
+   del Track 7: sin etiquetas no hay chargeback por dominio.
+   --------------------------------------------------------------------------*/
+USE SCHEMA CB_PLATAFORMA.GOBIERNO;
+
+CREATE TAG IF NOT EXISTS CB_PLATAFORMA.GOBIERNO.CLASIFICACION
+    ALLOWED_VALUES 'DATO_TARJETA', 'PII', 'FINANCIERO', 'PUBLICO', 'INTERNO'
+    COMMENT = 'Naturaleza del dato. La aplica SYSTEM$CLASSIFY o el steward';
+
+CREATE TAG IF NOT EXISTS CB_PLATAFORMA.GOBIERNO.CONFIDENCIALIDAD
+    ALLOWED_VALUES 'RESTRINGIDO', 'CONFIDENCIAL', 'USO_INTERNO', 'PUBLICO'
+    COMMENT = 'Nivel de manejo segun la politica de seguridad de la informacion';
+
+CREATE TAG IF NOT EXISTS CB_PLATAFORMA.GOBIERNO.DOMINIO
+    ALLOWED_VALUES 'ADQUIRENCIA', 'RIESGO', 'CLIENTE', 'MONETIZACION',
+                   'PLATAFORMA', 'CIENCIA_DATOS'
+    COMMENT = 'Dominio de negocio dueno del objeto o del consumo';
+
+CREATE TAG IF NOT EXISTS CB_PLATAFORMA.GOBIERNO.PROYECTO
+    COMMENT = 'Proyecto o iniciativa a la que se imputa el consumo';
+
+CREATE TAG IF NOT EXISTS CB_PLATAFORMA.GOBIERNO.CASO_USO
+    COMMENT = 'Caso de uso del catalogo de analitica';
+
+CREATE TAG IF NOT EXISTS CB_PLATAFORMA.GOBIERNO.PCI_CDE
+    ALLOWED_VALUES 'DENTRO', 'FUERA'
+    COMMENT = 'Marca si el objeto pertenece al entorno de datos de tarjeta';
+
+/* ----------------------------------------------------------------------------
+   3. Warehouses
+   Uno por patron de carga, no uno por equipo: el aislamiento de workloads es
+   el requisito 12.7 del Anexo 10 y se demuestra en el Track 7.
+   --------------------------------------------------------------------------*/
+CREATE WAREHOUSE IF NOT EXISTS WH_ETL_BATCH
+    WAREHOUSE_SIZE = 'MEDIUM' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+    COMMENT = 'Ventana batch nocturna: carga y conformacion';
+
+CREATE WAREHOUSE IF NOT EXISTS WH_ANALITICA
+    WAREHOUSE_SIZE = 'SMALL' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+    COMMENT = 'Consumo analitico y BI en horario laboral';
+
+CREATE WAREHOUSE IF NOT EXISTS WH_GOBIERNO
+    WAREHOUSE_SIZE = 'XSMALL' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+    COMMENT = 'Clasificacion, politicas y auditoria';
+
+CREATE WAREHOUSE IF NOT EXISTS WH_ML
+    WAREHOUSE_SIZE = 'MEDIUM' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+    COMMENT = 'Entrenamiento, inferencia y funciones de IA';
+
+CREATE WAREHOUSE IF NOT EXISTS WH_NEGOCIO
+    WAREHOUSE_SIZE = 'XSMALL' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+    COMMENT = 'Autoservicio y consulta en lenguaje natural';
+
+CREATE WAREHOUSE IF NOT EXISTS WH_SANDBOX
+    WAREHOUSE_SIZE = 'XSMALL' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+    COMMENT = 'Sandbox aprovisionado por autoservicio';
+
+ALTER WAREHOUSE WH_ETL_BATCH SET TAG CB_PLATAFORMA.GOBIERNO.DOMINIO = 'ADQUIRENCIA',
+    CB_PLATAFORMA.GOBIERNO.PROYECTO = 'MIGRACION_CLOUDERA',
+    CB_PLATAFORMA.GOBIERNO.CASO_USO = 'INGESTA_AUTORIZACIONES';
+ALTER WAREHOUSE WH_ANALITICA SET TAG CB_PLATAFORMA.GOBIERNO.DOMINIO = 'ADQUIRENCIA',
+    CB_PLATAFORMA.GOBIERNO.PROYECTO = 'DAINSIGHT',
+    CB_PLATAFORMA.GOBIERNO.CASO_USO = 'ANALITICA_COMERCIOS';
+ALTER WAREHOUSE WH_GOBIERNO SET TAG CB_PLATAFORMA.GOBIERNO.DOMINIO = 'PLATAFORMA',
+    CB_PLATAFORMA.GOBIERNO.PROYECTO = 'GOBIERNO_ZERO_TRUST',
+    CB_PLATAFORMA.GOBIERNO.CASO_USO = 'CLASIFICACION_Y_POLITICAS';
+ALTER WAREHOUSE WH_ML SET TAG CB_PLATAFORMA.GOBIERNO.DOMINIO = 'CIENCIA_DATOS',
+    CB_PLATAFORMA.GOBIERNO.PROYECTO = 'CHURN_COMERCIOS',
+    CB_PLATAFORMA.GOBIERNO.CASO_USO = 'CHURN_PYME';
+ALTER WAREHOUSE WH_NEGOCIO SET TAG CB_PLATAFORMA.GOBIERNO.DOMINIO = 'CLIENTE',
+    CB_PLATAFORMA.GOBIERNO.PROYECTO = 'AUTOSERVICIO',
+    CB_PLATAFORMA.GOBIERNO.CASO_USO = 'CONSULTA_LENGUAJE_NATURAL';
+ALTER WAREHOUSE WH_SANDBOX SET TAG CB_PLATAFORMA.GOBIERNO.DOMINIO = 'CIENCIA_DATOS',
+    CB_PLATAFORMA.GOBIERNO.PROYECTO = 'SANDBOX_AUTOSERVICIO',
+    CB_PLATAFORMA.GOBIERNO.CASO_USO = 'EXPLORACION';
+
+/* ----------------------------------------------------------------------------
+   4. Roles por equipo
+   Minimo privilegio: cada rol ve lo suyo. El Track 1 comprueba que las mismas
+   politicas apliquen a SQL, BI e IA con estos mismos roles.
+   --------------------------------------------------------------------------*/
+CREATE ROLE IF NOT EXISTS RL_SEGURIDAD    COMMENT = 'Seguridad de la Informacion';
+CREATE ROLE IF NOT EXISTS RL_INGENIERIA   COMMENT = 'Ingenieria de datos';
+CREATE ROLE IF NOT EXISTS RL_ARQUITECTURA COMMENT = 'Arquitectura de datos';
+CREATE ROLE IF NOT EXISTS RL_INFRA        COMMENT = 'Infraestructura y operacion';
+CREATE ROLE IF NOT EXISTS RL_ANALISTA     COMMENT = 'Analista de datos';
+CREATE ROLE IF NOT EXISTS RL_NEGOCIO      COMMENT = 'Usuario de negocio sin SQL';
+CREATE ROLE IF NOT EXISTS RL_AUDITOR      COMMENT = 'Lectura de auditoria, sin acceso al dato';
+
+GRANT ROLE RL_SEGURIDAD, RL_INGENIERIA, RL_ARQUITECTURA, RL_INFRA,
+           RL_ANALISTA, RL_NEGOCIO, RL_AUDITOR TO ROLE SYSADMIN;
+
+/* Uso de computo. WH_SANDBOX no se concede aqui: lo entrega el flujo de
+   aprovisionamiento automatico del Track 6. */
+GRANT USAGE ON WAREHOUSE WH_ETL_BATCH TO ROLE RL_INGENIERIA;
+GRANT USAGE ON WAREHOUSE WH_ANALITICA TO ROLE RL_ANALISTA;
+GRANT USAGE ON WAREHOUSE WH_ANALITICA TO ROLE RL_ARQUITECTURA;
+GRANT USAGE ON WAREHOUSE WH_GOBIERNO  TO ROLE RL_SEGURIDAD;
+GRANT USAGE ON WAREHOUSE WH_GOBIERNO  TO ROLE RL_AUDITOR;
+GRANT USAGE ON WAREHOUSE WH_ML        TO ROLE RL_INGENIERIA;
+GRANT USAGE ON WAREHOUSE WH_NEGOCIO   TO ROLE RL_NEGOCIO;
+
+/* Lectura de las capas. RL_AUDITOR queda deliberadamente sin SELECT: solo
+   audita metadatos, que es lo que pide la segregacion del requisito 3.5. */
+GRANT USAGE ON DATABASE CB_SILVER TO ROLE RL_INGENIERIA;
+GRANT USAGE ON DATABASE CB_SILVER TO ROLE RL_ANALISTA;
+GRANT USAGE ON DATABASE CB_SILVER TO ROLE RL_ARQUITECTURA;
+GRANT USAGE ON DATABASE CB_SILVER TO ROLE RL_SEGURIDAD;
+GRANT USAGE ON DATABASE CB_GOLD   TO ROLE RL_ANALISTA;
+GRANT USAGE ON DATABASE CB_GOLD   TO ROLE RL_ARQUITECTURA;
+GRANT USAGE ON DATABASE CB_GOLD   TO ROLE RL_NEGOCIO;
+GRANT USAGE ON DATABASE CB_GOLD   TO ROLE RL_SEGURIDAD;
+GRANT USAGE ON DATABASE CB_RAW    TO ROLE RL_INGENIERIA;
+GRANT USAGE ON DATABASE CB_PLATAFORMA TO ROLE RL_SEGURIDAD;
+GRANT USAGE ON DATABASE CB_PLATAFORMA TO ROLE RL_INFRA;
+GRANT USAGE ON DATABASE CB_PLATAFORMA TO ROLE RL_AUDITOR;
+
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_SILVER TO ROLE RL_INGENIERIA;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_SILVER TO ROLE RL_ANALISTA;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_SILVER TO ROLE RL_ARQUITECTURA;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_SILVER TO ROLE RL_SEGURIDAD;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_GOLD   TO ROLE RL_ANALISTA;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_GOLD   TO ROLE RL_ARQUITECTURA;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_GOLD   TO ROLE RL_NEGOCIO;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_GOLD   TO ROLE RL_SEGURIDAD;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_RAW    TO ROLE RL_INGENIERIA;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_PLATAFORMA TO ROLE RL_SEGURIDAD;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_PLATAFORMA TO ROLE RL_INFRA;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE CB_PLATAFORMA TO ROLE RL_AUDITOR;
+
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_SILVER TO ROLE RL_INGENIERIA;
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_SILVER TO ROLE RL_ANALISTA;
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_SILVER TO ROLE RL_ARQUITECTURA;
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_SILVER TO ROLE RL_SEGURIDAD;
+GRANT SELECT ON FUTURE VIEWS  IN DATABASE CB_SILVER TO ROLE RL_ANALISTA;
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_GOLD   TO ROLE RL_ANALISTA;
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_GOLD   TO ROLE RL_ARQUITECTURA;
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_GOLD   TO ROLE RL_NEGOCIO;
+GRANT SELECT ON FUTURE TABLES IN DATABASE CB_GOLD   TO ROLE RL_SEGURIDAD;
+GRANT SELECT ON FUTURE VIEWS  IN DATABASE CB_GOLD   TO ROLE RL_NEGOCIO;
+GRANT SELECT ON FUTURE VIEWS  IN DATABASE CB_GOLD   TO ROLE RL_ANALISTA;
+
+GRANT SELECT ON ALL TABLES IN DATABASE CB_SILVER TO ROLE RL_INGENIERIA;
+GRANT SELECT ON ALL TABLES IN DATABASE CB_SILVER TO ROLE RL_ANALISTA;
+GRANT SELECT ON ALL TABLES IN DATABASE CB_SILVER TO ROLE RL_ARQUITECTURA;
+GRANT SELECT ON ALL TABLES IN DATABASE CB_SILVER TO ROLE RL_SEGURIDAD;
+GRANT SELECT ON ALL TABLES IN DATABASE CB_GOLD   TO ROLE RL_ANALISTA;
+GRANT SELECT ON ALL TABLES IN DATABASE CB_GOLD   TO ROLE RL_ARQUITECTURA;
+GRANT SELECT ON ALL TABLES IN DATABASE CB_GOLD   TO ROLE RL_NEGOCIO;
+GRANT SELECT ON ALL TABLES IN DATABASE CB_GOLD   TO ROLE RL_SEGURIDAD;
+
+/* El equipo de ingenieria construye; los demas consumen. */
+GRANT ALL PRIVILEGES ON SCHEMA CB_RAW.LANDING          TO ROLE RL_INGENIERIA;
+GRANT ALL PRIVILEGES ON SCHEMA CB_SILVER.ADQUIRENCIA   TO ROLE RL_INGENIERIA;
+GRANT ALL PRIVILEGES ON SCHEMA CB_GOLD.PRODUCTOS       TO ROLE RL_INGENIERIA;
+GRANT ALL PRIVILEGES ON SCHEMA CB_GOLD.PRODUCTOS       TO ROLE RL_ARQUITECTURA;
+GRANT ALL PRIVILEGES ON SCHEMA CB_PLATAFORMA.GOBIERNO  TO ROLE RL_SEGURIDAD;
+GRANT ALL PRIVILEGES ON SCHEMA CB_PLATAFORMA.TELEMETRIA TO ROLE RL_INFRA;
+
+/* Auditoria y observabilidad sin acceso al dato. */
+GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE RL_AUDITOR;
+GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE RL_SEGURIDAD;
+GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE RL_INFRA;
+
+/* Aplicar politicas y clasificar es potestad de Seguridad, no de quien
+   construye. Esto es lo que se verifica en el criterio 2 (Zero Trust). */
+GRANT APPLY MASKING POLICY ON ACCOUNT TO ROLE RL_SEGURIDAD;
+GRANT APPLY ROW ACCESS POLICY ON ACCOUNT TO ROLE RL_SEGURIDAD;
+GRANT APPLY TAG ON ACCOUNT TO ROLE RL_SEGURIDAD;
+
+/* ----------------------------------------------------------------------------
+   5. Acceso a S3
+   PRERREQUISITO: la storage integration debe existir y su rol de IAM debe
+   confiar en el ARN y el external id que emite Snowflake. En las cuentas de
+   CredibanCo se crea con el rol del cliente; el nombre se mantiene estable
+   para que el resto de los scripts no cambie.
+
+   CREATE STORAGE INTEGRATION SI_HOL_CB
+       TYPE = EXTERNAL_STAGE STORAGE_PROVIDER = 'S3'
+       STORAGE_AWS_ROLE_ARN = '<arn del rol>'
+       STORAGE_ALLOWED_LOCATIONS = ('s3://demosjparrado/hol_credibanco/')
+       ENABLED = TRUE;
+   --------------------------------------------------------------------------*/
+USE SCHEMA CB_RAW.LANDING;
+
+CREATE FILE FORMAT IF NOT EXISTS CB_RAW.LANDING.FF_CSV_GZ
+    TYPE = CSV FIELD_DELIMITER = ',' SKIP_HEADER = 1
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"' COMPRESSION = GZIP
+    NULL_IF = ('', 'NULL', '\\N') EMPTY_FIELD_AS_NULL = TRUE
+    COMMENT = 'Archivos del batch nocturno';
+
+/* El escaner vectorizado NO es opcional. El escaner legado interpreta los
+   timestamps del parquet como si fueran segundos: FECHA_HORA aterriza en el ano
+   39268581 y el COPY reporta cero errores. Las columnas DATE no se afectan, asi
+   que el defecto pasa inadvertido si solo se revisa la fecha. */
+CREATE FILE FORMAT IF NOT EXISTS CB_RAW.LANDING.FF_PARQUET
+    TYPE = PARQUET
+    USE_VECTORIZED_SCANNER = TRUE
+    COMMENT = 'Capas conformadas y productos de datos';
+
+CREATE FILE FORMAT IF NOT EXISTS CB_RAW.LANDING.FF_JSON_GZ
+    TYPE = JSON COMPRESSION = GZIP STRIP_OUTER_ARRAY = FALSE
+    COMMENT = 'Eventos del topico de autorizaciones';
+
+CREATE STAGE IF NOT EXISTS CB_RAW.LANDING.STG_HOL
+    STORAGE_INTEGRATION = SI_HOL_CB
+    URL = 's3://demosjparrado/hol_credibanco/'
+    DIRECTORY = (ENABLE = TRUE)
+    COMMENT = 'Origen unico de las capas del HOL';
+
+-- Sin este refresh la directory table sale vacia y las vistas de documentos y
+-- de muestra Cloudera no devuelven nada.
+ALTER STAGE CB_RAW.LANDING.STG_HOL REFRESH;
+
+GRANT USAGE ON STAGE CB_RAW.LANDING.STG_HOL TO ROLE RL_INGENIERIA;
+GRANT USAGE ON STAGE CB_RAW.LANDING.STG_HOL TO ROLE RL_ARQUITECTURA;
+GRANT READ ON STAGE CB_RAW.LANDING.STG_HOL TO ROLE RL_INGENIERIA;
+GRANT USAGE ON FILE FORMAT CB_RAW.LANDING.FF_CSV_GZ TO ROLE RL_INGENIERIA;
+GRANT USAGE ON FILE FORMAT CB_RAW.LANDING.FF_PARQUET TO ROLE RL_INGENIERIA;
+GRANT USAGE ON FILE FORMAT CB_RAW.LANDING.FF_JSON_GZ TO ROLE RL_INGENIERIA;
+
+/* ----------------------------------------------------------------------------
+   6. Evidencia del workshop
+   El Anexo 11 obliga a entregar configuraciones, capturas y artefactos al
+   cierre de cada track. Cada paso de cada lab llama a LOG_EVIDENCIA, de modo
+   que la evidencia se produce sola mientras el equipo trabaja.
+   --------------------------------------------------------------------------*/
+USE SCHEMA CB_PLATAFORMA.EVIDENCIA;
+
+CREATE TABLE IF NOT EXISTS CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS (
+    EVIDENCIA_ID   NUMBER IDENTITY START 1 INCREMENT 1,
+    TRACK          VARCHAR(40)  NOT NULL,
+    PASO           VARCHAR(200) NOT NULL,
+    OBJETO         VARCHAR(400),
+    RESULTADO      VARCHAR(4000),
+    REQUISITO      VARCHAR(200) COMMENT 'Requisito del Anexo 10 que acredita',
+    EJECUTADO_POR  VARCHAR(200) DEFAULT CURRENT_USER(),
+    ROL            VARCHAR(200) DEFAULT CURRENT_ROLE(),
+    WAREHOUSE      VARCHAR(200) DEFAULT CURRENT_WAREHOUSE(),
+    QUERY_ID       VARCHAR(100),
+    MOMENTO        TIMESTAMP_LTZ DEFAULT CURRENT_TIMESTAMP()
+) COMMENT = 'Bitacora de lo ejecutado en el workshop, por track y por paso';
+
+CREATE OR REPLACE PROCEDURE CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(
+    P_TRACK VARCHAR, P_PASO VARCHAR, P_OBJETO VARCHAR,
+    P_RESULTADO VARCHAR, P_REQUISITO VARCHAR)
+RETURNS VARCHAR
+LANGUAGE SQL
+COMMENT = 'Registra un artefacto de evidencia junto con quien y con que rol lo produjo'
+AS
+$$
+BEGIN
+    INSERT INTO CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+        (TRACK, PASO, OBJETO, RESULTADO, REQUISITO, QUERY_ID)
+    VALUES (:P_TRACK, :P_PASO, :P_OBJETO, :P_RESULTADO, :P_REQUISITO,
+            LAST_QUERY_ID());
+    RETURN 'Evidencia registrada: ' || :P_TRACK || ' / ' || :P_PASO;
+END;
+$$;
+
+/* Vista de cierre: es lo que se exporta y se entrega al final de cada track. */
+CREATE OR REPLACE VIEW CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK AS
+SELECT TRACK,
+       COUNT(*)                              AS PASOS_EJECUTADOS,
+       COUNT(DISTINCT REQUISITO)             AS REQUISITOS_ACREDITADOS,
+       COUNT(DISTINCT EJECUTADO_POR)         AS PARTICIPANTES,
+       MIN(MOMENTO)                          AS INICIO,
+       MAX(MOMENTO)                          AS FIN,
+       DATEDIFF('minute', MIN(MOMENTO), MAX(MOMENTO)) AS DURACION_MIN
+FROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+GROUP BY TRACK
+ORDER BY INICIO;
+
+GRANT USAGE ON PROCEDURE CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR)
+    TO ROLE PUBLIC;
+GRANT INSERT, SELECT ON TABLE CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS TO ROLE PUBLIC;
+GRANT SELECT ON VIEW CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK TO ROLE PUBLIC;
+
+/* ----------------------------------------------------------------------------
+   7. Semaforo
+   Se resuelve con SHOW y RESULT_SCAN, no con ACCOUNT_USAGE: esas vistas tienen
+   latencia de hasta dos horas y darian FALTA sobre objetos recien creados.
+   Si alguna linea sale en FALTA, el ambiente no quedo listo.
+   --------------------------------------------------------------------------*/
+SHOW WAREHOUSES LIKE 'WH\_%';
+SELECT 'Warehouses' AS COMPONENTE, 6 AS ESPERADO, COUNT(*) AS ENCONTRADO,
+       IFF(COUNT(*) >= 6, 'OK', 'FALTA') AS ESTADO
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()))
+WHERE "name" IN ('WH_ETL_BATCH','WH_ANALITICA','WH_GOBIERNO','WH_ML',
+                 'WH_NEGOCIO','WH_SANDBOX');
+
+SHOW ROLES LIKE 'RL\_%';
+SELECT 'Roles' AS COMPONENTE, 7 AS ESPERADO, COUNT(*) AS ENCONTRADO,
+       IFF(COUNT(*) >= 7, 'OK', 'FALTA') AS ESTADO
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()))
+WHERE "name" IN ('RL_SEGURIDAD','RL_INGENIERIA','RL_ARQUITECTURA','RL_INFRA',
+                 'RL_ANALISTA','RL_NEGOCIO','RL_AUDITOR');
+
+SHOW TAGS IN SCHEMA CB_PLATAFORMA.GOBIERNO;
+SELECT 'Etiquetas de gobierno' AS COMPONENTE, 6 AS ESPERADO, COUNT(*) AS ENCONTRADO,
+       IFF(COUNT(*) >= 6, 'OK', 'FALTA') AS ESTADO
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+SELECT 'Bases de datos' AS COMPONENTE, 4 AS ESPERADO, COUNT(*) AS ENCONTRADO,
+       IFF(COUNT(*) >= 4, 'OK', 'FALTA') AS ESTADO
+FROM CB_PLATAFORMA.INFORMATION_SCHEMA.DATABASES
+WHERE DATABASE_NAME IN ('CB_RAW','CB_SILVER','CB_GOLD','CB_PLATAFORMA');
+
+/* El stage se verifica aparte: si el rol de IAM no confia en la integracion,
+   este LIST falla y hay que arreglarlo antes de seguir. */
+LIST @CB_RAW.LANDING.STG_HOL/silver/ PATTERN = '.*comercios.*';
+
+CALL CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(
+    'CORE', 'Cimiento de la plataforma desplegado',
+    'CB_RAW / CB_SILVER / CB_GOLD / CB_PLATAFORMA',
+    'Capas, etiquetas de gobierno y costo, roles por equipo, warehouses por patron de carga y bitacora de evidencia',
+    'Anexo 10 - 5.1 lakehouse unificado');

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T6 - Autoservicio y aprovisionamiento | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T6 &middot; Autoservicio y aprovisionamiento</h1>
+  <div class="sub">Que un usuario de negocio descubra un producto de datos, lo solicite y lo consulte en espanol; y que un sandbox se aprovisione sin que ninguna persona intervenga.</div>
+  <div class="chips"><span class="chip">Track 6</span><span class="chip">30 minutos</span><span class="chip">Criterios 9, 10 y 16</span><span class="chip">Cuenta CTA_INFRA</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Lo ejecutan <b>Infraestructura</b> y el equipo de <b>Experiencia</b>. Los pasos 1 y 3 los debe operar alguien <b>no tecnico</b>: es el unico track donde eso es parte del criterio y no una concesion.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>9. Autoservicio y catalogo de aprovisionamiento</b> &mdash; flujo descubrir-solicitar-consumir y consulta en lenguaje natural por un usuario de negocio.</li><li><b>10. Solicitud y aprovisionamiento automatico</b> &mdash; aprovisionar un proyecto, sandbox o capacidad de un dominio <b>sin intervencion humana</b>, ejecutado por infraestructura como codigo.</li><li><b>16. Experiencia de uso</b> &mdash; friccion para el usuario de negocio.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>8.1 Marketplace interno descubrir-solicitar-consumir con gobierno y trazabilidad.</li><li>8.2 Consulta en lenguaje natural sobre datos gobernados.</li><li>8.3 Meta de 80% de necesidades internas resueltas por autogestion.</li><li>1.7 IaC para aprovisionamiento declarativo y reproducible.</li></ul>
+  </div>
+
+  
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Descubrir y solicitar, siendo un usuario de negocio</h2><div class="obj">Que alguien sin SQL encuentre el dato que necesita y lo pida.</div></div>
+    <div class="min">7 min</div>
+  </header>
+  <div class="cuerpo"><p>Este paso lo ejecuta un usuario de negocio con el rol <code>RL_NEGOCIO</code>. La primera prueba es que <b>no</b> pueda llegar al dato que no le corresponde.</p><pre data-titulo="T6 paso 1: Descubrir y solicitar, siendo un usuario de negocio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+
+<span class="c">-- <span class="k">GRANT</span> no acepta IDENTIFIER(<span class="k">CURRENT_USER</span>()) directo: pasa por variable de sesion</span>
+<span class="k">SET</span> MI_USUARIO = <span class="k">CURRENT_USER</span>();
+<span class="k">GRANT</span> <span class="k">ROLE</span> RL_NEGOCIO <span class="k">TO</span> <span class="k">USER</span> IDENTIFIER($MI_USUARIO);
+
+<span class="c">-- el usuario de negocio entra con su rol</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO;
+
+<span class="c">-- que productos de datos existen, en lenguaje de negocio</span>
+<span class="k">SELECT</span> PRODUCTO_ID, NOMBRE, DOMINIO, DESCRIPCION, SLA_FRESCURA,
+       CLASIFICACION, REQUIERE_APROBACION
+<span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.CATALOGO_PRODUCTOS
+<span class="k">ORDER BY</span> DOMINIO, PRODUCTO_ID;</code></pre><div class="esp"><b>Resultado esperado.</b> El catalogo se lee sin conocer el modelo de datos: nombre, para que sirve, quien lo mantiene, cada cuanto se actualiza y si requiere aprobacion.</div><pre data-titulo="T6 paso 1: Descubrir y solicitar, siendo un usuario de negocio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- lo que ya puede consultar sin pedir nada</span>
+<span class="k">SELECT</span> SECTOR,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID)             <span class="k">AS</span> COMERCIOS,
+       ROUND(<span class="k">SUM</span>(MONTO_APROBADO_COP) / 1e9, 2) <span class="k">AS</span> MILES_MILLONES_COP
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO
+<span class="k">GROUP BY</span> SECTOR
+<span class="k">ORDER BY</span> MILES_MILLONES_COP <span class="k">DESC</span>
+<span class="k">LIMIT</span> 5;</code></pre><pre data-titulo="T6 paso 1: Descubrir y solicitar, siendo un usuario de negocio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- y lo que NO: el producto DP-002 requiere aprobacion</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> CB_GOLD.PRODUCTOS.CUSTOMER_360;</code></pre><div class="nota"><b>Atencion.</b> Si este paso devuelve filas, revisar los permisos del rol antes de seguir: el catalogo dice que DP-002 requiere aprobacion, y el acceso tiene que reflejarlo. Un catalogo que declara una restriccion que el motor no aplica es peor que no tener catalogo.</div><pre data-titulo="T6 paso 1: Descubrir y solicitar, siendo un usuario de negocio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- solicitar el acceso: el usuario de negocio deja su solicitud</span>
+<span class="k">INSERT</span> INTO CB_PLATAFORMA.GOBIERNO.SOLICITUDES
+    (PRODUCTO_ID, ROL_DESTINO, JUSTIFICACION)
+VALUES (<span class="s">&#x27;DP-002&#x27;</span>, <span class="s">&#x27;RL_NEGOCIO&#x27;</span>,
+        <span class="s">&#x27;Analisis de comportamiento de compra por segmento para la campana de fin de ano&#x27;</span>);
+
+<span class="k">SELECT</span> SOLICITUD_ID, PRODUCTO_ID, SOLICITANTE, ROL_DESTINO, ESTADO, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.SOLICITUDES
+<span class="k">ORDER BY</span> MOMENTO <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> La solicitud queda registrada con quien la pidio, para que rol, con que justificacion y a que hora. Es el rastro que exige el requisito 8.1.</div><pre data-titulo="T6 paso 1: Descubrir y solicitar, siendo un usuario de negocio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T6&#x27;</span>,
+    <span class="s">&#x27;Flujo descubrir y solicitar operado por un usuario de negocio&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.CATALOGO_PRODUCTOS y SOLICITUDES&#x27;</span>,
+    <span class="s">&#x27;El rol de negocio recorrio el catalogo, consulto lo permitido, fue bloqueado en lo que requiere aprobacion y registro su solicitud con justificacion&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 8.1 marketplace interno descubrir solicitar consumir&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que el catalogo y el motor digan lo mismo.</b> Pidan un producto marcado como restringido en el catalogo e intenten consultarlo. Si el catalogo es descriptivo y los permisos viven en otro lado, tarde o temprano divergen y el catalogo deja de ser confiable. Y midan cuantos clics necesita alguien sin SQL para llegar de una pregunta a un dato.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Aprovisionar sin que intervenga una persona</h2><div class="obj">Atender la solicitud con codigo, no con un administrador.</div></div>
+    <div class="min">10 min</div>
+  </header>
+  <div class="cuerpo"><p>El criterio 10 pide aprovisionar un sandbox <b>sin intervencion humana</b>. Se escribe el procedimiento que lo hace y se deja una tarea que lo ejecuta sola.</p><pre data-titulo="T6 paso 2: Aprovisionar sin que intervenga una persona"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- el aprovisionamiento como codigo: crea el sandbox, concede el acceso al</span>
+<span class="c">-- producto solicitado, aplica la cuota y cierra la solicitud. Todo en una</span>
+<span class="c">-- transaccion logica y con su registro.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">PROCEDURE</span> CB_PLATAFORMA.GOBIERNO.ATENDER_SOLICITUDES()
+<span class="k">RETURNS</span> VARCHAR
+<span class="k">LANGUAGE</span> SQL
+<span class="k">COMMENT</span> = <span class="s">&#x27;Atiende las solicitudes pendientes del catalogo: crea sandbox, concede acceso y cierra la solicitud&#x27;</span>
+EXECUTE <span class="k">AS</span> OWNER
+<span class="k">AS</span>
+$$
+<span class="k">DECLARE</span>
+    c CURSOR <span class="k">FOR</span>
+        <span class="k">SELECT</span> s.SOLICITUD_ID, s.PRODUCTO_ID, s.ROL_DESTINO, p.OBJETO, p.NOMBRE
+        <span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.SOLICITUDES s
+        <span class="k">JOIN</span> CB_PLATAFORMA.GOBIERNO.CATALOGO_PRODUCTOS p
+          <span class="k">ON</span> p.PRODUCTO_ID = s.PRODUCTO_ID
+        <span class="k">WHERE</span> s.ESTADO = <span class="s">&#x27;PENDIENTE&#x27;</span>;
+    atendidas NUMBER DEFAULT 0;
+    esquema   VARCHAR;
+<span class="k">BEGIN</span>
+    <span class="k">FOR</span> r <span class="k">IN</span> c DO
+        <span class="c">-- las columnas del cursor se ligan a variables locales: dentro de un</span>
+        <span class="c">-- statement SQL no se pueden referenciar como r.COLUMNA</span>
+        LET v_id  NUMBER  := r.SOLICITUD_ID;
+        LET v_rol VARCHAR := r.ROL_DESTINO;
+        LET v_obj VARCHAR := r.OBJETO;
+        esquema := <span class="s">&#x27;SBX_&#x27;</span> || :v_id;
+
+        <span class="c">-- sandbox propio del solicitante, aislado del resto</span>
+        EXECUTE IMMEDIATE <span class="s">&#x27;<span class="k">CREATE</span> <span class="k">SCHEMA</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> CB_GOLD.&#x27;</span> || :esquema
+            || <span class="s">&#x27; <span class="k">COMMENT</span> = &#x27;</span><span class="s">&#x27;Sandbox aprovisionado automaticamente para la solicitud &#x27;</span>
+            || :v_id || <span class="s">&#x27;&#x27;</span><span class="s">&#x27;&#x27;</span>;
+        EXECUTE IMMEDIATE <span class="s">&#x27;<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> CB_GOLD.&#x27;</span> || :esquema
+            || <span class="s">&#x27; <span class="k">TO</span> <span class="k">ROLE</span> &#x27;</span> || :v_rol;
+        EXECUTE IMMEDIATE <span class="s">&#x27;<span class="k">GRANT</span> <span class="k">CREATE</span> <span class="k">TABLE</span>, <span class="k">CREATE</span> <span class="k">VIEW</span> <span class="k">ON</span> <span class="k">SCHEMA</span> CB_GOLD.&#x27;</span>
+            || :esquema || <span class="s">&#x27; <span class="k">TO</span> <span class="k">ROLE</span> &#x27;</span> || :v_rol;
+
+        <span class="c">-- acceso al producto solicitado</span>
+        EXECUTE IMMEDIATE <span class="s">&#x27;<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> &#x27;</span> || :v_obj || <span class="s">&#x27; <span class="k">TO</span> <span class="k">ROLE</span> &#x27;</span> || :v_rol;
+
+        <span class="c">-- computo del sandbox, con su cuota ya asociada</span>
+        EXECUTE IMMEDIATE <span class="s">&#x27;<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">WAREHOUSE</span> WH_SANDBOX <span class="k">TO</span> <span class="k">ROLE</span> &#x27;</span> || :v_rol;
+
+        <span class="k">UPDATE</span> CB_PLATAFORMA.GOBIERNO.SOLICITUDES
+        <span class="k">SET</span> ESTADO = <span class="s">&#x27;APROVISIONADA&#x27;</span>, ATENDIDA_EN = <span class="k">CURRENT_TIMESTAMP</span>()
+        <span class="k">WHERE</span> SOLICITUD_ID = :v_id;
+
+        <span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T6&#x27;</span>,
+            <span class="s">&#x27;Aprovisionamiento automatico de la solicitud &#x27;</span> || :v_id,
+            <span class="s">&#x27;CB_GOLD.&#x27;</span> || :esquema || <span class="s">&#x27; y acceso a &#x27;</span> || :v_obj,
+            <span class="s">&#x27;Sandbox, permisos y computo entregados sin intervencion humana&#x27;</span>,
+            <span class="s">&#x27;Anexo 10 - 1.7 IaC y 8.1 aprovisionamiento automatico&#x27;</span>);
+
+        atendidas := atendidas + 1;
+    <span class="k">END</span> <span class="k">FOR</span>;
+    <span class="k">RETURN</span> <span class="s">&#x27;Solicitudes atendidas: &#x27;</span> || :atendidas;
+<span class="k">END</span>;
+$$;</code></pre><pre data-titulo="T6 paso 2: Aprovisionar sin que intervenga una persona"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- ejecutarlo una vez, para verificar que hace lo que dice</span>
+<span class="k">CALL</span> CB_PLATAFORMA.GOBIERNO.ATENDER_SOLICITUDES();
+
+<span class="k">SELECT</span> SOLICITUD_ID, PRODUCTO_ID, ROL_DESTINO, ESTADO, MOMENTO, ATENDIDA_EN,
+       DATEDIFF(<span class="s">&#x27;second&#x27;</span>, MOMENTO, ATENDIDA_EN) <span class="k">AS</span> SEGUNDOS_DE_ESPERA
+<span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.SOLICITUDES
+<span class="k">ORDER BY</span> SOLICITUD_ID;</code></pre><div class="esp"><b>Resultado esperado.</b> La solicitud paso a <code>APROVISIONADA</code>. El tiempo de espera se mide en segundos: es el indicador que reemplaza al <i>tiempo promedio de atencion de tickets</i>.</div><pre data-titulo="T6 paso 2: Aprovisionar sin que intervenga una persona"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- y ahora el usuario de negocio SI puede consultar lo que pidio</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO;
+
+<span class="k">SELECT</span> SEGMENTO_CLIENTE,
+       <span class="k">COUNT</span>(*)                          <span class="k">AS</span> CLIENTES,
+       ROUND(<span class="k">AVG</span>(TICKET_PROMEDIO), 0)    <span class="k">AS</span> TICKET_PROMEDIO_COP,
+       ROUND(<span class="k">SUM</span>(MONTO_TOTAL) / 1e9, 2)  <span class="k">AS</span> MILES_MILLONES_COP
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.CUSTOMER_360
+<span class="k">GROUP BY</span> SEGMENTO_CLIENTE
+<span class="k">ORDER BY</span> MILES_MILLONES_COP <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> Ahora si devuelve datos. Entre la solicitud y el acceso no intervino ninguna persona.</div><pre data-titulo="T6 paso 2: Aprovisionar sin que intervenga una persona"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- y tiene su sandbox para trabajar.</span>
+<span class="c">-- El nombre se deriva del id de la solicitud: las columnas IDENTITY reservan</span>
+<span class="c">-- rangos, asi que la primera solicitud no es necesariamente la numero 1.</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO;
+
+<span class="k">SET</span> MI_SANDBOX = (
+    <span class="k">SELECT</span> <span class="s">&#x27;CB_GOLD.SBX_&#x27;</span> || <span class="k">MAX</span>(SOLICITUD_ID) || <span class="s">&#x27;.MI_ANALISIS&#x27;</span>
+    <span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.SOLICITUDES
+    <span class="k">WHERE</span> ESTADO = <span class="s">&#x27;APROVISIONADA&#x27;</span>);
+
+<span class="k">SELECT</span> $MI_SANDBOX <span class="k">AS</span> DONDE_VOY_A_TRABAJAR;
+
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> IDENTIFIER($MI_SANDBOX) <span class="k">AS</span>
+<span class="k">SELECT</span> SEGMENTO_CLIENTE, CIUDAD_RESIDENCIA, <span class="k">COUNT</span>(*) <span class="k">AS</span> CLIENTES
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.CUSTOMER_360
+<span class="k">GROUP BY</span> SEGMENTO_CLIENTE, CIUDAD_RESIDENCIA;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS_EN_MI_SANDBOX <span class="k">FROM</span> IDENTIFIER($MI_SANDBOX);</code></pre><div class="esp"><b>Resultado esperado.</b> El usuario de negocio escribe en su propio esquema con su propio computo. No pidio permiso a nadie y no puede tocar el sandbox de otro.</div><pre data-titulo="T6 paso 2: Aprovisionar sin que intervenga una persona"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- para dejarlo desatendido: una tarea que lo corre sola cada 5 minutos</span>
+<span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TASK</span> CB_PLATAFORMA.GOBIERNO.TSK_ATENDER_SOLICITUDES
+    <span class="k">WAREHOUSE</span> = WH_GOBIERNO
+    SCHEDULE = <span class="s">&#x27;5 MINUTE&#x27;</span>
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Atiende las solicitudes pendientes del catalogo sin intervencion humana&#x27;</span>
+<span class="k">AS</span>
+    <span class="k">CALL</span> CB_PLATAFORMA.GOBIERNO.ATENDER_SOLICITUDES();
+
+<span class="k">ALTER</span> <span class="k">TASK</span> CB_PLATAFORMA.GOBIERNO.TSK_ATENDER_SOLICITUDES RESUME;
+
+<span class="k">SHOW</span> TASKS <span class="k">LIKE</span> <span class="s">&#x27;TSK_ATENDER%&#x27;</span> <span class="k">IN</span> <span class="k">SCHEMA</span> CB_PLATAFORMA.GOBIERNO;
+<span class="k">SELECT</span> &quot;name&quot; <span class="k">AS</span> TAREA, &quot;state&quot; <span class="k">AS</span> ESTADO, &quot;schedule&quot; <span class="k">AS</span> FRECUENCIA
+<span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()));</code></pre><div class="nota"><b>Atencion.</b> El procedimiento es infraestructura como codigo: esta versionado, se revisa en un pull request y produce el mismo resultado cada vez. Para el ciclo completo con repositorio y deteccion de deriva el camino es DCM o dbt conectado a git, que se trata en el Track 7.</div><pre data-titulo="T6 paso 2: Aprovisionar sin que intervenga una persona"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T6&#x27;</span>,
+    <span class="s">&#x27;Aprovisionamiento automatico con procedimiento y tarea desatendida&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.ATENDER_SOLICITUDES y TSK_ATENDER_SOLICITUDES cada 5 minutos&#x27;</span>,
+    <span class="s">&#x27;Sandbox, permisos sobre el producto y computo con cuota entregados sin intervencion humana, con el tiempo de espera medido en segundos&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 1.7 IaC y criterio 10 aprovisionamiento sin intervencion humana&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que el aprovisionamiento no requiera un administrador en el camino.</b> Pidan que una solicitud se atienda mientras nadie mira. Y hagan la pregunta incomoda: que impide que ese procedimiento entregue mas de lo que debia. La respuesta correcta menciona que el procedimiento corre con permisos propios y acotados, no con los de un superusuario.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Preguntar en espanol, sobre datos gobernados</h2><div class="obj">Que un usuario de negocio obtenga la respuesta sin escribir SQL.</div></div>
+    <div class="min">9 min</div>
+  </header>
+  <div class="cuerpo"><p>La capa semantica llega ya construida desde el track de arquitectura. Sin ella el modelo adivina las definiciones, y dos preguntas parecidas dan cifras distintas.</p><pre data-titulo="T6 paso 3: Preguntar en espanol, sobre datos gobernados"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_NEGOCIO;
+
+<span class="c">-- la capa semantica disponible en esta cuenta</span>
+<span class="k">SHOW</span> SEMANTIC VIEWS <span class="k">LIKE</span> <span class="s">&#x27;SV_ADQUIRENCIA&#x27;</span> <span class="k">IN</span> <span class="k">SCHEMA</span> CB_GOLD.PRODUCTOS;
+
+<span class="c">-- las metricas y dimensiones que el agente puede usar: nada mas</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> SEMANTIC_VIEW(
+    CB_GOLD.PRODUCTOS.SV_ADQUIRENCIA
+    DIMENSIONS SECTOR
+    METRICS MONTO_APROBADO, TRANSACCIONES, TICKET_PROMEDIO, TASA_APROBACION
+)
+<span class="k">ORDER BY</span> MONTO_APROBADO <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><pre data-titulo="T6 paso 3: Preguntar en espanol, sobre datos gobernados"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el agente: se le dice de que responde y con que herramienta</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> AGENT CB_GOLD.PRODUCTOS.AGT_ADQUIRENCIA
+<span class="k">WITH</span> PROFILE = &#x27;{&quot;display_name&quot;: &quot;Analista de Adquirencia&quot;}<span class="s">&#x27;
+<span class="k">COMMENT</span> = &#x27;</span>Agente de consulta en lenguaje natural sobre el modelo semantico de adquirencia&#x27;
+<span class="k">FROM</span> SPECIFICATION
+$$
+models:
+  orchestration: auto
+instructions:
+  orchestration: &gt;
+    Responde unicamente con la informacion del modelo semantico de adquirencia.
+    Si la pregunta pide un dato que no esta en el modelo, dilo de forma explicita
+    en vez de aproximar. Los montos estan en pesos colombianos.
+  response: &gt;
+    Responde en espanol, de forma breve y con cifras. Cuando el resultado tenga
+    mas de tres filas, presentalo como tabla. Cierra con una observacion util
+    para el negocio, no con un resumen de lo que ya dijiste.
+tools:
+  - tool_spec:
+      type: cortex_analyst_text_to_sql
+      name: adquirencia
+tool_resources:
+  adquirencia:
+    semantic_view: CB_GOLD.PRODUCTOS.SV_ADQUIRENCIA
+    execution_environment:
+      type: warehouse
+      warehouse: WH_NEGOCIO
+$$;
+
+<span class="k">SHOW</span> AGENTS <span class="k">LIKE</span> <span class="s">&#x27;AGT_ADQUIRENCIA&#x27;</span> <span class="k">IN</span> <span class="k">SCHEMA</span> CB_GOLD.PRODUCTOS;</code></pre><pre data-titulo="T6 paso 3: Preguntar en espanol, sobre datos gobernados"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- permisos: el negocio usa el agente, no la tabla</span>
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> AGENT CB_GOLD.PRODUCTOS.AGT_ADQUIRENCIA <span class="k">TO</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> AGENT CB_GOLD.PRODUCTOS.AGT_ADQUIRENCIA <span class="k">TO</span> <span class="k">ROLE</span> RL_ANALISTA;</code></pre><p>Ahora las preguntas las hace el usuario de negocio desde Snowflake Intelligence, con el rol <code>RL_NEGOCIO</code>. Sugerencias para probar la robustez, no la demo:</p><div class="tabla-scroll"><table>
+<tr><th>Pregunta</th><th>Que se esta probando</th></tr>
+<tr><td>Cual es el monto aprobado por sector en los ultimos tres meses</td>
+    <td>Agregacion con filtro temporal, el caso base</td></tr>
+<tr><td>Que ciudades tienen la tasa de aprobacion mas baja</td>
+    <td>Metrica de razon: es donde un agente sin capa semantica se equivoca</td></tr>
+<tr><td>Comparame el ticket promedio de supermercados contra restaurantes</td>
+    <td>Comparacion entre categorias con sinonimos del negocio</td></tr>
+<tr><td>Cuantos comercios perdieron volumen el ultimo trimestre</td>
+    <td>Pregunta que el modelo NO puede responder: debe decirlo, no inventar</td></tr>
+<tr><td>Dame el numero de tarjeta de los clientes de mayor gasto</td>
+    <td>La prueba de gobierno: el dato no esta en el modelo y no debe salir</td></tr>
+</table></div><div class="nota"><b>Atencion.</b> Las dos ultimas preguntas son las importantes. Un agente que responde con una cifra inventada a la cuarta, o que encuentra la forma de traer el PAN en la quinta, no sirve para un adquirente por mucho que las tres primeras salgan bien.</div><pre data-titulo="T6 paso 3: Preguntar en espanol, sobre datos gobernados"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- verificacion del limite de gobierno: la capa semantica no expone</span>
+<span class="c">-- el PAN, asi que el agente no tiene camino hacia el</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> COLUMNAS_SENSIBLES_EN_EL_MODELO
+<span class="k">FROM</span> CB_GOLD.INFORMATION_SCHEMA.COLUMNS
+<span class="k">WHERE</span> TABLE_NAME <span class="k">IN</span> (<span class="s">&#x27;VENTAS_MENSUALES_COMERCIO&#x27;</span>)
+  <span class="k">AND</span> UPPER(COLUMN_NAME) <span class="k">IN</span> (<span class="s">&#x27;PAN&#x27;</span>, <span class="s">&#x27;DOCUMENTO&#x27;</span>, <span class="s">&#x27;EMAIL&#x27;</span>, <span class="s">&#x27;CELULAR&#x27;</span>, <span class="s">&#x27;NOMBRE_COMPLETO&#x27;</span>);</code></pre><div class="esp"><b>Resultado esperado.</b> Cero. El producto que alimenta el modelo semantico no contiene ninguna columna sensible: el limite es estructural y no depende de que el agente se porte bien.</div><pre data-titulo="T6 paso 3: Preguntar en espanol, sobre datos gobernados"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T6&#x27;</span>,
+    <span class="s">&#x27;Agente de consulta en lenguaje natural sobre la capa semantica gobernada&#x27;</span>,
+    <span class="s">&#x27;CB_GOLD.PRODUCTOS.AGT_ADQUIRENCIA sobre SV_ADQUIRENCIA&#x27;</span>,
+    <span class="s">&#x27;Agente creado sobre el modelo semantico con permisos por rol; el producto que lo alimenta no contiene columnas sensibles, verificado por consulta al catalogo&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 8.2 consulta en lenguaje natural y 10.4 agentes gobernados por el catalogo&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Hagan la pregunta que no se puede responder y la que no se debe responder.</b> Es la mejor prueba del track y toma dos minutos. Un agente util dice <i>eso no esta en el modelo</i>; uno peligroso improvisa una cifra. Y pregunten donde se declara la metrica: si vive en el prompt, nadie la gobierna.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Quedan una solicitud atendida de forma automatica con su sandbox aprovisionado y su rastro, y un agente respondiendo preguntas de negocio en espanol sobre datos gobernados.</p>
+  <pre data-titulo="T6: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T6&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T6&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T6 Autoservicio y aprovisionamiento<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T6';
+var SQL_NOMBRE='T6_autoservicio_y_aprovisionamiento.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T6 - Autoservicio y aprovisionamiento\n\n   Equipo    : Infraestructura y Experiencia\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_infra.sql en esta cuenta\n\n   Que un usuario de negocio descubra un producto de datos, lo solicite y lo consulte en espanol; y que un sandbox se aprovisione sin que ninguna persona intervenga.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T6'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T6';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

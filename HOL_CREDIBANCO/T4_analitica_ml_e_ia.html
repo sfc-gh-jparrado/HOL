@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T4 - Analitica, ML e IA | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T4 &middot; Analitica, ML e IA</h1>
+  <div class="sub">Entrenar y explicar un modelo de abandono de comercio con SQL, leer documentos no estructurados con IA, y dejar un agente que responde en lenguaje natural sin que el dato salga del perimetro.</div>
+  <div class="chips"><span class="chip">Track 4</span><span class="chip">30 minutos</span><span class="chip">Criterio 7</span><span class="chip">Cuenta CTA_INGENIERIA</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Lo ejecuta el equipo de <b>Data & Analytics</b>, en la misma cuenta del Track 2 y sobre el dato que ese track acabo de conformar.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>7. ML, IA y GenIA en perimetro</b> &mdash; construccion o consumo de un modelo o agente gobernado, sin que el dato salga del perimetro.</li><li><b>16. Experiencia de uso</b> &mdash; que un analista pueda hacerlo sin un cientifico de datos al lado.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>10.1 Ciclo MLOps completo: experimentacion, registro de modelos, serving y monitoreo de drift.</li><li>10.3 IA generativa dentro del perimetro.</li><li>10.4 Agentes de IA gobernados por el catalogo.</li><li>10.5 Embeddings, busqueda vectorial y RAG.</li><li>68 del consolidado: datos no estructurados en alcance, documentos SARLAFT y vouchers.</li></ul>
+  </div>
+
+  
+  <div class="caja">
+    <h3>El caso</h3>
+    <p style="margin:0">13.845 de los 180.000 comercios estan perdiendo volumen de forma
+    sostenida. El negocio necesita saber cuales, por que, y poder preguntarlo sin
+    escribir SQL. Es el caso de churn de comercio que CredibanCo ya opera y que el
+    pliego pide industrializar, no inventar.</p>
+  </div>
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Entrenar un clasificador de abandono con SQL</h2><div class="obj">Que un analista entrene un modelo sin salir de SQL ni mover el dato.</div></div>
+    <div class="min">7 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T4 paso 1: Entrenar un clasificador de abandono con SQL"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ML;
+<span class="k">USE</span> <span class="k">SCHEMA</span> CB_GOLD.PRODUCTOS;
+
+<span class="c">-- las variables ya estan calculadas en el producto de datos</span>
+<span class="k">SELECT</span> CHURN,
+       <span class="k">COUNT</span>(*)                        <span class="k">AS</span> COMERCIOS,
+       ROUND(<span class="k">AVG</span>(TENDENCIA_3M), 4)     <span class="k">AS</span> TENDENCIA_PROMEDIO,
+       ROUND(<span class="k">AVG</span>(MONTO_ULT_3M) / 1e6, 1) <span class="k">AS</span> MONTO_ULT_3M_MILLONES,
+       ROUND(<span class="k">AVG</span>(MESES_ACTIVO), 1)     <span class="k">AS</span> MESES_ACTIVO
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.COMERCIO_FEATURES_CHURN
+<span class="k">GROUP BY</span> CHURN;</code></pre><div class="esp"><b>Resultado esperado.</b> Los que abandonan tienen tendencia negativa pronunciada; los que se quedan, ligeramente positiva. Hay senal y se ve antes de entrenar nada.</div><pre data-titulo="T4 paso 1: Entrenar un clasificador de abandono con SQL"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- particion de entrenamiento y prueba, estable y reproducible</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">VIEW</span> CB_GOLD.PRODUCTOS.VW_CHURN_ENTRENAMIENTO <span class="k">AS</span>
+<span class="k">SELECT</span> TENDENCIA_3M, MONTO_ULT_3M, MESES_ACTIVO, TASA_APROBACION,
+       TICKET_PROMEDIO, TASA_FRAUDE, TRX_TOTAL, TASA_DESCUENTO_PCT,
+       SECTOR, SEGMENTO, DEPARTAMENTO,
+       CHURN::VARCHAR <span class="k">AS</span> CHURN
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.COMERCIO_FEATURES_CHURN
+<span class="k">WHERE</span> MOD(ABS(HASH(COMERCIO_ID)), 10) &lt; 8;
+
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">VIEW</span> CB_GOLD.PRODUCTOS.VW_CHURN_PRUEBA <span class="k">AS</span>
+<span class="k">SELECT</span> COMERCIO_ID,
+       TENDENCIA_3M, MONTO_ULT_3M, MESES_ACTIVO, TASA_APROBACION,
+       TICKET_PROMEDIO, TASA_FRAUDE, TRX_TOTAL, TASA_DESCUENTO_PCT,
+       SECTOR, SEGMENTO, DEPARTAMENTO,
+       CHURN::VARCHAR <span class="k">AS</span> CHURN
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.COMERCIO_FEATURES_CHURN
+<span class="k">WHERE</span> MOD(ABS(HASH(COMERCIO_ID)), 10) &gt;= 8;
+
+<span class="k">SELECT</span> (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VW_CHURN_ENTRENAMIENTO) <span class="k">AS</span> ENTRENAMIENTO,
+       (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VW_CHURN_PRUEBA)        <span class="k">AS</span> PRUEBA;</code></pre><pre data-titulo="T4 paso 1: Entrenar un clasificador de abandono con SQL"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el entrenamiento es una sentencia. El dato no se mueve ni se</span>
+<span class="c">-- exporta a un notebook: el modelo se construye donde vive el dato.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> SNOWFLAKE.ML.CLASSIFICATION CB_GOLD.PRODUCTOS.MODELO_CHURN_COMERCIO(
+    INPUT_DATA        =&gt; SYSTEM$REFERENCE(<span class="s">&#x27;<span class="k">VIEW</span>&#x27;</span>, <span class="s">&#x27;CB_GOLD.PRODUCTOS.VW_CHURN_ENTRENAMIENTO&#x27;</span>),
+    TARGET_COLNAME    =&gt; <span class="s">&#x27;CHURN&#x27;</span>,
+    CONFIG_OBJECT     =&gt; {<span class="s">&#x27;evaluate&#x27;</span>: <span class="k">TRUE</span>, <span class="s">&#x27;on_error&#x27;</span>: <span class="s">&#x27;skip&#x27;</span>}
+);</code></pre><div class="esp"><b>Resultado esperado.</b> El modelo queda creado como un objeto de la base de datos, con su dueno y sus permisos, no como un archivo en el portatil de alguien.</div><pre data-titulo="T4 paso 1: Entrenar un clasificador de abandono con SQL"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T4&#x27;</span>,
+    <span class="s">&#x27;Modelo de abandono de comercio entrenado con SQL sobre el dato en sitio&#x27;</span>,
+    <span class="s">&#x27;CB_GOLD.PRODUCTOS.MODELO_CHURN_COMERCIO&#x27;</span>,
+    <span class="s">&#x27;Clasificador entrenado con una sentencia SQL sobre 144.000 comercios, sin exportar el dato ni provisionar infraestructura de entrenamiento&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 10.1 ciclo MLOps y 10.3 IA dentro del perimetro&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Donde se entrena y por donde viaja el dato.</b> Pregunten si entrenar exige copiar el conjunto a otro servicio, quien queda dueno de esa copia, y si el modelo hereda los permisos del dato con el que se entreno. Si el cientifico de datos tiene que descargar un CSV, el gobierno que se demostro en el Track 1 termina justo ahi.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Evaluar y explicar antes de creerle</h2><div class="obj">Obtener metricas de calidad y saber que variables pesan.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>Un modelo sin explicacion no pasa un comite de riesgo. La explicabilidad no es un anexo: es lo que permite defender la decision ante la Superintendencia.</p><pre data-titulo="T4 paso 2: Evaluar y explicar antes de creerle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ML;
+
+<span class="c">-- metricas de calidad calculadas en el entrenamiento</span>
+<span class="k">CALL</span> CB_GOLD.PRODUCTOS.MODELO_CHURN_COMERCIO!SHOW_EVALUATION_METRICS();</code></pre><pre data-titulo="T4 paso 2: Evaluar y explicar antes de creerle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- matriz de confusion: donde se equivoca y hacia que lado</span>
+<span class="k">CALL</span> CB_GOLD.PRODUCTOS.MODELO_CHURN_COMERCIO!SHOW_CONFUSION_MATRIX();</code></pre><pre data-titulo="T4 paso 2: Evaluar y explicar antes de creerle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- que variables sostienen la prediccion</span>
+<span class="k">CALL</span> CB_GOLD.PRODUCTOS.MODELO_CHURN_COMERCIO!SHOW_FEATURE_IMPORTANCE();</code></pre><div class="esp"><b>Resultado esperado.</b> Las variables de comportamiento dominan: <code>TRX_TOTAL</code>, <code>TENDENCIA_3M</code> y <code>TASA_APROBACION</code> en las tres primeras posiciones. El sector y la ciudad pesan mucho menos, y eso es informacion util: el abandono se explica por como opera el comercio, no por donde esta.</div><pre data-titulo="T4 paso 2: Evaluar y explicar antes de creerle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- predecir sobre el conjunto que el modelo nunca vio</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_GOLD.PRODUCTOS.CHURN_PREDICCIONES <span class="k">AS</span>
+<span class="k">SELECT</span> p.COMERCIO_ID,
+       p.CHURN <span class="k">AS</span> CHURN_REAL,
+       pred:class::VARCHAR                          <span class="k">AS</span> CHURN_PREDICHO,
+       pred:probability:&quot;1&quot;::FLOAT                  <span class="k">AS</span> PROBABILIDAD_ABANDONO
+<span class="k">FROM</span> (
+    <span class="k">SELECT</span> COMERCIO_ID, CHURN,
+           CB_GOLD.PRODUCTOS.MODELO_CHURN_COMERCIO!PREDICT(
+               OBJECT_CONSTRUCT(*)) <span class="k">AS</span> pred
+    <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VW_CHURN_PRUEBA
+) p;
+
+<span class="c">-- calidad sobre datos no vistos, en lenguaje de negocio</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*)                                                      <span class="k">AS</span> COMERCIOS_EVALUADOS,
+       COUNT_IF(CHURN_REAL = CHURN_PREDICHO)                         <span class="k">AS</span> ACIERTOS,
+       ROUND(100.0 * COUNT_IF(CHURN_REAL = CHURN_PREDICHO) / <span class="k">COUNT</span>(*), 2) <span class="k">AS</span> PCT_ACIERTO,
+       COUNT_IF(CHURN_REAL = <span class="s">&#x27;1&#x27;</span> <span class="k">AND</span> CHURN_PREDICHO = <span class="s">&#x27;1&#x27;</span>)           <span class="k">AS</span> ABANDONOS_DETECTADOS,
+       COUNT_IF(CHURN_REAL = <span class="s">&#x27;1&#x27;</span> <span class="k">AND</span> CHURN_PREDICHO = <span class="s">&#x27;0&#x27;</span>)           <span class="k">AS</span> ABANDONOS_NO_VISTOS,
+       COUNT_IF(CHURN_REAL = <span class="s">&#x27;0&#x27;</span> <span class="k">AND</span> CHURN_PREDICHO = <span class="s">&#x27;1&#x27;</span>)           <span class="k">AS</span> FALSAS_ALARMAS
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.CHURN_PREDICCIONES;</code></pre><div class="nota"><b>Atencion.</b> Miren el <b>recall de la clase 1</b> en las metricas: ronda 0,47. El modelo acierta el 95% de las veces en total, pero se le escapa cerca de la mitad de los comercios que si abandonan. Con 7,7% de casos positivos eso es lo esperable, y es exactamente la conversacion que hay que tener con el negocio: los <code>ABANDONOS_NO_VISTOS</code> cuestan dinero y las <code>FALSAS_ALARMAS</code> cuestan esfuerzo comercial. El umbral de probabilidad se mueve segun cual de los dos errores duele mas, y esa es una decision del negocio, no del modelo. Un proveedor que solo muestre el 95% de acierto global esta escondiendo esta discusion.</div><pre data-titulo="T4 paso 2: Evaluar y explicar antes de creerle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la lista accionable: comercios grandes en riesgo alto</span>
+<span class="k">SELECT</span> p.COMERCIO_ID,
+       c.RAZON_SOCIAL,
+       c.SECTOR,
+       c.CIUDAD,
+       ROUND(p.PROBABILIDAD_ABANDONO, 3)   <span class="k">AS</span> RIESGO,
+       ROUND(f.MONTO_ULT_3M / 1e6, 1)      <span class="k">AS</span> MONTO_ULT_3M_MILLONES,
+       ROUND(f.TENDENCIA_3M, 3)            <span class="k">AS</span> TENDENCIA
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.CHURN_PREDICCIONES p
+<span class="k">JOIN</span> CB_SILVER.ADQUIRENCIA.COMERCIOS c        <span class="k">ON</span> c.COMERCIO_ID = p.COMERCIO_ID
+<span class="k">JOIN</span> CB_GOLD.PRODUCTOS.COMERCIO_FEATURES_CHURN f <span class="k">ON</span> f.COMERCIO_ID = p.COMERCIO_ID
+<span class="k">WHERE</span> p.PROBABILIDAD_ABANDONO &gt; 0.7
+<span class="k">ORDER BY</span> f.MONTO_ULT_3M <span class="k">DESC</span>
+<span class="k">LIMIT</span> 20;</code></pre><div class="esp"><b>Resultado esperado.</b> Una lista de comercios con nombre, sector, ciudad, riesgo y monto en juego. Es lo que un gerente comercial puede usar el lunes.</div><pre data-titulo="T4 paso 2: Evaluar y explicar antes de creerle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T4&#x27;</span>,
+    <span class="s">&#x27;Evaluacion, explicabilidad y prediccion sobre datos no vistos&#x27;</span>,
+    <span class="s">&#x27;MODELO_CHURN_COMERCIO: metricas, matriz de confusion, importancia de variables y CHURN_PREDICCIONES&#x27;</span>,
+    <span class="s">&#x27;Metricas de calidad, matriz de confusion e importancia de variables obtenidas del propio modelo, mas lista priorizada por monto en riesgo&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 10.1 MLOps con evaluacion y explicabilidad&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que la explicabilidad venga del modelo y no de una libreria aparte.</b> Pidan la importancia de variables y la matriz de confusion sin escribir codigo de Python. Pregunten como se audita, seis meses despues, con que datos se entreno la version que tomo una decision.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Leer documentos con IA, dentro del perimetro</h2><div class="obj">Convertir vouchers y expedientes SARLAFT en datos consultables.</div></div>
+    <div class="min">7 min</div>
+  </header>
+  <div class="cuerpo"><p>El consolidado de dudas dejo los documentos SARLAFT y los vouchers explicitamente en alcance. Son texto libre, que hoy nadie consulta.</p><pre data-titulo="T4 paso 3: Leer documentos con IA, dentro del perimetro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ML;
+
+<span class="c">-- que documentos hay disponibles</span>
+<span class="k">SELECT</span> TIPO_DOCUMENTO, <span class="k">COUNT</span>(*) <span class="k">AS</span> DOCUMENTOS, ROUND(<span class="k">SUM</span>(SIZE)/1024.0, 1) <span class="k">AS</span> KB
+<span class="k">FROM</span> CB_RAW.LANDING.VW_DOCUMENTOS
+<span class="k">GROUP BY</span> TIPO_DOCUMENTO
+<span class="k">ORDER BY</span> DOCUMENTOS <span class="k">DESC</span>;</code></pre><pre data-titulo="T4 paso 3: Leer documentos con IA, dentro del perimetro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- extraer campos de un expediente SARLAFT sin escribir un parser</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_GOLD.PRODUCTOS.SARLAFT_ESTRUCTURADO <span class="k">AS</span>
+<span class="k">SELECT</span> RELATIVE_PATH <span class="k">AS</span> ARCHIVO,
+       AI_EXTRACT(
+           file =&gt; TO_FILE(<span class="s">&#x27;@CB_RAW.LANDING.STG_HOL&#x27;</span>, RELATIVE_PATH),
+           responseFormat =&gt; {
+               <span class="s">&#x27;nit&#x27;</span>: <span class="s">&#x27;NIT del vinculado&#x27;</span>,
+               <span class="s">&#x27;razon_social&#x27;</span>: <span class="s">&#x27;Razon social del vinculado&#x27;</span>,
+               <span class="s">&#x27;nivel_riesgo&#x27;</span>: <span class="s">&#x27;Nivel de riesgo LA/FT: BAJO, MEDIO o ALTO&#x27;</span>,
+               <span class="s">&#x27;es_pep&#x27;</span>: <span class="s">&#x27;Indica si es Persona Expuesta Politicamente: SI o NO&#x27;</span>,
+               <span class="s">&#x27;desviacion_pct&#x27;</span>: <span class="s">&#x27;Desviacion porcentual entre el monto esperado y el observado&#x27;</span>,
+               <span class="s">&#x27;recomendacion&#x27;</span>: <span class="s">&#x27;Recomendacion del analista en una frase&#x27;</span>
+           }
+       ):response <span class="k">AS</span> DATOS
+<span class="k">FROM</span> CB_RAW.LANDING.VW_DOCUMENTOS
+<span class="k">WHERE</span> TIPO_DOCUMENTO = <span class="s">&#x27;SARLAFT&#x27;</span>
+<span class="k">LIMIT</span> 25;
+
+<span class="k">SELECT</span> ARCHIVO,
+       DATOS:nit::VARCHAR           <span class="k">AS</span> NIT,
+       DATOS:razon_social::VARCHAR  <span class="k">AS</span> RAZON_SOCIAL,
+       DATOS:nivel_riesgo::VARCHAR  <span class="k">AS</span> NIVEL_RIESGO,
+       DATOS:es_pep::VARCHAR        <span class="k">AS</span> ES_PEP,
+       DATOS:recomendacion::VARCHAR <span class="k">AS</span> RECOMENDACION
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.SARLAFT_ESTRUCTURADO
+<span class="k">LIMIT</span> 10;</code></pre><div class="esp"><b>Resultado esperado.</b> Los expedientes en texto libre quedan como columnas consultables. No se escribio ninguna expresion regular ni se definio un esquema del documento.</div><pre data-titulo="T4 paso 3: Leer documentos con IA, dentro del perimetro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- ahora el texto libre se cruza con el dato transaccional</span>
+<span class="k">SELECT</span> s.DATOS:nivel_riesgo::VARCHAR <span class="k">AS</span> NIVEL_RIESGO,
+       <span class="k">COUNT</span>(*)                      <span class="k">AS</span> COMERCIOS,
+       ROUND(<span class="k">AVG</span>(f.MONTO_ULT_3M) / 1e6, 1) <span class="k">AS</span> MONTO_PROMEDIO_MILLONES,
+       ROUND(<span class="k">AVG</span>(f.TASA_FRAUDE) * 100, 4)  <span class="k">AS</span> TASA_FRAUDE_PCT
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.SARLAFT_ESTRUCTURADO s
+<span class="k">JOIN</span> CB_SILVER.ADQUIRENCIA.COMERCIOS c
+  <span class="k">ON</span> c.NIT = s.DATOS:nit::VARCHAR
+<span class="k">JOIN</span> CB_GOLD.PRODUCTOS.COMERCIO_FEATURES_CHURN f
+  <span class="k">ON</span> f.COMERCIO_ID = c.COMERCIO_ID
+<span class="k">GROUP BY</span> NIVEL_RIESGO
+<span class="k">ORDER BY</span> NIVEL_RIESGO;</code></pre><div class="nota"><b>Atencion.</b> Este cruce es el que justifica el paso: el expediente de cumplimiento y el comportamiento transaccional dejan de ser dos mundos. Es tambien el insumo natural del Graph RAG sobre redes transaccionales y KYC que pide el requisito 10.5.</div><pre data-titulo="T4 paso 3: Leer documentos con IA, dentro del perimetro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- clasificar el motivo de una declinacion en texto libre</span>
+<span class="k">SELECT</span> DESCRIPCION_RESPUESTA,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> OCURRENCIAS,
+       AI_CLASSIFY(
+           ANY_VALUE(DESCRIPCION_RESPUESTA),
+           [<span class="s">&#x27;problema de saldo&#x27;</span>, <span class="s">&#x27;problema de la tarjeta&#x27;</span>, <span class="s">&#x27;sospecha de fraude&#x27;</span>,
+            <span class="s">&#x27;falla tecnica&#x27;</span>, <span class="s">&#x27;restriccion del emisor&#x27;</span>]
+       ):labels[0]::VARCHAR <span class="k">AS</span> CATEGORIA
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">WHERE</span> APROBADA = <span class="k">FALSE</span>
+<span class="k">GROUP BY</span> DESCRIPCION_RESPUESTA
+<span class="k">ORDER BY</span> OCURRENCIAS <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> Las once descripciones de declinacion quedan agrupadas en cinco categorias de negocio, sin mantener una tabla de equivalencias.</div><pre data-titulo="T4 paso 3: Leer documentos con IA, dentro del perimetro"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T4&#x27;</span>,
+    <span class="s">&#x27;Documentos no estructurados convertidos en datos y cruzados con lo transaccional&#x27;</span>,
+    <span class="s">&#x27;CB_GOLD.PRODUCTOS.SARLAFT_ESTRUCTURADO desde archivos de texto en el stage&#x27;</span>,
+    <span class="s">&#x27;Campos extraidos de expedientes SARLAFT sin escribir un parser y cruzados por NIT con el comportamiento transaccional del comercio&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 10.3 GenIA en perimetro y consolidado 68 datos no estructurados&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Por donde sale el documento cuando lo procesa el modelo.</b> Esta es la puerta 0 numero 3 del pliego: garantia de no-uso de los datos para entrenar modelos publicos. Pidan el detalle de a que endpoint viaja el contenido del expediente SARLAFT, si sale de la region contratada, y como se acredita contractualmente que no alimenta un modelo de terceros.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">4</div>
+    <div class="tit"><h2>Un agente que responde y respeta los permisos</h2><div class="obj">Dejar el analisis disponible en lenguaje natural, con el gobierno intacto.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>El requisito 8.2 pide hablar con el dato respetando accesos. Se construye la capa semantica y se prueba con el rol del negocio, no con el del administrador.</p><pre data-titulo="T4 paso 4: Un agente que responde y respeta los permisos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ML;
+
+<span class="c">-- la capa semantica: nombres de negocio, metricas y relaciones.</span>
+<span class="c">-- Es lo que evita que el modelo invente una definicion de ticket promedio.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> SEMANTIC <span class="k">VIEW</span> CB_GOLD.PRODUCTOS.SV_ADQUIRENCIA
+    TABLES (
+        COMERCIOS <span class="k">AS</span> CB_SILVER.ADQUIRENCIA.COMERCIOS
+            <span class="k">PRIMARY KEY</span> (COMERCIO_ID)
+            <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;comercio&#x27;</span>, <span class="s">&#x27;afiliado&#x27;</span>, <span class="s">&#x27;establecimiento&#x27;</span>)
+            <span class="k">COMMENT</span> = <span class="s">&#x27;Comercios afiliados a la red de adquirencia&#x27;</span>,
+        VENTAS <span class="k">AS</span> CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO
+            <span class="k">PRIMARY KEY</span> (COMERCIO_ID, MES)
+            <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;ventas&#x27;</span>, <span class="s">&#x27;facturacion&#x27;</span>, <span class="s">&#x27;transacciones&#x27;</span>)
+            <span class="k">COMMENT</span> = <span class="s">&#x27;Ventas mensuales agregadas por comercio&#x27;</span>
+    )
+    RELATIONSHIPS (
+        VENTAS_A_COMERCIO <span class="k">AS</span> VENTAS (COMERCIO_ID) <span class="k">REFERENCES</span> COMERCIOS (COMERCIO_ID)
+    )
+    DIMENSIONS (
+        COMERCIOS.RAZON_SOCIAL <span class="k">AS</span> RAZON_SOCIAL <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;nombre del comercio&#x27;</span>),
+        COMERCIOS.SECTOR       <span class="k">AS</span> SECTOR       <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;rubro&#x27;</span>, <span class="s">&#x27;actividad&#x27;</span>),
+        COMERCIOS.SEGMENTO     <span class="k">AS</span> SEGMENTO     <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;tamano del comercio&#x27;</span>),
+        VENTAS.CIUDAD <span class="k">AS</span> CIUDAD_COMERCIO       <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;ciudad&#x27;</span>, <span class="s">&#x27;plaza&#x27;</span>),
+        VENTAS.DEPARTAMENTO    <span class="k">AS</span> DEPARTAMENTO <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;departamento&#x27;</span>, <span class="s">&#x27;region&#x27;</span>),
+        VENTAS.MES             <span class="k">AS</span> MES          <span class="k">WITH</span> SYNONYMS = (<span class="s">&#x27;mes&#x27;</span>, <span class="s">&#x27;periodo&#x27;</span>)
+    )
+    METRICS (
+        VENTAS.MONTO_APROBADO <span class="k">AS</span> <span class="k">SUM</span>(VENTAS.MONTO_APROBADO_COP)
+            <span class="k">COMMENT</span> = <span class="s">&#x27;Monto aprobado en pesos colombianos&#x27;</span>,
+        VENTAS.TRANSACCIONES  <span class="k">AS</span> <span class="k">SUM</span>(VENTAS.TRX_TOTAL)
+            <span class="k">COMMENT</span> = <span class="s">&#x27;Cantidad total de transacciones&#x27;</span>,
+        VENTAS.TICKET_PROMEDIO <span class="k">AS</span> <span class="k">SUM</span>(VENTAS.MONTO_APROBADO_COP) / NULLIF(<span class="k">SUM</span>(VENTAS.TRX_APROBADAS), 0)
+            <span class="k">COMMENT</span> = <span class="s">&#x27;Ticket promedio en pesos&#x27;</span>,
+        VENTAS.TASA_APROBACION <span class="k">AS</span> 100.0 * <span class="k">SUM</span>(VENTAS.TRX_APROBADAS) / NULLIF(<span class="k">SUM</span>(VENTAS.TRX_TOTAL), 0)
+            <span class="k">COMMENT</span> = <span class="s">&#x27;Porcentaje de transacciones aprobadas&#x27;</span>,
+        VENTAS.CLIENTES <span class="k">AS</span> <span class="k">SUM</span>(VENTAS.CLIENTES_UNICOS)
+            <span class="k">COMMENT</span> = <span class="s">&#x27;Clientes unicos que compraron&#x27;</span>
+    )
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Modelo semantico de adquirencia para consulta en lenguaje natural&#x27;</span>;
+
+<span class="k">SHOW</span> SEMANTIC VIEWS <span class="k">LIKE</span> <span class="s">&#x27;SV_ADQUIRENCIA&#x27;</span> <span class="k">IN</span> <span class="k">SCHEMA</span> CB_GOLD.PRODUCTOS;</code></pre><pre data-titulo="T4 paso 4: Un agente que responde y respeta los permisos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la capa semantica se consulta tambien con SQL, lo que permite</span>
+<span class="c">-- verificar que las metricas dan lo mismo por los dos caminos</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> SEMANTIC_VIEW(
+    CB_GOLD.PRODUCTOS.SV_ADQUIRENCIA
+    DIMENSIONS SECTOR
+    METRICS MONTO_APROBADO, TRANSACCIONES, TICKET_PROMEDIO
+)
+<span class="k">ORDER BY</span> MONTO_APROBADO <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><div class="esp"><b>Resultado esperado.</b> Las metricas de negocio salen de una definicion unica. Si manana el agente, el tablero y el analista calculan el ticket promedio, los tres usan la misma formula.</div><pre data-titulo="T4 paso 4: Un agente que responde y respeta los permisos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- permisos para que el negocio consulte</span>
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">DATABASE</span> CB_GOLD <span class="k">TO</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> CB_GOLD.PRODUCTOS <span class="k">TO</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> SEMANTIC <span class="k">VIEW</span> CB_GOLD.PRODUCTOS.SV_ADQUIRENCIA <span class="k">TO</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> SEMANTIC <span class="k">VIEW</span> CB_GOLD.PRODUCTOS.SV_ADQUIRENCIA <span class="k">TO</span> <span class="k">ROLE</span> RL_ANALISTA;</code></pre><div class="nota"><b>Atencion.</b> El agente conversacional se arma sobre esta misma vista semantica y se prueba en el <b>Track 6</b>, que es el de experiencia de usuario de negocio. Aqui queda construida y verificada la capa que lo sostiene: sin modelo semantico, un agente adivina las definiciones.</div><pre data-titulo="T4 paso 4: Un agente que responde y respeta los permisos"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T4&#x27;</span>,
+    <span class="s">&#x27;Capa semantica de negocio para consulta en lenguaje natural&#x27;</span>,
+    <span class="s">&#x27;CB_GOLD.PRODUCTOS.SV_ADQUIRENCIA con 6 dimensiones y 5 metricas&#x27;</span>,
+    <span class="s">&#x27;Metricas de negocio definidas una sola vez y consultables por SQL y por lenguaje natural, con permisos por rol&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 8.2 consulta en lenguaje natural sobre datos gobernados&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Quien define la metrica cuando responde el agente.</b> Pidan la misma pregunta de negocio dos veces y comparen. Si la definicion de ticket promedio vive en el prompt o la infiere el modelo, dos preguntas parecidas dan cifras distintas, y eso es peor que no tener agente. Pregunten donde se declara la metrica y quien la gobierna.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Quedan un modelo registrado con su explicacion, los documentos no estructurados convertidos en datos consultables y un agente que responde en lenguaje natural respetando los permisos de quien pregunta.</p>
+  <pre data-titulo="T4: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T4&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T4&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T4 Analitica, ML e IA<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T4';
+var SQL_NOMBRE='T4_analitica_ml_e_ia.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T4 - Analitica, ML e IA\n\n   Equipo    : Data & Analytics\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_ingenieria.sql en esta cuenta\n\n   Entrenar y explicar un modelo de abandono de comercio con SQL, leer documentos no estructurados con IA, y dejar un agente que responde en lenguaje natural sin que el dato salga del perimetro.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T4'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T4';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

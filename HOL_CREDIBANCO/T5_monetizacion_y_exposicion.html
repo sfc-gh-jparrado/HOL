@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T5 - Monetizacion y exposicion | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T5 &middot; Monetizacion y exposicion</h1>
+  <div class="sub">Entregar dato a un tercero sin copiarlo ni moverlo, cruzar informacion con un socio sin que ninguno vea la del otro, y publicar un producto en un catalogo interno.</div>
+  <div class="chips"><span class="chip">Track 5</span><span class="chip">30 minutos</span><span class="chip">Criterio 8</span><span class="chip">CTA_ARQUITECTURA hacia CTA_SEGURIDAD</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Lo ejecuta <b>Arquitectura</b> como proveedor del dato. La cuenta de <b>Seguridad</b> hace de consumidor, en el papel del banco emisor: el share es entre cuentas distintas, no entre dos roles de la misma cuenta.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>8. Monetizacion y exposicion</b> &mdash; data sharing sin copia, clean room y/o publicacion en marketplace, y exposicion via API.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>7.1 Data sharing zero-copy a terceros sin transferencia fisica ni descargas.</li><li>7.2 Data clean rooms con joins hasheados.</li><li>7.3 Marketplace y listings para publicar productos de datos.</li><li>7.4 Productos de datos como APIs con control de acceso.</li><li>7.5 Sandbox para exploracion controlada por consumidores externos.</li></ul>
+  </div>
+
+  
+  <div class="caja">
+    <h3>El caso de negocio</h3>
+    <p style="margin:0 0 8px">CredibanCo quiere venderle a un banco emisor un indicador de
+    comportamiento de compra por sector y ciudad. Tres restricciones: el banco no puede
+    ver comercios individuales, CredibanCo no puede entregarle un archivo, y el banco
+    tampoco puede entregar su base de clientes.</p>
+    <p style="margin:0">Es el caso de DaInsight y Open Data que ya opera hoy, con las
+    restricciones reales de un adquirente.</p>
+  </div>
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Entregar el dato sin entregar el dato</h2><div class="obj">Publicar un producto a otra cuenta sin copiar ni exportar nada.</div></div>
+    <div class="min">8 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T5 paso 1: Entregar el dato sin entregar el dato"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- lo que el tercero puede ver: agregados por sector y ciudad, con un umbral</span>
+<span class="c">-- minimo de comercios para que ningun agregado identifique a uno solo</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> SECURE <span class="k">VIEW</span> CB_GOLD.PRODUCTOS.VW_INDICADOR_SECTORIAL
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Producto monetizable. Agregados por sector, ciudad y mes con k-anonimato de 5 comercios&#x27;</span>
+<span class="k">AS</span>
+<span class="k">SELECT</span> SECTOR,
+       CIUDAD_COMERCIO,
+       DEPARTAMENTO,
+       MES,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID)                  <span class="k">AS</span> COMERCIOS,
+       <span class="k">SUM</span>(TRX_TOTAL)                               <span class="k">AS</span> TRANSACCIONES,
+       ROUND(<span class="k">SUM</span>(MONTO_APROBADO_COP) / 1e6, 2)      <span class="k">AS</span> MONTO_MILLONES_COP,
+       ROUND(<span class="k">AVG</span>(TICKET_PROMEDIO_COP), 0)           <span class="k">AS</span> TICKET_PROMEDIO_COP,
+       ROUND(100.0 * <span class="k">SUM</span>(TRX_APROBADAS) / NULLIF(<span class="k">SUM</span>(TRX_TOTAL), 0), 2) <span class="k">AS</span> TASA_APROBACION_PCT
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO
+<span class="k">GROUP BY</span> SECTOR, CIUDAD_COMERCIO, DEPARTAMENTO, MES
+<span class="k">HAVING</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID) &gt;= 5;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS_PUBLICABLES <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VW_INDICADOR_SECTORIAL;</code></pre><div class="nota"><b>Atencion.</b> La vista es <code>SECURE</code> a proposito: eso impide que el consumidor deduzca la definicion interna o use el optimizador para inferir filas que la vista filtra. Sin <code>SECURE</code>, un agregado con umbral se puede desarmar.</div><pre data-titulo="T5 paso 1: Entregar el dato sin entregar el dato"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el share: se declara que se comparte, no se mueve nada</span>
+<span class="k">CREATE</span> <span class="k">SHARE</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> SH_INDICADOR_SECTORIAL
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Indicador sectorial de adquirencia para bancos emisores&#x27;</span>;
+
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">DATABASE</span> CB_GOLD <span class="k">TO</span> <span class="k">SHARE</span> SH_INDICADOR_SECTORIAL;
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> CB_GOLD.PRODUCTOS <span class="k">TO</span> <span class="k">SHARE</span> SH_INDICADOR_SECTORIAL;
+<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> <span class="k">VIEW</span> CB_GOLD.PRODUCTOS.VW_INDICADOR_SECTORIAL
+    <span class="k">TO</span> <span class="k">SHARE</span> SH_INDICADOR_SECTORIAL;
+
+<span class="k">SHOW</span> SHARES <span class="k">LIKE</span> <span class="s">&#x27;SH_INDICADOR_SECTORIAL&#x27;</span>;</code></pre><pre data-titulo="T5 paso 1: Entregar el dato sin entregar el dato"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- que quedo expuesto exactamente: la lista es auditable</span>
+<span class="k">SHOW</span> GRANTS <span class="k">TO</span> <span class="k">SHARE</span> SH_INDICADOR_SECTORIAL;</code></pre><div class="esp"><b>Resultado esperado.</b> Solo aparece la vista segura. Las tablas base con el PAN y el detalle por comercio <b>no estan en el share</b>, y eso se puede mostrar en pantalla.</div><pre data-titulo="T5 paso 1: Entregar el dato sin entregar el dato"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- se agrega la cuenta del consumidor. En el workshop es la cuenta</span>
+<span class="c">-- del equipo de Seguridad, haciendo de banco emisor.</span>
+<span class="c">-- <span class="k">ALTER</span> <span class="k">SHARE</span> SH_INDICADOR_SECTORIAL ADD ACCOUNTS = &lt;cuenta_consumidora&gt;;</span>
+
+<span class="c">-- del lado del consumidor, montar el dato compartido es una sentencia y no</span>
+<span class="c">-- consume almacenamiento:</span>
+<span class="c">-- <span class="k">CREATE</span> <span class="k">DATABASE</span> DATOS_CREDIBANCO <span class="k">FROM</span> <span class="k">SHARE</span> &lt;proveedor&gt;.SH_INDICADOR_SECTORIAL;</span>
+<span class="c">-- <span class="k">SELECT</span> * <span class="k">FROM</span> DATOS_CREDIBANCO.PRODUCTOS.VW_INDICADOR_SECTORIAL <span class="k">LIMIT</span> 10;</span>
+
+<span class="k">SELECT</span> <span class="s">&#x27;El consumidor monta el share sin copiar datos ni pagar almacenamiento&#x27;</span> <span class="k">AS</span> NOTA;</code></pre><div class="nota"><b>Atencion.</b> El consumidor no paga almacenamiento por el dato compartido y siempre ve la version vigente: no hay ventana de desactualizacion ni proceso de envio que pueda fallar. Comparar con el modelo actual, donde entregar un indicador a un tercero implica generar un archivo, transferirlo y confiar en que lo borren.</div><pre data-titulo="T5 paso 1: Entregar el dato sin entregar el dato"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T5&#x27;</span>,
+    <span class="s">&#x27;Producto de datos compartido a otra cuenta sin copia ni transferencia&#x27;</span>,
+    <span class="s">&#x27;SH_INDICADOR_SECTORIAL sobre la vista segura VW_INDICADOR_SECTORIAL&#x27;</span>,
+    <span class="s">&#x27;Share con una sola vista segura expuesta y k-anonimato de 5 comercios. Las tablas base con PAN y detalle por comercio quedan fuera, verificable con <span class="k">SHOW</span> GRANTS <span class="k">TO</span> <span class="k">SHARE</span>&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 7.1 data sharing zero-copy sin transferencia fisica&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que no haya copia y que se pueda revocar.</b> Dos pruebas: cambien un dato del origen y verifiquen que el consumidor lo ve sin que corra ningun proceso; y revoquen el acceso y comprueben que el consumidor pierde el dato de inmediato. Si el modelo es una replica programada, ni lo primero ni lo segundo se cumplen, y CredibanCo pierde el control de un dato que vende.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Cruzar con un socio sin ver lo del socio</h2><div class="obj">Medir el traslape de clientes con un banco sin que ninguno exponga su base.</div></div>
+    <div class="min">10 min</div>
+  </header>
+  <div class="cuerpo"><p>El banco emisor quiere saber cuantos de sus clientes compran en determinado sector. Ninguna de las dos partes puede entregar su base. Se resuelve con identificadores hasheados y una funcion que solo devuelve agregados.</p><pre data-titulo="T5 paso 2: Cruzar con un socio sin ver lo del socio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="k">CREATE</span> <span class="k">SCHEMA</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> CB_GOLD.CLEAN_ROOM
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Superficie de cruce con terceros. Solo salen agregados&#x27;</span>;
+
+<span class="c">-- la llave de cruce es un hash con sal compartida. El PAN nunca sale, y el</span>
+<span class="c">-- hash sin la sal no sirve para nada fuera de este contexto.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> SECURE <span class="k">VIEW</span> CB_GOLD.CLEAN_ROOM.VW_IDENTIDADES_HASH
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Identificadores hasheados con sal compartida para cruce con terceros&#x27;</span>
+<span class="k">AS</span>
+<span class="k">SELECT</span> SHA2(CONCAT(h.DOCUMENTO, <span class="s">&#x27;sal-acordada-con-el-socio-2026&#x27;</span>), 256) <span class="k">AS</span> ID_HASH,
+       c.SECTOR,
+       c.DEPARTAMENTO,
+       <span class="k">COUNT</span>(*)                        <span class="k">AS</span> TRANSACCIONES,
+       ROUND(<span class="k">SUM</span>(a.MONTO_COP) / 1e3, 0) <span class="k">AS</span> MONTO_MILES_COP
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES a
+<span class="k">JOIN</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES h
+  <span class="k">ON</span> h.TARJETAHABIENTE_ID = a.TARJETAHABIENTE_ID
+<span class="k">JOIN</span> CB_SILVER.ADQUIRENCIA.COMERCIOS c
+  <span class="k">ON</span> c.COMERCIO_ID = a.COMERCIO_ID
+<span class="k">WHERE</span> a.APROBADA
+<span class="k">GROUP BY</span> ID_HASH, c.SECTOR, c.DEPARTAMENTO;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS, <span class="k">COUNT</span>(<span class="k">DISTINCT</span> ID_HASH) <span class="k">AS</span> IDENTIDADES
+<span class="k">FROM</span> CB_GOLD.CLEAN_ROOM.VW_IDENTIDADES_HASH;</code></pre><pre data-titulo="T5 paso 2: Cruzar con un socio sin ver lo del socio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la base del socio: en el workshop llega por su propio share.</span>
+<span class="c">-- Aqui se simula con una muestra para poder ejecutar el cruce.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_GOLD.CLEAN_ROOM.SOCIO_BANCO_HASH <span class="k">AS</span>
+<span class="k">SELECT</span> SHA2(CONCAT(DOCUMENTO, <span class="s">&#x27;sal-acordada-con-el-socio-2026&#x27;</span>), 256) <span class="k">AS</span> ID_HASH,
+       <span class="k">CASE</span> <span class="k">WHEN</span> MOD(ABS(HASH(DOCUMENTO)), 3) = 0 <span class="k">THEN</span> <span class="s">&#x27;NOMINA&#x27;</span>
+            <span class="k">WHEN</span> MOD(ABS(HASH(DOCUMENTO)), 3) = 1 <span class="k">THEN</span> <span class="s">&#x27;TARJETA_CREDITO&#x27;</span>
+            <span class="k">ELSE</span> <span class="s">&#x27;AHORROS&#x27;</span> <span class="k">END</span> <span class="k">AS</span> PRODUCTO_DEL_BANCO
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES
+SAMPLE (35);
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> CLIENTES_DEL_SOCIO <span class="k">FROM</span> CB_GOLD.CLEAN_ROOM.SOCIO_BANCO_HASH;</code></pre><pre data-titulo="T5 paso 2: Cruzar con un socio sin ver lo del socio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la funcion de cruce: SOLO devuelve agregados y exige un minimo de</span>
+<span class="c">-- 100 identidades por celda. Ninguna de las dos partes puede pedir una fila.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> SECURE <span class="k">FUNCTION</span> CB_GOLD.CLEAN_ROOM.TRASLAPE_POR_SECTOR()
+<span class="k">RETURNS</span> <span class="k">TABLE</span> (
+    SECTOR VARCHAR, PRODUCTO_DEL_BANCO VARCHAR,
+    CLIENTES_EN_COMUN NUMBER, TRANSACCIONES NUMBER, MONTO_MILLONES_COP NUMBER)
+<span class="k">COMMENT</span> = <span class="s">&#x27;Traslape de clientes por sector y producto. Suprime celdas con menos de 100 identidades&#x27;</span>
+<span class="k">AS</span>
+$$
+    <span class="k">SELECT</span> i.SECTOR,
+           s.PRODUCTO_DEL_BANCO,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> i.ID_HASH)                     <span class="k">AS</span> CLIENTES_EN_COMUN,
+           <span class="k">SUM</span>(i.TRANSACCIONES)                          <span class="k">AS</span> TRANSACCIONES,
+           ROUND(<span class="k">SUM</span>(i.MONTO_MILES_COP) / 1000.0, 1)     <span class="k">AS</span> MONTO_MILLONES_COP
+    <span class="k">FROM</span> CB_GOLD.CLEAN_ROOM.VW_IDENTIDADES_HASH i
+    <span class="k">JOIN</span> CB_GOLD.CLEAN_ROOM.SOCIO_BANCO_HASH s <span class="k">ON</span> s.ID_HASH = i.ID_HASH
+    <span class="k">GROUP BY</span> i.SECTOR, s.PRODUCTO_DEL_BANCO
+    <span class="k">HAVING</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> i.ID_HASH) &gt;= 100
+$$;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_GOLD.CLEAN_ROOM.TRASLAPE_POR_SECTOR())
+<span class="k">ORDER BY</span> CLIENTES_EN_COMUN <span class="k">DESC</span>
+<span class="k">LIMIT</span> 15;</code></pre><div class="esp"><b>Resultado esperado.</b> Sale el traslape por sector y producto bancario. Ninguna fila identifica a una persona y las celdas con menos de 100 identidades no aparecen.</div><pre data-titulo="T5 paso 2: Cruzar con un socio sin ver lo del socio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- verificacion de la restriccion: cuanto se suprimio</span>
+<span class="k">WITH</span> todo <span class="k">AS</span> (
+    <span class="k">SELECT</span> i.SECTOR, s.PRODUCTO_DEL_BANCO, <span class="k">COUNT</span>(<span class="k">DISTINCT</span> i.ID_HASH) <span class="k">AS</span> N
+    <span class="k">FROM</span> CB_GOLD.CLEAN_ROOM.VW_IDENTIDADES_HASH i
+    <span class="k">JOIN</span> CB_GOLD.CLEAN_ROOM.SOCIO_BANCO_HASH s <span class="k">ON</span> s.ID_HASH = i.ID_HASH
+    <span class="k">GROUP BY</span> 1, 2
+)
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*)                    <span class="k">AS</span> CELDAS_TOTALES,
+       COUNT_IF(N &gt;= 100)          <span class="k">AS</span> CELDAS_PUBLICADAS,
+       COUNT_IF(N &lt; 100)           <span class="k">AS</span> CELDAS_SUPRIMIDAS,
+       <span class="k">MIN</span>(N)                      <span class="k">AS</span> MINIMO_OBSERVADO
+<span class="k">FROM</span> todo;</code></pre><div class="nota"><b>Atencion.</b> El patron mostrado &mdash;vista segura, hash con sal compartida y funcion segura con umbral&mdash; es el mecanismo que sostiene un clean room y se puede auditar linea por linea. Snowflake tambien ofrece <b>Data Clean Rooms</b> como producto gestionado, con plantillas de analisis, aprobacion de consultas por ambas partes y registro de lo ejecutado; se instala como aplicacion nativa y requiere un aprovisionamiento previo que no cabe en este track.</div><pre data-titulo="T5 paso 2: Cruzar con un socio sin ver lo del socio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T5&#x27;</span>,
+    <span class="s">&#x27;Cruce con un socio sin exponer identidades ni bases&#x27;</span>,
+    <span class="s">&#x27;CB_GOLD.CLEAN_ROOM: vista de identidades hasheadas y funcion segura con umbral de 100&#x27;</span>,
+    <span class="s">&#x27;Traslape de clientes por sector y producto bancario calculado sobre identificadores hasheados con sal compartida, con supresion de celdas pequenas verificada&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 7.2 data clean rooms con joins hasheados&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Quien puede ver una fila individual y quien autoriza cada consulta.</b> Un clean room que permite a una de las partes ejecutar consultas arbitrarias no es un clean room. Pregunten: se pueden restringir las consultas a plantillas aprobadas por las dos partes; queda registro de lo que ejecuto cada quien; y como se impide reconstruir identidades a punta de consultas sucesivas con filtros distintos.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Publicar en el catalogo y exponer por API</h2><div class="obj">Dejar el producto disponible para descubrir, solicitar y consumir.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T5 paso 3: Publicar en el catalogo y exponer por API"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- el producto se publica en el catalogo interno con su contrato comercial</span>
+<span class="k">MERGE</span> INTO CB_PLATAFORMA.GOBIERNO.CATALOGO_PRODUCTOS t
+<span class="k">USING</span> (
+    <span class="k">SELECT</span> <span class="s">&#x27;DP-005&#x27;</span> <span class="k">AS</span> PRODUCTO_ID,
+           <span class="s">&#x27;Indicador sectorial de adquirencia&#x27;</span> <span class="k">AS</span> NOMBRE,
+           <span class="s">&#x27;MONETIZACION&#x27;</span> <span class="k">AS</span> DOMINIO,
+           <span class="s">&#x27;Agregados de transaccionalidad por sector, ciudad y mes con k-anonimato de 5 comercios. Producto monetizable para bancos emisores y pasarelas.&#x27;</span> <span class="k">AS</span> DESCRIPCION,
+           <span class="s">&#x27;CB_GOLD.PRODUCTOS.VW_INDICADOR_SECTORIAL&#x27;</span> <span class="k">AS</span> OBJETO,
+           <span class="s">&#x27;Gerencia de Datos&#x27;</span> <span class="k">AS</span> DUENO,
+           <span class="s">&#x27;Mensual, quinto dia habil&#x27;</span> <span class="k">AS</span> SLA_FRESCURA,
+           <span class="s">&#x27;USO_INTERNO&#x27;</span> <span class="k">AS</span> CLASIFICACION,
+           <span class="k">TRUE</span> <span class="k">AS</span> REQUIERE_APROBACION
+) s <span class="k">ON</span> t.PRODUCTO_ID = s.PRODUCTO_ID
+<span class="k">WHEN</span> <span class="k">NOT</span> <span class="k">MATCHED</span> <span class="k">THEN</span> <span class="k">INSERT</span>
+    (PRODUCTO_ID,NOMBRE,DOMINIO,DESCRIPCION,OBJETO,DUENO,SLA_FRESCURA,CLASIFICACION,REQUIERE_APROBACION)
+    VALUES (s.PRODUCTO_ID,s.NOMBRE,s.DOMINIO,s.DESCRIPCION,s.OBJETO,s.DUENO,
+            s.SLA_FRESCURA,s.CLASIFICACION,s.REQUIERE_APROBACION);
+
+<span class="k">SELECT</span> PRODUCTO_ID, NOMBRE, DOMINIO, SLA_FRESCURA, REQUIERE_APROBACION
+<span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.CATALOGO_PRODUCTOS
+<span class="k">ORDER BY</span> PRODUCTO_ID;</code></pre><pre data-titulo="T5 paso 3: Publicar en el catalogo y exponer por API"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- exposicion por API: la logica de negocio queda del lado del dato,</span>
+<span class="c">-- parametrizada, y el gateway corporativo la invoca. No se expone SQL libre.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> SECURE <span class="k">FUNCTION</span> CB_GOLD.PRODUCTOS.API_INDICADOR_SECTOR(
+    P_SECTOR VARCHAR, P_DESDE DATE, P_HASTA DATE)
+<span class="k">RETURNS</span> <span class="k">TABLE</span> (
+    SECTOR VARCHAR, MES DATE, COMERCIOS NUMBER,
+    TRANSACCIONES NUMBER, MONTO_MILLONES_COP NUMBER, TASA_APROBACION_PCT NUMBER)
+<span class="k">COMMENT</span> = <span class="s">&#x27;Endpoint del producto DP-005. Recibe sector y rango de fechas y devuelve la serie agregada&#x27;</span>
+<span class="k">AS</span>
+$$
+    <span class="k">SELECT</span> SECTOR, MES,
+           <span class="k">SUM</span>(COMERCIOS)            <span class="k">AS</span> COMERCIOS,
+           <span class="k">SUM</span>(TRANSACCIONES)        <span class="k">AS</span> TRANSACCIONES,
+           ROUND(<span class="k">SUM</span>(MONTO_MILLONES_COP), 2) <span class="k">AS</span> MONTO_MILLONES_COP,
+           ROUND(<span class="k">AVG</span>(TASA_APROBACION_PCT), 2) <span class="k">AS</span> TASA_APROBACION_PCT
+    <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VW_INDICADOR_SECTORIAL
+    <span class="k">WHERE</span> SECTOR = P_SECTOR
+      <span class="k">AND</span> MES <span class="k">BETWEEN</span> P_DESDE <span class="k">AND</span> P_HASTA
+    <span class="k">GROUP BY</span> SECTOR, MES
+$$;
+
+<span class="c">-- la misma llamada que haria el gateway</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_GOLD.PRODUCTOS.API_INDICADOR_SECTOR(
+    <span class="s">&#x27;Supermercados&#x27;</span>, <span class="s">&#x27;2025-01-01&#x27;</span>::DATE, <span class="s">&#x27;2025-12-31&#x27;</span>::DATE))
+<span class="k">ORDER BY</span> MES;</code></pre><div class="esp"><b>Resultado esperado.</b> La serie mensual del sector, ya agregada. El consumidor no escribe SQL ni conoce el modelo: invoca una funcion con parametros.</div><div class="nota"><b>Atencion.</b> CredibanCo <b>ya tiene API Management corporativo</b>, segun el consolidado de respuestas. Lo que aporta la plataforma es que la logica y el control de acceso viven junto al dato: el gateway publica, autentica y tarifica, pero no reimplementa la regla de negocio ni necesita una copia del dato para responder.</div><pre data-titulo="T5 paso 3: Publicar en el catalogo y exponer por API"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- control de acceso al endpoint: se concede la funcion, no la tabla</span>
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> CB_GOLD.PRODUCTOS <span class="k">TO</span> <span class="k">ROLE</span> RL_NEGOCIO;
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">FUNCTION</span> CB_GOLD.PRODUCTOS.API_INDICADOR_SECTOR(VARCHAR, DATE, DATE)
+    <span class="k">TO</span> <span class="k">ROLE</span> RL_NEGOCIO;
+
+<span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T5&#x27;</span>,
+    <span class="s">&#x27;Producto publicado en el catalogo interno y expuesto como endpoint parametrizado&#x27;</span>,
+    <span class="s">&#x27;DP-005 en CATALOGO_PRODUCTOS y funcion segura API_INDICADOR_SECTOR&#x27;</span>,
+    <span class="s">&#x27;Producto monetizable publicado con SLA y aprobacion requerida, mas endpoint parametrizado que encapsula la regla de negocio y se concede sin exponer las tablas&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 7.3 marketplace de productos y 7.4 productos de datos como API&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Si exponer por API exige mover el dato a otra capa.</b> El patron comun es replicar el agregado a una base operacional para que el API responda rapido. Eso duplica el dato, agrega una ventana de desactualizacion y obliga a reimplementar el gobierno. Pregunten si el endpoint lee del mismo objeto gobernado y como se garantiza la latencia sin una copia.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Queda un share activo hacia otra cuenta, una vista segura que solo expone agregados, un patron de cruce sin exponer identidades y un producto publicado en el catalogo interno.</p>
+  <pre data-titulo="T5: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T5&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T5&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T5 Monetizacion y exposicion<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T5';
+var SQL_NOMBRE='T5_monetizacion_y_exposicion.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T5 - Monetizacion y exposicion\n\n   Equipo    : Arquitectura y Data & Analytics\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_arquitectura.sql en esta cuenta\n\n   Entregar dato a un tercero sin copiarlo ni moverlo, cruzar informacion con un socio sin que ninguno vea la del otro, y publicar un producto en un catalogo interno.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T5'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T5';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

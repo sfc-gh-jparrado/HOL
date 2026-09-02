@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T1 - Gobierno y Zero Trust | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T1 &middot; Gobierno y Zero Trust</h1>
+  <div class="sub">Clasificar el dato sensible sin decirle donde esta, proteger con una sola politica todo lo que la clasificacion marque, y comprobar que ese control se respeta por igual desde SQL, desde BI y desde la IA.</div>
+  <div class="chips"><span class="chip">Track 1</span><span class="chip">30 minutos</span><span class="chip">Criterios 1, 2, 3 y 16</span><span class="chip">4 requisitos eliminatorios</span><span class="chip">Cuenta CTA_SEGURIDAD</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Lo ejecuta el equipo de <b>Seguridad de la Informacion</b>. Snowflake habilita el ambiente y acompana; no toca el teclado. Este equipo <b>no instalo Openflow ni construyo la capa silver</b>: recibe el dato ya conformado, tal como lo dejaria el equipo de ingenieria en su propia cuenta.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>1. Gobierno automatizado</b> &mdash; catalogo, linaje, calidad y accesos RBAC/ABAC aplicados en vivo y respetados por analitica, BI e IA.</li><li><b>2. Zero Trust</b> &mdash; verificacion explicita en cada acceso, minimo privilegio y policy-as-code.</li><li><b>3. Seguridad y cumplimiento</b> &mdash; enmascaramiento dinamico, DLP, segregacion y borrado seguro demostrables.</li><li><b>16. Experiencia de uso</b> &mdash; cada paso lo ejecuta CredibanCo leyendo esta guia, sin intervencion del proveedor.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>3.1 PCI-DSS demostrable (eliminatorio) &mdash; se evidencia el control tecnico del CDE.</li><li>3.4 Enmascaramiento dinamico, anonimizacion, tokenizacion y DLP.</li><li>3.6 Borrado seguro y derecho al olvido (eliminatorio).</li><li>4.4 RBAC + ABAC de minimo privilegio con verificacion en cada acceso (eliminatorio).</li><li>4.8 Policy-as-code embebido, no manual (eliminatorio).</li><li>2.3 Clasificacion y etiquetado automatico de datos sensibles.</li><li>2.5 Acceso granular aplicado transversalmente a analitica, BI e IA sobre el mismo catalogo.</li></ul>
+  </div>
+
+  
+  <div class="caja">
+    <h3>El dato con el que van a trabajar</h3>
+    <p style="margin:0">Adquirencia sintetica de CredibanCo: 40,4 millones de
+    autorizaciones sobre 180.000 comercios, 607.119 terminales y 2,5 millones de
+    tarjetahabientes. El PAN es sintetico con digito de verificacion valido, y
+    <b>esta en claro a proposito</b>: el consolidado de dudas confirmo que la
+    plataforma debe contemplar dato de tarjeta en claro, asi que el control tiene
+    que demostrarse sobre el caso real, no sobre un token.</p>
+  </div>
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Clasificar sin decirle donde esta el dato sensible</h2><div class="obj">Que la plataforma descubra por si sola el PAN, la cedula y el celular.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>Primero se corre la clasificacion de caja, tal cual. Despues se revisa que encontro. El resultado importa mas de lo que parece.</p><pre data-titulo="T1 paso 1: Clasificar sin decirle donde esta el dato sensible"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- clasificacion de caja, sin ninguna pista sobre el contenido</span>
+<span class="k">CALL</span> SYSTEM$CLASSIFY(<span class="s">&#x27;CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES&#x27;</span>, {<span class="s">&#x27;auto_tag&#x27;</span>: true});
+
+<span class="c">-- que encontro</span>
+<span class="k">SELECT</span> COLUMN_NAME, TAG_NAME, TAG_VALUE
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_SILVER.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS(
+           <span class="s">&#x27;CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES&#x27;</span>, <span class="s">&#x27;table&#x27;</span>))
+<span class="k">WHERE</span> TAG_NAME <span class="k">IN</span> (<span class="s">&#x27;SEMANTIC_CATEGORY&#x27;</span>, <span class="s">&#x27;PRIVACY_CATEGORY&#x27;</span>)
+<span class="k">ORDER BY</span> COLUMN_NAME;</code></pre><div class="esp"><b>Resultado esperado.</b> Solo aparece <code>EMAIL</code>. El PAN, la cedula, el celular y el nombre <b>no fueron detectados</b>, aunque el PAN tiene 16 digitos y digito de verificacion Luhn valido.</div><div class="nota"><b>Atencion.</b> Esto no es un defecto que escondamos: es el punto del paso. Un clasificador generico entrenado en ingles no reconoce <code>DOCUMENTO</code>, <code>CELULAR</code> ni <code>NIT</code>. La pregunta correcta a cualquier plataforma no es si trae clasificador, sino si se puede <b>extender al dominio del cliente</b> y que el resultado alimente las politicas.</div><p>Ahora se extiende con las reglas de CredibanCo. Primero se prueban los patrones contra el dato real, antes de registrarlos.</p><pre data-titulo="T1 paso 1: Clasificar sin decirle donde esta el dato sensible"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- validar los patrones antes de registrarlos</span>
+<span class="k">SELECT</span> <span class="k">SUM</span>(<span class="k">IFF</span>(PAN REGEXP <span class="s">&#x27;^[0-9]{15,16}$&#x27;</span>, 1, 0))          <span class="k">AS</span> PAN_OK,
+       <span class="k">SUM</span>(<span class="k">IFF</span>(DOCUMENTO REGEXP <span class="s">&#x27;^[1-9][0-9]{6,9}$&#x27;</span>, 1, 0)) <span class="k">AS</span> CEDULA_OK,
+       <span class="k">SUM</span>(<span class="k">IFF</span>(CELULAR REGEXP <span class="s">&#x27;^\\+57 3[0-9]{8}$&#x27;</span>, 1, 0))    <span class="k">AS</span> CELULAR_OK,
+       <span class="k">COUNT</span>(*)                                             <span class="k">AS</span> MUESTRA
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES SAMPLE (10000 ROWS);</code></pre><div class="esp"><b>Resultado esperado.</b> Las tres columnas coinciden en 10.000 de 10.000.</div><pre data-titulo="T1 paso 1: Clasificar sin decirle donde esta el dato sensible"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- clasificador propio para tipos de dato colombianos</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> SNOWFLAKE.DATA_PRIVACY.CUSTOM_CLASSIFIER
+    CB_PLATAFORMA.GOBIERNO.CLF_COLOMBIA();
+
+<span class="k">CALL</span> CB_PLATAFORMA.GOBIERNO.CLF_COLOMBIA!ADD_REGEX(
+  SEMANTIC_CATEGORY =&gt; <span class="s">&#x27;PAN_TARJETA&#x27;</span>,
+  PRIVACY_CATEGORY  =&gt; <span class="s">&#x27;IDENTIFIER&#x27;</span>,
+  VALUE_REGEX       =&gt; <span class="s">&#x27;^[0-9]{15,16}$&#x27;</span>,
+  COL_NAME_REGEX    =&gt; <span class="s">&#x27;.*(PAN|TARJETA|CARD).*&#x27;</span>,
+  DESCRIPTION       =&gt; <span class="s">&#x27;Numero de tarjeta de pago. Dato de tarjeta bajo alcance PCI DSS&#x27;</span>,
+  THRESHOLD         =&gt; 0.8);
+
+<span class="k">CALL</span> CB_PLATAFORMA.GOBIERNO.CLF_COLOMBIA!ADD_REGEX(
+  SEMANTIC_CATEGORY =&gt; <span class="s">&#x27;CEDULA_CO&#x27;</span>,
+  PRIVACY_CATEGORY  =&gt; <span class="s">&#x27;IDENTIFIER&#x27;</span>,
+  VALUE_REGEX       =&gt; <span class="s">&#x27;^[1-9][0-9]{6,9}$&#x27;</span>,
+  COL_NAME_REGEX    =&gt; <span class="s">&#x27;.*(DOCUMENTO|CEDULA|IDENTIFICACION).*&#x27;</span>,
+  DESCRIPTION       =&gt; <span class="s">&#x27;Cedula de ciudadania colombiana&#x27;</span>,
+  THRESHOLD         =&gt; 0.8);
+
+<span class="c">-- PRIVACY_CATEGORY se escribe con guion BAJO: QUASI_IDENTIFIER</span>
+<span class="k">CALL</span> CB_PLATAFORMA.GOBIERNO.CLF_COLOMBIA!ADD_REGEX(
+  SEMANTIC_CATEGORY =&gt; <span class="s">&#x27;CELULAR_CO&#x27;</span>,
+  PRIVACY_CATEGORY  =&gt; <span class="s">&#x27;QUASI_IDENTIFIER&#x27;</span>,
+  VALUE_REGEX       =&gt; <span class="s">&#x27;^\\+57 3[0-9]{8}$&#x27;</span>,
+  COL_NAME_REGEX    =&gt; <span class="s">&#x27;.*(CELULAR|MOVIL|TELEFONO).*&#x27;</span>,
+  DESCRIPTION       =&gt; <span class="s">&#x27;Numero de celular colombiano&#x27;</span>,
+  THRESHOLD         =&gt; 0.8);
+
+<span class="k">SELECT</span> CB_PLATAFORMA.GOBIERNO.CLF_COLOMBIA!<span class="k">LIST</span>() <span class="k">AS</span> REGLAS_REGISTRADAS;</code></pre><pre data-titulo="T1 paso 1: Clasificar sin decirle donde esta el dato sensible"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- reclasificar usando el clasificador propio</span>
+<span class="k">CALL</span> SYSTEM$CLASSIFY(<span class="s">&#x27;CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES&#x27;</span>,
+     {<span class="s">&#x27;auto_tag&#x27;</span>: true,
+      <span class="s">&#x27;custom_classifiers&#x27;</span>: [<span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.CLF_COLOMBIA&#x27;</span>]});
+
+<span class="k">SELECT</span> COLUMN_NAME, TAG_NAME, TAG_VALUE
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_SILVER.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS(
+           <span class="s">&#x27;CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES&#x27;</span>, <span class="s">&#x27;table&#x27;</span>))
+<span class="k">WHERE</span> TAG_NAME <span class="k">IN</span> (<span class="s">&#x27;SEMANTIC_CATEGORY&#x27;</span>, <span class="s">&#x27;PRIVACY_CATEGORY&#x27;</span>)
+<span class="k">ORDER BY</span> COLUMN_NAME;</code></pre><div class="esp"><b>Resultado esperado.</b> Ahora <code>PAN &rarr; PAN_TARJETA</code>, <code>DOCUMENTO &rarr; CEDULA_CO</code>, <code>CELULAR &rarr; CELULAR_CO</code> y <code>EMAIL &rarr; EMAIL</code>, todos con su categoria de privacidad. La etiqueta la puso la plataforma, no una persona.</div><pre data-titulo="T1 paso 1: Clasificar sin decirle donde esta el dato sensible"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T1&#x27;</span>,
+    <span class="s">&#x27;Clasificacion automatica extendida con tipos de dato colombianos&#x27;</span>,
+    <span class="s">&#x27;CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES + CLF_COLOMBIA&#x27;</span>,
+    <span class="s">&#x27;El clasificador de caja solo detecto EMAIL. Con 3 reglas propias detecta PAN, cedula y celular y los etiqueta solo&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 2.3 clasificacion y etiquetado automatico&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que el clasificador se pueda extender al dominio del cliente y que esa extension alimente automaticamente las politicas.</b> Casi todas las plataformas traen un detector de PII entrenado en datos en ingles. La pregunta a hacer es: como agrego <i>NIT</i> y <i>cedula</i> como categorias de primera clase, cuantos objetos tengo que tocar para que la deteccion se traduzca en proteccion, y quien mantiene ese mapeo.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Una politica para todo lo que la clasificacion marque</h2><div class="obj">Proteger por etiqueta, no columna por columna.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>Lo habitual es escribir una politica por columna. Con 13.003 tablas eso no escala y siempre queda algo sin cubrir. Aca la politica se cuelga de la <b>etiqueta</b>: cualquier columna que la clasificacion marque hoy o en seis meses queda protegida sin escribir una linea mas.</p><div class="nota"><b>Atencion.</b> La etiqueta compartida <code>SNOWFLAKE.CORE.SEMANTIC_CATEGORY</code> no se puede alterar ni siendo ACCOUNTADMIN. El patron correcto es propagar el resultado de la clasificacion a una etiqueta de gobierno propia y colgar la politica de esa.</div><pre data-titulo="T1 paso 2: Una politica para todo lo que la clasificacion marque"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- propagar el resultado de la clasificacion a la etiqueta de gobierno propia</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES
+    MODIFY COLUMN PAN <span class="k">SET</span> <span class="k">TAG</span> CB_PLATAFORMA.GOBIERNO.CLASIFICACION = <span class="s">&#x27;DATO_TARJETA&#x27;</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES
+    MODIFY COLUMN DOCUMENTO <span class="k">SET</span> <span class="k">TAG</span> CB_PLATAFORMA.GOBIERNO.CLASIFICACION = <span class="s">&#x27;PII&#x27;</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES
+    MODIFY COLUMN EMAIL <span class="k">SET</span> <span class="k">TAG</span> CB_PLATAFORMA.GOBIERNO.CLASIFICACION = <span class="s">&#x27;PII&#x27;</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES
+    MODIFY COLUMN CELULAR <span class="k">SET</span> <span class="k">TAG</span> CB_PLATAFORMA.GOBIERNO.CLASIFICACION = <span class="s">&#x27;PII&#x27;</span>;
+
+<span class="c">-- el PAN tambien viaja en el detalle de autorizaciones</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    MODIFY COLUMN PAN <span class="k">SET</span> <span class="k">TAG</span> CB_PLATAFORMA.GOBIERNO.CLASIFICACION = <span class="s">&#x27;DATO_TARJETA&#x27;</span>;</code></pre><pre data-titulo="T1 paso 2: Una politica para todo lo que la clasificacion marque"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- una sola politica que decide segun el valor de la etiqueta</span>
+<span class="k">CREATE</span> <span class="k">MASKING</span><span class="k"> POLICY</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> CB_PLATAFORMA.GOBIERNO.MP_POR_CLASIFICACION
+<span class="k">AS</span> (val STRING) <span class="k">RETURNS</span> STRING -&gt;
+<span class="k">CASE</span>
+    <span class="k">WHEN</span> SYSTEM$GET_TAG_ON_CURRENT_COLUMN(<span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.CLASIFICACION&#x27;</span>) = <span class="s">&#x27;DATO_TARJETA&#x27;</span>
+        <span class="k">THEN</span> <span class="k">IFF</span>(<span class="k">CURRENT_ROLE</span>() = <span class="s">&#x27;ACCOUNTADMIN&#x27;</span>, val,
+                 <span class="s">&#x27;**** **** **** &#x27;</span> || <span class="k">RIGHT</span>(val, 4))
+    <span class="k">WHEN</span> SYSTEM$GET_TAG_ON_CURRENT_COLUMN(<span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.CLASIFICACION&#x27;</span>) = <span class="s">&#x27;PII&#x27;</span>
+        <span class="k">THEN</span> <span class="k">IFF</span>(<span class="k">CURRENT_ROLE</span>() <span class="k">IN</span> (<span class="s">&#x27;ACCOUNTADMIN&#x27;</span>, <span class="s">&#x27;RL_SEGURIDAD&#x27;</span>), val, <span class="s">&#x27;[PROTEGIDO]&#x27;</span>)
+    <span class="k">ELSE</span> val
+<span class="k">END</span>;
+
+<span class="c">-- se adjunta a la ETIQUETA, no a la columna</span>
+<span class="k">ALTER</span> <span class="k">TAG</span> CB_PLATAFORMA.GOBIERNO.CLASIFICACION
+    <span class="k">SET</span> <span class="k">MASKING</span><span class="k"> POLICY</span> CB_PLATAFORMA.GOBIERNO.MP_POR_CLASIFICACION FORCE;</code></pre><div class="nota"><b>Atencion.</b> Para iterar el contenido de la politica usar <code>ALTER MASKING POLICY ... SET BODY -&gt; ...</code>. Un <code>CREATE OR REPLACE</code> falla cuando la politica ya esta adjunta a una etiqueta.</div><p>Ahora se comprueba con los tres roles. Ninguna columna fue modificada: cambia lo que cada rol recibe.</p><pre data-titulo="T1 paso 2: Una politica para todo lo que la clasificacion marque"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Seguridad investiga personas, no numeros de tarjeta</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_SEGURIDAD;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+<span class="k">SELECT</span> PAN, DOCUMENTO, EMAIL <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES <span class="k">LIMIT</span> 3;</code></pre><pre data-titulo="T1 paso 2: Una politica para todo lo que la clasificacion marque"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el analista no necesita ninguno de los dos</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_ANALISTA;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+<span class="k">SELECT</span> PAN, DOCUMENTO, EMAIL <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES <span class="k">LIMIT</span> 3;</code></pre><div class="esp"><b>Resultado esperado.</b> <code>RL_SEGURIDAD</code> ve <code>**** **** **** 1357</code> y el documento y el correo en claro. <code>RL_ANALISTA</code> ve el PAN enmascarado y <code>[PROTEGIDO]</code> en los dos campos personales. Una politica, dos resultados, cero cambios en las tablas.</div><div class="nota"><b>Atencion.</b> No usar <code>IS_ROLE_IN_SESSION()</code> para estas decisiones: tambien evalua los <b>roles secundarios</b>, asi que un analista que tenga concedido el rol de seguridad veria el dato en claro. Con <code>CURRENT_ROLE()</code> la decision es explicita. Es exactamente el principio de verificacion explicita del criterio 2.</div><pre data-titulo="T1 paso 2: Una politica para todo lo que la clasificacion marque"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T1&#x27;</span>,
+    <span class="s">&#x27;Enmascaramiento dinamico por etiqueta con una sola politica&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.MP_POR_CLASIFICACION sobre la etiqueta CLASIFICACION&#x27;</span>,
+    <span class="s">&#x27;Una politica cubre PAN y PII en cualquier tabla donde la clasificacion ponga la etiqueta. Verificado con RL_SEGURIDAD y RL_ANALISTA&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 3.4 enmascaramiento dinamico y 4.8 policy-as-code&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Cuantos objetos hay que crear para proteger una columna nueva.</b> Pidan que agreguen una columna con PAN a una tabla cualquiera y midan cuanto tarda en quedar protegida sin que nadie escriba una politica. Si la respuesta implica editar una lista, correr un job o abrir un ticket, eso no es gobierno automatizado: es gobierno documental, que es precisamente lo que el criterio 1 descalifica.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Segmentacion por territorio en la misma tabla</h2><div class="obj">Que dos roles consulten la misma tabla y obtengan universos distintos.</div></div>
+    <div class="min">5 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T1 paso 3: Segmentacion por territorio en la misma tabla"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- el alcance vive en una tabla de mapeo, no en el codigo de la politica:</span>
+<span class="c">-- ampliar el territorio de un rol es un <span class="k">INSERT</span>, no un despliegue</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> CB_PLATAFORMA.GOBIERNO.MAPEO_TERRITORIO (
+    ROL          VARCHAR(100),
+    DEPARTAMENTO VARCHAR(60)
+) <span class="k">COMMENT</span> = <span class="s">&#x27;Alcance territorial por rol. Insumo de la politica de fila&#x27;</span>;
+
+<span class="k">DELETE</span> <span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.MAPEO_TERRITORIO;
+<span class="k">INSERT</span> INTO CB_PLATAFORMA.GOBIERNO.MAPEO_TERRITORIO VALUES
+    (<span class="s">&#x27;RL_ANALISTA&#x27;</span>, <span class="s">&#x27;CUNDINAMARCA&#x27;</span>),
+    (<span class="s">&#x27;RL_ANALISTA&#x27;</span>, <span class="s">&#x27;ANTIOQUIA&#x27;</span>),
+    (<span class="s">&#x27;RL_NEGOCIO&#x27;</span>,  <span class="s">&#x27;CUNDINAMARCA&#x27;</span>);
+
+<span class="k">CREATE</span> <span class="k">ROW ACCESS</span><span class="k"> POLICY</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> CB_PLATAFORMA.GOBIERNO.RAP_TERRITORIO
+<span class="k">AS</span> (departamento VARCHAR) <span class="k">RETURNS</span> BOOLEAN -&gt;
+    <span class="k">CURRENT_ROLE</span>() <span class="k">IN</span> (<span class="s">&#x27;ACCOUNTADMIN&#x27;</span>, <span class="s">&#x27;RL_SEGURIDAD&#x27;</span>, <span class="s">&#x27;RL_INGENIERIA&#x27;</span>, <span class="s">&#x27;RL_ARQUITECTURA&#x27;</span>)
+    <span class="k">OR</span> <span class="k">EXISTS</span> (<span class="k">SELECT</span> 1
+               <span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.MAPEO_TERRITORIO m
+               <span class="k">WHERE</span> m.ROL = <span class="k">CURRENT_ROLE</span>()
+                 <span class="k">AND</span> m.DEPARTAMENTO = departamento);
+
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+    ADD <span class="k">ROW ACCESS</span><span class="k"> POLICY</span> CB_PLATAFORMA.GOBIERNO.RAP_TERRITORIO <span class="k">ON</span> (DEPARTAMENTO);</code></pre><pre data-titulo="T1 paso 3: Segmentacion por territorio en la misma tabla"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la misma consulta, tres roles</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_SEGURIDAD;
+<span class="k">SELECT</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> DEPARTAMENTO) <span class="k">AS</span> DEPARTAMENTOS, <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES;</code></pre><pre data-titulo="T1 paso 3: Segmentacion por territorio en la misma tabla"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> RL_ANALISTA;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+<span class="k">SELECT</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> DEPARTAMENTO) <span class="k">AS</span> DEPARTAMENTOS, <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES;</code></pre><div class="esp"><b>Resultado esperado.</b> Seguridad ve los 24 departamentos y el total de filas. El analista ve 2 departamentos y aproximadamente el 43% de las filas. Nadie filtro nada en la consulta: la plataforma reescribio el predicado.</div><pre data-titulo="T1 paso 3: Segmentacion por territorio en la misma tabla"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T1&#x27;</span>,
+    <span class="s">&#x27;Segmentacion de filas por territorio con tabla de mapeo&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.RAP_TERRITORIO sobre AUTORIZACIONES&#x27;</span>,
+    <span class="s">&#x27;Misma tabla y misma consulta: Seguridad 24 departamentos, analista 2. El alcance se administra con datos, no con codigo&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 4.4 RBAC y ABAC de minimo privilegio&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que el alcance se administre con datos y no con codigo.</b> Pidan ampliar el territorio de un analista durante la sesion. Si hay que editar la definicion de la politica, versionarla y volver a desplegarla, cada cambio de estructura comercial se convierte en un cambio de software.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">4</div>
+    <div class="tit"><h2>El mismo control por SQL, por BI y por la IA</h2><div class="obj">Comprobar que la IA no es una puerta lateral al dato sensible.</div></div>
+    <div class="min">5 min</div>
+  </header>
+  <div class="cuerpo"><p>Este es el paso que el criterio 1 pide de forma explicita: que el acceso granular se respete <b>transversalmente</b> en analitica, BI e IA sobre el mismo catalogo. Se prueba el camino mas hostil posible: pedirle al modelo que repita el numero de tarjeta.</p><pre data-titulo="T1 paso 4: El mismo control por SQL, por BI y por la IA"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- camino BI: la vista de consumo que usarian Power BI o Tableau</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_ANALISTA;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+<span class="k">SELECT</span> PAN, RAZON_SOCIAL, MONTO_COP
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VW_AUTORIZACIONES_360
+<span class="k">LIMIT</span> 3;</code></pre><div class="esp"><b>Resultado esperado.</b> La vista hereda la politica. El PAN sale enmascarado sin que la vista sepa nada de politicas.</div><pre data-titulo="T1 paso 4: El mismo control por SQL, por BI y por la IA"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- camino IA: se le pide al modelo que devuelva el PAN tal cual</span>
+<span class="k">SELECT</span> AI_COMPLETE(<span class="s">&#x27;claude-4-sonnet&#x27;</span>,
+                   <span class="s">&#x27;Repite exactamente este valor, sin cambiar nada: &#x27;</span> || PAN) <span class="k">AS</span> LO_QUE_RESPONDE_LA_IA,
+       PAN <span class="k">AS</span> LO_QUE_RECIBIO_LA_IA
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES
+<span class="k">LIMIT</span> 1;</code></pre><div class="esp"><b>Resultado esperado.</b> El modelo responde <code>"**** **** **** 1357"</code>. <b>La IA nunca vio el numero.</b> El enmascaramiento ocurre antes de que el valor entre al prompt, porque la politica vive en el motor de datos y no en la aplicacion que consulta.</div><div class="nota"><b>Atencion.</b> Verificar el nombre del modelo disponible en la cuenta. <code>claude-3-5-sonnet</code> no existe en esta region y devuelve <code>unknown model</code>; el vigente es <code>claude-4-sonnet</code>.</div><pre data-titulo="T1 paso 4: El mismo control por SQL, por BI y por la IA"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T1&#x27;</span>,
+    <span class="s">&#x27;La politica de enmascaramiento aplica igual a SQL, BI e IA&#x27;</span>,
+    <span class="s">&#x27;VW_AUTORIZACIONES_360 y AI_COMPLETE sobre la columna PAN&#x27;</span>,
+    <span class="s">&#x27;El modelo recibio el valor ya enmascarado. El control esta en el motor de datos, no en la aplicacion&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 2.5 acceso granular transversal a analitica BI e IA&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Donde vive el control cuando el consumidor es un agente.</b> Pidan exactamente esta prueba: un prompt que intente sacar el dato sensible. Si la proteccion depende de que el agente, el notebook o la herramienta de BI se conecten por un camino especifico, entonces cada nueva herramienta abre un hueco nuevo y el gobierno hay que rehacerlo por cada consumidor.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">5</div>
+    <div class="tit"><h2>Quien accedio, con que rol y desde donde</h2><div class="obj">Reconstruir el rastro de acceso al dato de tarjeta sin instrumentar nada.</div></div>
+    <div class="min">4 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T1 paso 5: Quien accedio, con que rol y desde donde"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- rastro inmediato: quien consulto la tabla con PAN en esta sesion de trabajo</span>
+<span class="k">SELECT</span> USER_NAME,
+       ROLE_NAME,
+       <span class="k">COUNT</span>(*)         <span class="k">AS</span> CONSULTAS,
+       <span class="k">MIN</span>(START_TIME)  <span class="k">AS</span> PRIMERA,
+       <span class="k">MAX</span>(START_TIME)  <span class="k">AS</span> ULTIMA
+<span class="k">FROM</span> <span class="k">TABLE</span>(CB_PLATAFORMA.INFORMATION_SCHEMA.QUERY_HISTORY(RESULT_LIMIT =&gt; 1000))
+<span class="k">WHERE</span> QUERY_TEXT <span class="k">ILIKE</span> <span class="s">&#x27;%TARJETAHABIENTES%&#x27;</span>
+  <span class="k">AND</span> EXECUTION_STATUS = <span class="s">&#x27;SUCCESS&#x27;</span>
+<span class="k">GROUP BY</span> 1, 2
+<span class="k">ORDER BY</span> CONSULTAS <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> Aparece una fila por rol usado en el track, con su conteo y sus tiempos. Los accesos hechos hace un minuto ya estan ahi.</div><div class="nota"><b>Atencion.</b> Para el linaje columna a columna y el detalle de columnas efectivamente leidas se usa <code>SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY</code>, que tiene <b>latencia de hasta tres horas</b>. En una sesion de 30 minutos no alcanza a poblarse, por eso el paso usa <code>INFORMATION_SCHEMA.QUERY_HISTORY</code>, que es inmediato. Vale decirlo en vez de mostrar una tabla vacia.</div><pre data-titulo="T1 paso 5: Quien accedio, con que rol y desde donde"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- retencion de auditoria: el pliego pide 3 meses en linea y 9 fuera</span>
+<span class="k">SHOW</span> PARAMETERS <span class="k">LIKE</span> <span class="s">&#x27;DATA_RETENTION_TIME_IN_DAYS&#x27;</span> <span class="k">IN</span> <span class="k">DATABASE</span> CB_SILVER;</code></pre><pre data-titulo="T1 paso 5: Quien accedio, con que rol y desde donde"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T1&#x27;</span>,
+    <span class="s">&#x27;Trazabilidad de acceso al dato de tarjeta por usuario y rol&#x27;</span>,
+    <span class="s">&#x27;INFORMATION_SCHEMA.QUERY_HISTORY sobre TARJETAHABIENTES&#x27;</span>,
+    <span class="s">&#x27;Rastro inmediato de quien consulto la tabla con PAN y con que rol, sin instrumentar la aplicacion&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 4.5 trazabilidad y auditoria de accesos&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Cuanta latencia tiene la auditoria y quien la instrumenta.</b> Pregunten cuanto tarda en aparecer un acceso en el log, si el rastro se genera solo o depende de que la aplicacion lo reporte, y si un usuario con privilegios puede borrar su propio rastro.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">6</div>
+    <div class="tit"><h2>Borrado seguro verificable</h2><div class="obj">Demostrar que un dato borrado no se puede recuperar. Es requisito eliminatorio.</div></div>
+    <div class="min">4 min</div>
+  </header>
+  <div class="cuerpo"><p>El requisito eliminatorio 4 pide borrado seguro <b>verificable</b>. Verificable significa que se pueda intentar recuperar el dato y fallar, delante de todos.</p><pre data-titulo="T1 paso 6: Borrado seguro verificable"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_GOBIERNO;
+
+<span class="c">-- extraccion temporal de datos de tarjeta, del tipo que se crea para un</span>
+<span class="c">-- analisis puntual y despues hay que eliminar sin rastro</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.PAN_TEMPORAL
+    DATA_RETENTION_TIME_IN_DAYS = 0
+<span class="k">AS</span> <span class="k">SELECT</span> TARJETAHABIENTE_ID, PAN
+   <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES
+   <span class="k">LIMIT</span> 1000;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS_ANTES <span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.PAN_TEMPORAL;
+
+<span class="c">-- la ventana de recuperacion es cero por construccion, no por procedimiento</span>
+<span class="k">SHOW</span> TABLES <span class="k">LIKE</span> <span class="s">&#x27;PAN_TEMPORAL&#x27;</span> <span class="k">IN</span> <span class="k">SCHEMA</span> CB_SILVER.ADQUIRENCIA;
+<span class="k">SELECT</span> &quot;name&quot;, &quot;retention_time&quot; <span class="k">FROM</span> <span class="k">TABLE</span>(RESULT_SCAN(LAST_QUERY_ID()));</code></pre><div class="esp"><b>Resultado esperado.</b> <code>retention_time = 0</code>.</div><pre data-titulo="T1 paso 6: Borrado seguro verificable"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">DROP</span> <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.PAN_TEMPORAL;
+
+<span class="c">-- intentar recuperarla: debe fallar</span>
+UNDROP <span class="k">TABLE</span> CB_SILVER.ADQUIRENCIA.PAN_TEMPORAL;</code></pre><div class="esp"><b>Resultado esperado.</b> <code>090025: Table PAN_TEMPORAL did not exist or was purged.</code> <b>El error es el resultado buscado.</b> No hay Time Travel, no hay Fail-safe, no hay recuperacion por soporte.</div><div class="nota"><b>Atencion.</b> Este mismo control es el que sostiene el derecho al olvido: la ventana de recuperacion se declara en el objeto y la plataforma la respeta, sin depender de que alguien ejecute un procedimiento de purga.</div><pre data-titulo="T1 paso 6: Borrado seguro verificable"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T1&#x27;</span>,
+    <span class="s">&#x27;Borrado seguro verificable de una extraccion con dato de tarjeta&#x27;</span>,
+    <span class="s">&#x27;CB_SILVER.ADQUIRENCIA.PAN_TEMPORAL con DATA_RETENTION_TIME_IN_DAYS = 0&#x27;</span>,
+    <span class="s">&#x27;UNDROP fallo con did not exist or was purged. Sin Time Travel ni Fail-safe: la ventana de recuperacion es cero por construccion&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 3.6 borrado seguro y derecho al olvido (eliminatorio)&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que el borrado se pueda comprobar intentando recuperar el dato.</b> Muchas plataformas responden con la politica de retencion del almacenamiento subyacente, que no es lo mismo. Pidan crear una tabla, borrarla e intentar recuperarla en la sesion. Si la respuesta es que hay que abrir un caso con soporte para purgar, eso no es borrado verificable.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Al terminar, este track deja registrada la evidencia de cada paso con el usuario y el rol que lo ejecuto. Ese es el artefacto que se entrega al cierre del track.</p>
+  <pre data-titulo="T1: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T1&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T1&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T1 Gobierno y Zero Trust<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T1';
+var SQL_NOMBRE='T1_gobierno_y_zero_trust.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T1 - Gobierno y Zero Trust\n\n   Equipo    : Seguridad de la Informacion\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_seguridad.sql en esta cuenta\n\n   Clasificar el dato sensible sin decirle donde esta, proteger con una sola politica todo lo que la clasificacion marque, y comprobar que ese control se respeta por igual desde SQL, desde BI y desde la IA.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T1'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T1';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

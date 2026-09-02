@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Runbook del facilitador | Workshop CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; RFP 10010806 &middot; Uso interno</div>
+  <h1>Runbook del facilitador</h1>
+  <div class="sub">Lo que hay que tener resuelto antes de entrar, que recortar si un track
+  se atrasa, y los errores que son el resultado esperado.</div>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>La regla que define el rol de Snowflake</h3>
+    <p style="margin:0">El Anexo 11 dice, para siete de los ocho tracks:
+    <i>"Habilita y acompana; no ejecuta por el equipo"</i>. El criterio 16 califica
+    <i>"autonomia real del equipo sin intervencion del proveedor"</i> en TODOS los tracks.
+    <b>No tomar el teclado.</b> Si un participante se traba, senalar el paso en la guia; si
+    la guia no alcanza, ese paso esta mal escrito y hay que anotarlo, no suplirlo.</p>
+    <p style="margin:8px 0 0">Excepcion unica: el <b>Track 8</b>, donde el pliego pide
+    explicitamente que el proveedor <i>"ejecuta la muestra de migracion con el equipo"</i>.</p>
+  </div>
+
+  <h2 class="sec">Antes de la sesion</h2>
+  <ul>
+    <li><b>Cuatro cuentas provisionadas</b> con usuarios nominales para cada participante.
+        No usuarios compartidos: el criterio 1 exige demostrar trazabilidad por persona.</li>
+    <li><b>Los cuatro scripts de instalacion ejecutados</b> y su semaforo en OK. Toma menos
+        de 10 minutos por cuenta.</li>
+    <li><b>Openflow: el deployment aprovisionado.</b> Es la unica pieza pre-hecha del T2 y
+        toma mas que el track completo. Verificarlo con
+        <code>SHOW OPENFLOW DATA PLANE INTEGRATIONS</code>.</li>
+    <li><b>El volumen externo del T3 creado</b> y con permisos de nube verificados con una
+        tabla Iceberg de prueba.</li>
+    <li><b>El identificador de la cuenta consumidora del T5</b> a mano, para el
+        <code>ALTER SHARE ADD ACCOUNTS</code>.</li>
+    <li><b>La muestra Cloudera de CredibanCo cargada</b>, si ya la entregaron. Si no, se usa
+        la muestra equivalente que viene con el HOL y se dice que es equivalente.</li>
+    <li><b>Modelo de IA disponible verificado.</b> <code>claude-3-5-sonnet</code> no existe
+        en todas las regiones; el vigente es <code>claude-4-sonnet</code>. Correr un
+        <code>AI_COMPLETE</code> de prueba.</li>
+  </ul>
+
+  <h2 class="sec">Si un track se atrasa</h2>
+  <p>Cada track dura 30 minutos y el Anexo 11 exige que todos duren lo mismo: no se puede
+  robar tiempo de otro. Esta tabla dice que sacrificar primero.</p>
+  <div class="tabla-scroll">
+  <table>
+    <tr><th>Track</th><th>Que se puede recortar</th><th>Que NO se recorta</th>
+        <th>Ojo con esto</th></tr>
+    <tr><td><b>T0</b> Modulo general</td><td>Paso 3 (roles y etiquetas) se puede resumir mostrando solo las etiquetas.</td><td>Ninguno: es el que prepara todo lo demas.</td><td>El PAN se ve completo porque todavia no hay politicas. Decirlo antes de que alguien pregunte.</td></tr><tr><td><b>T1</b> Gobierno y Zero Trust</td><td>Paso 5 (auditoria) si el tiempo aprieta.</td><td>Pasos 1, 2 y 6: son los tres requisitos eliminatorios.</td><td>El <code>UNDROP</code> del paso 6 DEBE fallar. Es la prueba del borrado seguro, no un error.</td></tr><tr><td><b>T2</b> Ingenieria de datos</td><td>Paso 6 (linaje) se puede mostrar en Snowsight en dos minutos.</td><td>Pasos 1, 3 y 4: batch, CDC y conformacion son el criterio 4 completo.</td><td>El <code>COPY</code> repetido no duplica: si alguien lo corre dos veces, es una oportunidad para mostrar la idempotencia.</td></tr><tr><td><b>T3</b> Arquitectura y Data Fabric</td><td>Paso 3 (catalogo) si el tiempo aprieta.</td><td>Paso 1: la ruta del <code>metadata.json</code> es el argumento de portabilidad.</td><td>El <code>CREATE TABLE</code> del paso 2 DEBE fallar con privilegios insuficientes: demuestra el limite del dominio.</td></tr><tr><td><b>T4</b> Analitica, ML e IA</td><td>Paso 3 (documentos) se puede reducir a 10 expedientes.</td><td>Pasos 1 y 2: entrenar y explicar es el criterio 7.</td><td>El recall de la clase 1 ronda 0,47. No esconderlo: es la conversacion correcta con el negocio y da credibilidad.</td></tr><tr><td><b>T5</b> Monetizacion</td><td>Paso 3 (catalogo y API) si el tiempo aprieta.</td><td>Pasos 1 y 2: sharing sin copia y cruce sin exponer identidades.</td><td>El <code>ALTER SHARE ADD ACCOUNTS</code> necesita el identificador de la cuenta consumidora. Tenerlo a mano ANTES de la sesion.</td></tr><tr><td><b>T6</b> Autoservicio</td><td>Paso 1 se puede acortar mostrando solo el catalogo.</td><td>Pasos 2 y 3: aprovisionamiento sin intervencion y lenguaje natural.</td><td>La consulta a <code>CUSTOMER_360</code> del paso 1 DEBE fallar: es lo que hace significativo el aprovisionamiento del paso 2.</td></tr><tr><td><b>T7</b> Admin, DataOps y FinOps</td><td>Paso 6 (observabilidad) se solapa con el paso 1.</td><td>Pasos 1, 3 y 4: aislamiento, chargeback y cuotas.</td><td>Si en el perfil aparece <code>DynamicSecureView</code> en vez de <code>TableScan</code>, hay una politica de fila adjunta: medir el pruning sobre la tabla de ventas.</td></tr><tr><td><b>T8</b> Migracion</td><td>Paso 3 (componentes y olas) se puede entregar impreso.</td><td>Paso 2: la reconciliacion es el criterio 14.</td><td>Es el UNICO track donde Snowflake ejecuta con el equipo. En los otros ocho, no tocar el teclado.</td></tr>
+  </table>
+  </div>
+
+  <h2 class="sec">Errores que son el resultado esperado</h2>
+  <p>Cuatro pasos del workshop estan disenados para fallar. Si el participante los ve como
+  un problema, se pierde el punto. Anunciarlos antes de ejecutarlos.</p>
+  <div class="tabla-scroll">
+  <table>
+    <tr><th>Donde</th><th>Que error sale</th><th>Que demuestra</th></tr>
+    <tr><td>T1 paso 6</td><td><code>090025 Table ... did not exist or was purged</code></td>
+        <td>Borrado seguro verificable. Requisito eliminatorio.</td></tr>
+    <tr><td>T3 paso 2</td><td><code>003001 Insufficient privileges to operate on schema</code></td>
+        <td>El limite del dominio es real, no decorativo.</td></tr>
+    <tr><td>T6 paso 1</td><td>La consulta a <code>CUSTOMER_360</code> no devuelve datos</td>
+        <td>El catalogo y el motor dicen lo mismo. Hace significativo el paso 2.</td></tr>
+    <tr><td>T4 paso 4</td><td>El agente responde que el dato no esta en el modelo</td>
+        <td>No inventa. Es la prueba que separa un agente util de uno peligroso.</td></tr>
+  </table>
+  </div>
+
+  <h2 class="sec">Cosas que aprendimos construyendo esto</h2>
+  <p>Son trampas reales que aparecieron al validar. Vale conocerlas para no improvisar.</p>
+  <ul>
+    <li>El <b>clasificador automatico de caja no detecta el PAN</b> ni cedula, celular o NIT:
+        solo reconocio el correo. Se resuelve con un clasificador propio de cuatro reglas, y
+        eso es mejor argumento que el clasificador de caja.</li>
+    <li><b>No se puede colgar una politica de la etiqueta compartida</b>
+        <code>SNOWFLAKE.CORE.SEMANTIC_CATEGORY</code>. Se propaga a una etiqueta propia.</li>
+    <li><b><code>IS_ROLE_IN_SESSION</code> tambien evalua los roles secundarios</b>: un
+        analista con el rol de seguridad concedido veria el PAN. Usar
+        <code>CURRENT_ROLE()</code>.</li>
+    <li><b>El escaner legado de Parquet corrompe los timestamps</b> sin reportar error. El
+        file format lleva <code>USE_VECTORIZED_SCANNER = TRUE</code>.</li>
+    <li><b><code>SYSTEM$GET_TAG</code> exige el nombre del objeto como literal</b>: no sirve
+        dentro de un join. Por eso los inventarios se materializan en una vista.</li>
+    <li>Las columnas de <b>pruning y derrame no estan en
+        <code>INFORMATION_SCHEMA.QUERY_HISTORY</code></b>: se leen de
+        <code>GET_QUERY_OPERATOR_STATS</code>, que es inmediato.</li>
+    <li><b>Las tablas Iceberg rechazan <code>NUMBER</code> sin precision.</b></li>
+  </ul>
+
+  <h2 class="sec">Al cierre de cada track</h2>
+  <p>El numeral 3.2 del Anexo 11 obliga a entregar la evidencia de lo ejecutado. Cada guia
+  trae el boton <b>Descargar evidencia del track</b>, que genera la consulta de cierre. La
+  bitacora se llena sola mientras el equipo trabaja: registra el paso, el objeto, el
+  resultado, el requisito del Anexo 10 acreditado, el usuario y el rol.</p>
+</div>
+
+<footer>Snowflake Colombia &middot; Runbook del facilitador &middot; RFP 10010806</footer>
+</body>
+</html>

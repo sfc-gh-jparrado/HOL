@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workshop de Evaluacion Funcional | CredibanCo RFP 10010806</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+
+.hero h1{font-size:34px}
+table td:first-child{white-space:nowrap}
+.kpi{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0}
+.kpi div{flex:1;min-width:150px;background:#F5F7F9;border-radius:8px;padding:14px 16px}
+.kpi b{display:block;font-size:26px;color:#11567F}
+.kpi span{font-size:13px;color:#5A6C77}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; RFP 10010806 Plataforma de Datos</div>
+  <h1>Workshop de Evaluacion Funcional</h1>
+  <div class="sub">Ocho tracks de igual duracion mas un modulo general, operados por los
+  equipos de CredibanCo sobre datos sinteticos de adquirencia. Cada equipo trabaja en su
+  propia cuenta y ejecuta sus propios pasos.</div>
+  <div class="chips">
+    <span class="chip">4 horas 40 minutos</span>
+    <span class="chip">8 tracks + general</span>
+    <span class="chip">4 cuentas</span>
+    <span class="chip">40,4 millones de autorizaciones</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="kpi">
+    <div><b>4h40</b><span>General 25 min mas ocho tracks de 30 min. El Anexo 11 exige igual duracion por track.</span></div>
+    <div><b>60%</b><span>de la calificacion tecnica se decide aqui, no en la propuesta escrita.</span></div>
+    <div><b>16</b><span>criterios de la rubrica, cada uno trazado a los pasos que lo acreditan.</span></div>
+    <div><b>0</b><span>pasos ejecutados por el proveedor, salvo el Track 8 donde el pliego lo pide.</span></div>
+  </div>
+
+  <h2 class="sec">Los nueve modulos</h2>
+  <div class="tabla-scroll">
+  <table>
+    <tr><th>#</th><th>Track</th><th>Equipo</th><th>Duracion</th><th>Cuenta</th>
+        <th>Que se demuestra operando</th><th>Script</th></tr>
+    <tr>
+  <td><b>T0</b></td>
+  <td><a href="T0_modulo_general_transversal.html">Modulo general transversal</a></td>
+  <td>Todos los equipos</td>
+  <td>25 min</td>
+  <td><code>la suya</code></td>
+  <td>Arquitectura objetivo, navegacion, dominios y flujo end-to-end del dato</td>
+  <td><a href="T0_modulo_general_transversal.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T1</b></td>
+  <td><a href="T1_gobierno_y_zero_trust.html">Gobierno y Zero Trust</a></td>
+  <td>Seguridad de la Informacion</td>
+  <td>30 min</td>
+  <td><code>CTA_SEGURIDAD</code></td>
+  <td>Clasificacion automatica extensible, enmascaramiento por etiqueta, politica de fila, borrado seguro</td>
+  <td><a href="T1_gobierno_y_zero_trust.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T2</b></td>
+  <td><a href="T2_ingenieria_de_datos.html">Ingenieria de datos</a></td>
+  <td>Data &amp; Analytics</td>
+  <td>30 min</td>
+  <td><code>CTA_INGENIERIA</code></td>
+  <td>Batch, CDC y flujo continuo en un pipeline, calidad embebida, linaje automatico</td>
+  <td><a href="T2_ingenieria_de_datos.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T3</b></td>
+  <td><a href="T3_arquitectura_y_data_fabric.html">Arquitectura y Data Fabric</a></td>
+  <td>Arquitectura</td>
+  <td>30 min</td>
+  <td><code>CTA_ARQUITECTURA</code></td>
+  <td>Iceberg sobre el bucket propio, dominios federados, catalogo de casos de uso</td>
+  <td><a href="T3_arquitectura_y_data_fabric.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T4</b></td>
+  <td><a href="T4_analitica_ml_e_ia.html">Analitica, ML e IA</a></td>
+  <td>Data &amp; Analytics</td>
+  <td>30 min</td>
+  <td><code>CTA_INGENIERIA</code></td>
+  <td>Modelo de churn explicable, lectura de documentos SARLAFT, capa semantica</td>
+  <td><a href="T4_analitica_ml_e_ia.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T5</b></td>
+  <td><a href="T5_monetizacion_y_exposicion.html">Monetizacion y exposicion</a></td>
+  <td>Arquitectura</td>
+  <td>30 min</td>
+  <td><code>CTA_ARQUITECTURA &rarr; CTA_SEGURIDAD</code></td>
+  <td>Share sin copia entre cuentas, cruce sin exponer identidades, exposicion por API</td>
+  <td><a href="T5_monetizacion_y_exposicion.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T6</b></td>
+  <td><a href="T6_autoservicio_y_aprovisionamiento.html">Autoservicio y aprovisionamiento</a></td>
+  <td>Infraestructura y Experiencia</td>
+  <td>30 min</td>
+  <td><code>CTA_INFRA</code></td>
+  <td>Descubrir-solicitar-consumir, aprovisionamiento sin intervencion, lenguaje natural</td>
+  <td><a href="T6_autoservicio_y_aprovisionamiento.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T7</b></td>
+  <td><a href="T7_administracion_dataops_y_finops.html">Administracion, DataOps y FinOps</a></td>
+  <td>Infraestructura</td>
+  <td>30 min</td>
+  <td><code>CTA_INFRA</code></td>
+  <td>Aislamiento de cargas, chargeback por dominio, cuotas, ambientes con volumen real</td>
+  <td><a href="T7_administracion_dataops_y_finops.sql">SQL</a></td>
+</tr><tr>
+  <td><b>T8</b></td>
+  <td><a href="T8_migracion_desde_cloudera.html">Migracion desde Cloudera</a></td>
+  <td>Arquitectura</td>
+  <td>30 min</td>
+  <td><code>CTA_ARQUITECTURA</code></td>
+  <td>Assessment por patron, conversion ejecutada y reconciliada fila por fila</td>
+  <td><a href="T8_migracion_desde_cloudera.sql">SQL</a></td>
+</tr>
+  </table>
+  </div>
+
+  <h2 class="sec">Como se reparten las cuentas</h2>
+  <p>Cada equipo tiene su cuenta y <b>solo instala lo que su track necesita</b>. La regla
+  es que cada cuenta carga desde el almacenamiento las capas que su track NO produce, y
+  deja vacias las que su track SI produce. Por eso Seguridad nunca despliega Openflow y
+  Data &amp; Analytics si construye el pipeline.</p>
+  <div class="tabla-scroll">
+  <table>
+    <tr><th>Cuenta</th><th>Equipo</th><th>Tracks</th><th>Script de instalacion</th>
+        <th>Que llega hecho y que no</th></tr>
+    <tr>
+  <td><code>CTA_SEGURIDAD</code></td>
+  <td>Seguridad de la Informacion</td>
+  <td>T1 y consumidor del share de T5</td>
+  <td><code>install_seguridad.sql</code></td>
+  <td>No instala Openflow ni construye silver: recibe la capa conformada</td>
+</tr><tr>
+  <td><code>CTA_INGENIERIA</code></td>
+  <td>Data &amp; Analytics</td>
+  <td>T2 y T4</td>
+  <td><code>install_ingenieria.sql</code></td>
+  <td>Diciembre de 2025 llega VACIO y el CDC sin aplicar: es el trabajo del track</td>
+</tr><tr>
+  <td><code>CTA_ARQUITECTURA</code></td>
+  <td>Arquitectura</td>
+  <td>T3, T5 y T8</td>
+  <td><code>install_arquitectura.sql</code></td>
+  <td>El volumen externo llega aprovisionado; las tablas Iceberg las crea el equipo</td>
+</tr><tr>
+  <td><code>CTA_INFRA</code></td>
+  <td>Infraestructura</td>
+  <td>T6 y T7</td>
+  <td><code>install_infra.sql</code></td>
+  <td>Los resource monitors y el sandbox los crea el equipo durante sus tracks</td>
+</tr>
+  </table>
+  </div>
+
+  <div class="caja">
+    <h3>El dato</h3>
+    <p style="margin:0">Adquirencia sintetica: <b>40,4 millones de autorizaciones</b> de 24
+    meses sobre <b>180.000 comercios</b>, <b>607.119 terminales</b> y <b>2,5 millones de
+    tarjetahabientes</b>, mas 45.000 operaciones de CDC, 300.000 eventos de autorizacion,
+    400 vouchers y 120 expedientes SARLAFT. El PAN es sintetico con digito de verificacion
+    valido y esta en claro a proposito: el consolidado de respuestas confirmo que la
+    plataforma debe contemplar dato de tarjeta en claro, asi que el control se demuestra
+    sobre el caso real y no sobre un token. <b>Sin PCI real, sin datos personales reales y
+    sin informacion productiva de CredibanCo.</b></p>
+  </div>
+
+  <div class="caja">
+    <h3>Antes de empezar</h3>
+    <ul style="margin:6px 0 0">
+      <li>Cada participante entra con su <b>usuario nominal</b>, no con uno compartido.</li>
+      <li>El script de instalacion de su cuenta ya corrio y su semaforo salio en OK.</li>
+      <li>La guia de cada track trae un boton para <b>descargar el SQL completo</b> y otro
+          para <b>descargar la evidencia</b> del track.</li>
+      <li>Cada paso registra su propia evidencia: al cierre de cada track la bitacora ya
+          esta lista para entregar, como exige el numeral 3.2 del Anexo 11.</li>
+    </ul>
+  </div>
+
+  <h2 class="sec">Material del facilitador</h2>
+  <ul>
+    <li><a href="runbook.html">Runbook del facilitador</a> &mdash; que hacer si un equipo
+        se atrasa, que paso es sacrificable en cada track, y los errores que son el
+        resultado esperado.</li>
+    <li><a href="competitivo.html">Preguntas verificables para comparar proveedores</a>
+        &mdash; consolidado de los recuadros de cada track.</li>
+  </ul>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva
+  de CredibanCo.
+</footer>
+</body>
+</html>

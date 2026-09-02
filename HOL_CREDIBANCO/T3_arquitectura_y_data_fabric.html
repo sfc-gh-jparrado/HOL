@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T3 - Arquitectura y Data Fabric | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T3 &middot; Arquitectura y Data Fabric</h1>
+  <div class="sub">Comprobar que el dato queda en formato abierto y legible por otros motores, y que los dominios pueden publicar y gobernar sus propios productos de datos sin pasar por un equipo central.</div>
+  <div class="chips"><span class="chip">Track 3</span><span class="chip">30 minutos</span><span class="chip">Criterio 6</span><span class="chip">Cuenta CTA_ARQUITECTURA</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Lo ejecuta el equipo de <b>Arquitectura</b>. Es el track donde se responde la pregunta que decide una migracion: <i>si manana queremos salir, como salimos</i>.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>6. Arquitectura de datos (Data Mesh / Data Fabric)</b> &mdash; dominios, productos de datos, exposicion federada, catalogo de negocio y catalogo de casos de uso operando.</li><li><b>16. Experiencia de uso</b> &mdash; que un dominio publique sin depender del equipo central.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>5.1 Lakehouse unificado sin fragmentacion.</li><li>5.2 Data mesh con dominios, productos con SLA y gobierno federado.</li><li>5.3 Formatos abiertos Apache Iceberg para portabilidad multi-engine y datos exportables.</li><li>5.9 Separacion de almacenamiento y computo con escalado independiente.</li><li>2.7 Dominios Data Fabric con gobierno federado.</li><li>2.9 Contratos de datos con SLA, ownership y versionamiento.</li></ul>
+  </div>
+
+  
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>El dato en formato abierto, sobre su propio almacenamiento</h2><div class="obj">Verificar que la tabla vive en Parquet e Iceberg en el bucket de CredibanCo.</div></div>
+    <div class="min">8 min</div>
+  </header>
+  <div class="cuerpo"><p>El requisito 5.3 pide formatos abiertos para evitar el bloqueo de proveedor y que los datos sean exportables. Se comprueba escribiendo una tabla real y mirando los archivos que quedan.</p><div class="nota"><b>Atencion.</b> El <b>volumen externo</b> se aprovisiona antes de la sesion porque depende de permisos de nube que no se resuelven en 30 minutos. Es la unica pieza pre-hecha de este track.</div><pre data-titulo="T3 paso 1: El dato en formato abierto, sobre su propio almacenamiento"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- el volumen externo apunta al bucket de CredibanCo: el dato no queda en un</span>
+<span class="c">-- almacenamiento opaco del proveedor</span>
+<span class="k">SHOW</span> EXTERNAL VOLUMES <span class="k">LIKE</span> <span class="s">&#x27;EV_HOL_CB&#x27;</span>;
+<span class="k">DESC</span> EXTERNAL VOLUME EV_HOL_CB;</code></pre><pre data-titulo="T3 paso 1: El dato en formato abierto, sobre su propio almacenamiento"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- tabla Iceberg gestionada por Snowflake sobre el bucket propio.</span>
+<span class="c">-- Gestionada significa que Snowflake mantiene los metadatos y las</span>
+<span class="c">-- optimizaciones, pero los archivos son Parquet y el catalogo es Iceberg.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">ICEBERG</span> <span class="k">TABLE</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG (
+    COMERCIO_ID           NUMBER(12,0),
+    RAZON_SOCIAL          STRING,
+    SECTOR                STRING,
+    CIUDAD_COMERCIO       STRING,
+    DEPARTAMENTO          STRING,
+    MES                   DATE,
+    TRX_TOTAL             NUMBER(18,0),
+    TRX_APROBADAS         NUMBER(18,0),
+    MONTO_APROBADO_COP    NUMBER(24,2),
+    TICKET_PROMEDIO_COP   NUMBER(18,2),
+    CLIENTES_UNICOS       NUMBER(18,0)
+)
+    CATALOG = <span class="s">&#x27;SNOWFLAKE&#x27;</span>
+    EXTERNAL_VOLUME = <span class="s">&#x27;EV_HOL_CB&#x27;</span>
+    BASE_LOCATION = <span class="s">&#x27;iceberg/ventas_mensuales/&#x27;</span>
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Producto de datos de ventas en formato abierto Apache Iceberg&#x27;</span>;
+
+<span class="k">INSERT</span> INTO CB_GOLD.PRODUCTOS.VENTAS_ICEBERG
+<span class="k">SELECT</span> COMERCIO_ID, RAZON_SOCIAL, SECTOR, CIUDAD_COMERCIO, DEPARTAMENTO, MES,
+       TRX_TOTAL, TRX_APROBADAS, MONTO_APROBADO_COP, TICKET_PROMEDIO_COP,
+       CLIENTES_UNICOS
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS_EN_ICEBERG <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG;</code></pre><pre data-titulo="T3 paso 1: El dato en formato abierto, sobre su propio almacenamiento"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- donde quedaron los archivos y cual es el metadato Iceberg vigente.</span>
+<span class="c">-- Esta ruta se le puede entregar a Spark, Trino, Flink o Athena tal cual.</span>
+<span class="k">SELECT</span> SYSTEM$GET_ICEBERG_TABLE_INFORMATION(<span class="s">&#x27;CB_GOLD.PRODUCTOS.VENTAS_ICEBERG&#x27;</span>) <span class="k">AS</span> UBICACION_Y_METADATO;</code></pre><div class="esp"><b>Resultado esperado.</b> Devuelve la ruta del archivo <code>metadata.json</code> dentro del bucket de CredibanCo. Ese archivo es el punto de entrada estandar de Iceberg: cualquier motor compatible lee la tabla desde ahi, sin pedirle permiso a Snowflake.</div><pre data-titulo="T3 paso 1: El dato en formato abierto, sobre su propio almacenamiento"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- se consulta igual que cualquier tabla, con el mismo SQL y las</span>
+<span class="c">-- mismas politicas de gobierno</span>
+<span class="k">SELECT</span> SECTOR,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID)            <span class="k">AS</span> COMERCIOS,
+       ROUND(<span class="k">SUM</span>(MONTO_APROBADO_COP)/1e9, 2)  <span class="k">AS</span> MILES_MILLONES_COP
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG
+<span class="k">GROUP BY</span> SECTOR
+<span class="k">ORDER BY</span> MILES_MILLONES_COP <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;
+
+<span class="c">-- y admite Time Travel como una tabla nativa: se borra algo y se recupera.</span>
+<span class="c">-- No se usa AT(OFFSET =&gt; -60) porque la tabla acaba de crearse y hace un</span>
+<span class="c">-- minuto no existia.</span>
+<span class="k">DELETE</span> <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG <span class="k">WHERE</span> SECTOR = <span class="s">&#x27;Joyerías&#x27;</span>;
+
+<span class="c">-- se guarda el identificador del borrado: solo un statement de DML sirve como</span>
+<span class="c">-- punto de referencia para Time Travel</span>
+<span class="k">SET</span> QID_BORRADO = LAST_QUERY_ID();
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> DESPUES_DEL_BORRADO <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> ANTES_DEL_BORRADO
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG BEFORE(STATEMENT =&gt; $QID_BORRADO);
+
+<span class="c">-- recuperar lo borrado desde la version anterior de la propia tabla</span>
+<span class="k">INSERT</span> INTO CB_GOLD.PRODUCTOS.VENTAS_ICEBERG
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG BEFORE(STATEMENT =&gt; $QID_BORRADO)
+<span class="k">WHERE</span> SECTOR = <span class="s">&#x27;Joyerías&#x27;</span>;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> RECUPERADO <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_ICEBERG;</code></pre><div class="esp"><b>Resultado esperado.</b> El conteo baja con el borrado, la consulta a la version anterior lo recupera y la tabla vuelve a su estado original. Time Travel funciona sobre una tabla en formato abierto, que es algo que Iceberg por si solo no da.</div><div class="nota"><b>Atencion.</b> La linea base de CredibanCo ya esta 98,5% en formatos columnares abiertos (83,2% Parquet, 15,3% ORC). Esta tabla demuestra que la migracion no cambia esa condicion: se sigue en Parquet abierto, con catalogo Iceberg y sobre almacenamiento de CredibanCo.</div><pre data-titulo="T3 paso 1: El dato en formato abierto, sobre su propio almacenamiento"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T3&#x27;</span>,
+    <span class="s">&#x27;Producto de datos en formato abierto Iceberg sobre almacenamiento propio&#x27;</span>,
+    <span class="s">&#x27;CB_GOLD.PRODUCTOS.VENTAS_ICEBERG en el volumen externo EV_HOL_CB&#x27;</span>,
+    <span class="s">&#x27;Tabla Iceberg gestionada con archivos Parquet en el bucket de CredibanCo, ruta de metadata.json entregable a otros motores y Time Travel disponible&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 5.3 formatos abiertos y portabilidad multi-engine&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Pidan la ruta del metadata.json y quien es dueno del bucket.</b> Es la prueba de salida. Tres preguntas concretas: los archivos quedan en una cuenta de nube de CredibanCo o del proveedor; que motor externo puede leer la tabla hoy mismo sin exportar; y si al escribir desde otro motor la plataforma sigue viendo la tabla. Una respuesta que empiece por <i>exportamos a...</i> no es portabilidad, es una copia mas que mantener.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Dominios con dueno propio</h2><div class="obj">Que cada dominio administre y publique lo suyo sin el equipo central.</div></div>
+    <div class="min">8 min</div>
+  </header>
+  <div class="cuerpo"><p>El data mesh se cae cuando el dominio necesita un ticket al equipo central para publicar. La prueba es que el dueno del dominio cree su producto y le de acceso a otro dominio por su cuenta.</p><pre data-titulo="T3 paso 2: Dominios con dueno propio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- los tres dominios y sus roles ya existen desde la instalacion</span>
+<span class="k">SHOW</span> SCHEMAS <span class="k">LIKE</span> <span class="s">&#x27;DOM_%&#x27;</span> <span class="k">IN</span> <span class="k">DATABASE</span> CB_GOLD;
+
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">WAREHOUSE</span> WH_ANALITICA <span class="k">TO</span> <span class="k">ROLE</span> RL_DOM_RIESGO;
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">WAREHOUSE</span> WH_ANALITICA <span class="k">TO</span> <span class="k">ROLE</span> RL_DOM_ADQUIRENCIA;
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">DATABASE</span> CB_SILVER <span class="k">TO</span> <span class="k">ROLE</span> RL_DOM_RIESGO;
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> CB_SILVER.ADQUIRENCIA <span class="k">TO</span> <span class="k">ROLE</span> RL_DOM_RIESGO;
+<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> <span class="k">ALL</span> TABLES <span class="k">IN</span> <span class="k">SCHEMA</span> CB_SILVER.ADQUIRENCIA <span class="k">TO</span> <span class="k">ROLE</span> RL_DOM_RIESGO;
+
+<span class="c">-- <span class="k">GRANT</span> no acepta IDENTIFIER(<span class="k">CURRENT_USER</span>()) directo: hay que pasar por una</span>
+<span class="c">-- variable de sesion</span>
+<span class="k">SET</span> MI_USUARIO = <span class="k">CURRENT_USER</span>();
+<span class="k">GRANT</span> <span class="k">ROLE</span> RL_DOM_RIESGO <span class="k">TO</span> <span class="k">USER</span> IDENTIFIER($MI_USUARIO);
+<span class="k">GRANT</span> <span class="k">ROLE</span> RL_DOM_ADQUIRENCIA <span class="k">TO</span> <span class="k">USER</span> IDENTIFIER($MI_USUARIO);</code></pre><pre data-titulo="T3 paso 2: Dominios con dueno propio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el dominio Riesgo publica su propio producto de datos.</span>
+<span class="c">-- Lo hace con SU rol, en SU esquema, sin intervencion del equipo de plataforma.</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_DOM_RIESGO;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_GOLD.DOM_RIESGO.SENALES_FRAUDE_COMERCIO
+    <span class="k">COMMENT</span> = <span class="s">&#x27;Producto de datos del dominio Riesgo. Senales de fraude agregadas por comercio. SLA de frescura: diaria 06:00. Dueno: Vicepresidencia de Riesgo&#x27;</span>
+<span class="k">AS</span>
+<span class="k">SELECT</span> COMERCIO_ID,
+       SECTOR,
+       CIUDAD_COMERCIO,
+       DEPARTAMENTO,
+       <span class="k">COUNT</span>(*)                                             <span class="k">AS</span> TRX_TOTAL,
+       COUNT_IF(MARCA_FRAUDE)                               <span class="k">AS</span> TRX_FRAUDE,
+       ROUND(100.0 * COUNT_IF(MARCA_FRAUDE) / <span class="k">COUNT</span>(*), 4)  <span class="k">AS</span> TASA_FRAUDE_PCT,
+       COUNT_IF(ES_INTERNACIONAL)                           <span class="k">AS</span> TRX_INTERNACIONALES,
+       COUNT_IF(MODO_ENTRADA = <span class="s">&#x27;ECOMMERCE&#x27;</span>)                 <span class="k">AS</span> TRX_ECOMMERCE,
+       ROUND(<span class="k">SUM</span>(<span class="k">IFF</span>(MARCA_FRAUDE, MONTO_COP, 0)) / 1e6, 2) <span class="k">AS</span> MONTO_FRAUDE_MILLONES
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES
+<span class="k">GROUP BY</span> COMERCIO_ID, SECTOR, CIUDAD_COMERCIO, DEPARTAMENTO
+<span class="k">HAVING</span> <span class="k">COUNT</span>(*) &gt;= 50;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> COMERCIOS_EN_EL_PRODUCTO <span class="k">FROM</span> CB_GOLD.DOM_RIESGO.SENALES_FRAUDE_COMERCIO;</code></pre><pre data-titulo="T3 paso 2: Dominios con dueno propio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el contrato del producto: quien es dueno, que frescura garantiza,</span>
+<span class="c">-- que clasificacion tiene. Sin contrato, un producto de datos es una tabla mas.</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> CB_GOLD.DOM_RIESGO.SENALES_FRAUDE_COMERCIO
+    <span class="k">SET</span> <span class="k">TAG</span> CB_PLATAFORMA.GOBIERNO.DOMINIO = <span class="s">&#x27;RIESGO&#x27;</span>,
+            CB_PLATAFORMA.GOBIERNO.CLASIFICACION = <span class="s">&#x27;FINANCIERO&#x27;</span>,
+            CB_PLATAFORMA.GOBIERNO.CONFIDENCIALIDAD = <span class="s">&#x27;CONFIDENCIAL&#x27;</span>,
+            CB_PLATAFORMA.GOBIERNO.PCI_CDE = <span class="s">&#x27;FUERA&#x27;</span>;
+
+<span class="c">-- y el dominio Riesgo decide, por su cuenta, quien lo consume</span>
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> CB_GOLD.DOM_RIESGO <span class="k">TO</span> <span class="k">ROLE</span> RL_DOM_ADQUIRENCIA;
+<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> <span class="k">TABLE</span> CB_GOLD.DOM_RIESGO.SENALES_FRAUDE_COMERCIO <span class="k">TO</span> <span class="k">ROLE</span> RL_DOM_ADQUIRENCIA;</code></pre><pre data-titulo="T3 paso 2: Dominios con dueno propio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el dominio Adquirencia consume el producto del dominio Riesgo</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_DOM_ADQUIRENCIA;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="k">SELECT</span> SECTOR,
+       <span class="k">COUNT</span>(*)                       <span class="k">AS</span> COMERCIOS,
+       ROUND(<span class="k">AVG</span>(TASA_FRAUDE_PCT), 4) <span class="k">AS</span> TASA_FRAUDE_PROMEDIO,
+       ROUND(<span class="k">SUM</span>(MONTO_FRAUDE_MILLONES), 1) <span class="k">AS</span> MONTO_FRAUDE_MILLONES
+<span class="k">FROM</span> CB_GOLD.DOM_RIESGO.SENALES_FRAUDE_COMERCIO
+<span class="k">GROUP BY</span> SECTOR
+<span class="k">ORDER BY</span> TASA_FRAUDE_PROMEDIO <span class="k">DESC</span>
+<span class="k">LIMIT</span> 10;</code></pre><div class="esp"><b>Resultado esperado.</b> El dominio Adquirencia lee el producto de Riesgo. El acceso lo otorgo el dueno del dato, no un administrador de plataforma: eso es gobierno federado y no gobierno centralizado con delegacion.</div><pre data-titulo="T3 paso 2: Dominios con dueno propio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- y NO puede escribir en el dominio ajeno</span>
+<span class="k">USE</span> <span class="k">ROLE</span> RL_DOM_ADQUIRENCIA;
+<span class="k">CREATE</span> <span class="k">TABLE</span> CB_GOLD.DOM_RIESGO.INTRUSION (X NUMBER(1,0));</code></pre><div class="esp"><b>Resultado esperado.</b> Falla con <code>Insufficient privileges</code>. Adquirencia puede <b>leer</b> el producto que Riesgo le compartio y nada mas: no puede escribir en su esquema. <b>El error es el resultado buscado.</b></div><div class="nota"><b>Atencion.</b> El limite del dominio es real: el rol de Adquirencia no ve el esquema de Cliente. Si este paso no fallara, el mesh seria decorativo.</div><pre data-titulo="T3 paso 2: Dominios con dueno propio"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T3&#x27;</span>,
+    <span class="s">&#x27;Dominio publica su producto de datos y otorga acceso por su cuenta&#x27;</span>,
+    <span class="s">&#x27;CB_GOLD.DOM_RIESGO.SENALES_FRAUDE_COMERCIO con contrato en etiquetas&#x27;</span>,
+    <span class="s">&#x27;El rol del dominio Riesgo creo el producto, le puso contrato y dueno, y concedio acceso al dominio Adquirencia sin intervencion del equipo central&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 5.2 data mesh con gobierno federado y 2.9 contratos de datos&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Que el dominio publique sin pasar por el equipo central.</b> Pidan que un rol de dominio cree un producto y le de acceso a otro dominio, en vivo. Si hace falta un rol de administrador para el <code>GRANT</code>, el mesh es un organigrama y no una arquitectura: el cuello de botella sigue donde estaba.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Catalogo de negocio y de casos de uso</h2><div class="obj">Que un no tecnico encuentre el dato y sepa si puede confiar en el.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><pre data-titulo="T3 paso 3: Catalogo de negocio y de casos de uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- catalogo de casos de uso de analitica: lo que el criterio 6 pide de forma</span>
+<span class="c">-- explicita y casi nadie tiene. Vincula caso de uso, dominio, producto y modelo.</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> CB_PLATAFORMA.GOBIERNO.CATALOGO_CASOS_USO (
+    CASO_USO_ID    VARCHAR(20) <span class="k">NOT</span> <span class="k">NULL</span>,
+    NOMBRE         VARCHAR(200),
+    DOMINIO        VARCHAR(40),
+    ESTADO         VARCHAR(30),
+    DESCRIPCION    VARCHAR(1000),
+    PRODUCTOS      VARCHAR(500) <span class="k">COMMENT</span> <span class="s">&#x27;Productos de datos que consume&#x27;</span>,
+    MODELO         VARCHAR(200) <span class="k">COMMENT</span> <span class="s">&#x27;Modelo o agente asociado, si aplica&#x27;</span>,
+    DUENO_NEGOCIO  VARCHAR(120),
+    <span class="k">CONSTRAINT</span> PK_CASOS_USO <span class="k">PRIMARY KEY</span> (CASO_USO_ID)
+) <span class="k">COMMENT</span> = <span class="s">&#x27;Catalogo de casos de uso de analitica de CredibanCo&#x27;</span>;
+
+<span class="k">MERGE</span> INTO CB_PLATAFORMA.GOBIERNO.CATALOGO_CASOS_USO t
+<span class="k">USING</span> (
+    <span class="k">SELECT</span> * <span class="k">FROM</span> VALUES
+      (<span class="s">&#x27;UC-01&#x27;</span>,<span class="s">&#x27;DaInsight&#x27;</span>,<span class="s">&#x27;MONETIZACION&#x27;</span>,<span class="s">&#x27;EN PRODUCCION&#x27;</span>,
+       <span class="s">&#x27;Analitica de comportamiento de compra comercializada a terceros.&#x27;</span>,
+       <span class="s">&#x27;VENTAS_MENSUALES_COMERCIO, VENTAS_ICEBERG&#x27;</span>, <span class="k">NULL</span>, <span class="s">&#x27;Gerencia de Datos&#x27;</span>),
+      (<span class="s">&#x27;UC-02&#x27;</span>,<span class="s">&#x27;Open Data / DataConnect&#x27;</span>,<span class="s">&#x27;MONETIZACION&#x27;</span>,<span class="s">&#x27;EN PRODUCCION&#x27;</span>,
+       <span class="s">&#x27;Exposicion controlada de indicadores agregados a bancos y pasarelas.&#x27;</span>,
+       <span class="s">&#x27;VENTAS_MENSUALES_COMERCIO&#x27;</span>, <span class="k">NULL</span>, <span class="s">&#x27;Gerencia de Datos&#x27;</span>),
+      (<span class="s">&#x27;UC-03&#x27;</span>,<span class="s">&#x27;Customer 360&#x27;</span>,<span class="s">&#x27;CLIENTE&#x27;</span>,<span class="s">&#x27;EN PRODUCCION&#x27;</span>,
+       <span class="s">&#x27;Vision unica del tarjetahabiente para campanas y servicio.&#x27;</span>,
+       <span class="s">&#x27;CUSTOMER_360&#x27;</span>, <span class="k">NULL</span>, <span class="s">&#x27;Vicepresidencia Comercial&#x27;</span>),
+      (<span class="s">&#x27;UC-04&#x27;</span>,<span class="s">&#x27;Churn de comercio&#x27;</span>,<span class="s">&#x27;ADQUIRENCIA&#x27;</span>,<span class="s">&#x27;EN PRODUCCION&#x27;</span>,
+       <span class="s">&#x27;Prediccion de abandono de comercio afiliado para retencion proactiva.&#x27;</span>,
+       <span class="s">&#x27;COMERCIO_FEATURES_CHURN&#x27;</span>, <span class="s">&#x27;MODELO_CHURN_COMERCIO&#x27;</span>, <span class="s">&#x27;Vicepresidencia Comercial&#x27;</span>),
+      (<span class="s">&#x27;UC-05&#x27;</span>,<span class="s">&#x27;Senales de fraude&#x27;</span>,<span class="s">&#x27;RIESGO&#x27;</span>,<span class="s">&#x27;EN PRODUCCION&#x27;</span>,
+       <span class="s">&#x27;Deteccion de patrones de fraude por comercio y canal.&#x27;</span>,
+       <span class="s">&#x27;SENALES_FRAUDE_COMERCIO&#x27;</span>, <span class="k">NULL</span>, <span class="s">&#x27;Vicepresidencia de Riesgo&#x27;</span>),
+      (<span class="s">&#x27;UC-06&#x27;</span>,<span class="s">&#x27;Vinculacion inteligente&#x27;</span>,<span class="s">&#x27;ADQUIRENCIA&#x27;</span>,<span class="s">&#x27;EN DESARROLLO&#x27;</span>,
+       <span class="s">&#x27;Priorizacion de prospectos de afiliacion por potencial transaccional.&#x27;</span>,
+       <span class="s">&#x27;VENTAS_MENSUALES_COMERCIO, CUSTOMER_360&#x27;</span>, <span class="k">NULL</span>, <span class="s">&#x27;Vicepresidencia Comercial&#x27;</span>)
+    <span class="k">AS</span> s(CASO_USO_ID,NOMBRE,DOMINIO,ESTADO,DESCRIPCION,PRODUCTOS,MODELO,DUENO_NEGOCIO)
+) s <span class="k">ON</span> t.CASO_USO_ID = s.CASO_USO_ID
+<span class="k">WHEN</span> <span class="k">NOT</span> <span class="k">MATCHED</span> <span class="k">THEN</span> <span class="k">INSERT</span>
+    (CASO_USO_ID,NOMBRE,DOMINIO,ESTADO,DESCRIPCION,PRODUCTOS,MODELO,DUENO_NEGOCIO)
+    VALUES (s.CASO_USO_ID,s.NOMBRE,s.DOMINIO,s.ESTADO,s.DESCRIPCION,s.PRODUCTOS,
+            s.MODELO,s.DUENO_NEGOCIO);
+
+<span class="k">SELECT</span> DOMINIO, ESTADO, <span class="k">COUNT</span>(*) <span class="k">AS</span> CASOS_USO
+<span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.CATALOGO_CASOS_USO
+<span class="k">GROUP BY</span> DOMINIO, ESTADO
+<span class="k">ORDER BY</span> DOMINIO;</code></pre><pre data-titulo="T3 paso 3: Catalogo de negocio y de casos de uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- inventario por dominio. SYSTEM$GET_TAG exige el nombre del objeto</span>
+<span class="c">-- como literal y ACCOUNT_USAGE.TAG_REFERENCES tiene latencia de horas, asi que</span>
+<span class="c">-- el inventario se materializa con TAG_REFERENCES, que es inmediato.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">VIEW</span> CB_PLATAFORMA.GOBIERNO.VW_INVENTARIO_POR_DOMINIO <span class="k">AS</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_GOLD.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO&#x27;</span>,<span class="s">&#x27;<span class="k">TABLE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_GOLD.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;CB_GOLD.DOM_RIESGO.SENALES_FRAUDE_COMERCIO&#x27;</span>,<span class="s">&#x27;<span class="k">TABLE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_SILVER.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;CB_SILVER.ADQUIRENCIA.AUTORIZACIONES&#x27;</span>,<span class="s">&#x27;<span class="k">TABLE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_SILVER.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;CB_SILVER.ADQUIRENCIA.COMERCIOS&#x27;</span>,<span class="s">&#x27;<span class="k">TABLE</span>&#x27;</span>))
+<span class="k">UNION ALL</span> <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="k">TABLE</span>(CB_SILVER.INFORMATION_SCHEMA.TAG_REFERENCES(<span class="s">&#x27;CB_SILVER.ADQUIRENCIA.TARJETAHABIENTES&#x27;</span>,<span class="s">&#x27;<span class="k">TABLE</span>&#x27;</span>));
+
+<span class="k">SELECT</span> TAG_VALUE <span class="k">AS</span> DOMINIO,
+       OBJECT_DATABASE || <span class="s">&#x27;.&#x27;</span> || OBJECT_SCHEMA || <span class="s">&#x27;.&#x27;</span> || OBJECT_NAME <span class="k">AS</span> OBJETO
+<span class="k">FROM</span> CB_PLATAFORMA.GOBIERNO.VW_INVENTARIO_POR_DOMINIO
+<span class="k">WHERE</span> TAG_NAME = <span class="s">&#x27;DOMINIO&#x27;</span>
+<span class="k">ORDER BY</span> DOMINIO, OBJETO;</code></pre><div class="esp"><b>Resultado esperado.</b> Cada objeto aparece con el dominio que lo posee. Es el inventario que responde <i>que tiene el dominio Riesgo</i> sin recorrer 13.003 tablas.</div><pre data-titulo="T3 paso 3: Catalogo de negocio y de casos de uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- el comentario del objeto es parte del catalogo, no documentacion aparte</span>
+<span class="k">SELECT</span> TABLE_SCHEMA <span class="k">AS</span> DOMINIO,
+       TABLE_NAME   <span class="k">AS</span> PRODUCTO,
+       ROW_COUNT    <span class="k">AS</span> FILAS,
+       <span class="k">COMMENT</span>      <span class="k">AS</span> CONTRATO
+<span class="k">FROM</span> CB_GOLD.INFORMATION_SCHEMA.TABLES
+<span class="k">WHERE</span> <span class="k">COMMENT</span> <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+  <span class="k">AND</span> TABLE_SCHEMA <span class="k">LIKE</span> <span class="s">&#x27;DOM%&#x27;</span>
+<span class="k">ORDER BY</span> TABLE_SCHEMA;</code></pre><pre data-titulo="T3 paso 3: Catalogo de negocio y de casos de uso"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T3&#x27;</span>,
+    <span class="s">&#x27;Catalogo de negocio y catalogo de casos de uso de analitica&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.GOBIERNO.CATALOGO_CASOS_USO con los 6 casos de uso vigentes&#x27;</span>,
+    <span class="s">&#x27;Casos de uso vinculados a dominio, producto de datos, modelo y dueno de negocio, mas inventario por dominio derivado de las etiquetas&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 5.2 catalogo de negocio y catalogo de casos de uso&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Pregunten por el catalogo de casos de uso, no por el de tablas.</b> El criterio 6 pide los dos. Casi todas las plataformas catalogan tablas; muy pocas relacionan caso de uso, dominio, producto, modelo y dueno de negocio en el mismo lugar. Sin eso, nadie puede responder que se rompe si se cambia una tabla.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Quedan una tabla en formato abierto sobre el almacenamiento de CredibanCo, tres dominios con dueno y politicas propias, y un producto de datos publicado con su contrato.</p>
+  <pre data-titulo="T3: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T3&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T3&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T3 Arquitectura y Data Fabric<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T3';
+var SQL_NOMBRE='T3_arquitectura_y_data_fabric.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T3 - Arquitectura y Data Fabric\n\n   Equipo    : Arquitectura\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_arquitectura.sql en esta cuenta\n\n   Comprobar que el dato queda en formato abierto y legible por otros motores, y que los dominios pueden publicar y gobernar sus propios productos de datos sin pasar por un equipo central.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T3'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T3';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>

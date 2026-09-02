@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T8 - Migracion desde Cloudera | HOL CredibanCo</title>
+<style>
+:root{--az:#29B5E8;--azo:#11567F;--gr:#F5F7F9;--tx:#1B2A32}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:#fff}
+.hero{background:linear-gradient(135deg,var(--azo) 0%,var(--az) 100%);color:#fff;padding:38px 40px 30px}
+.hero .marca{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9}
+.hero h1{margin:10px 0 6px;font-size:31px;font-weight:600;line-height:1.2}
+.hero .sub{font-size:17px;opacity:.95;max-width:900px}
+.chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);border-radius:20px;padding:5px 14px;font-size:13px}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 24px 70px}
+.barra{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #E3E8EC;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:9px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--azo)}
+.btn.sec{background:#fff;color:var(--azo);border:1px solid #C6D2DA}
+.btn.sec:hover{background:var(--gr)}
+.barra .prog{margin-left:auto;font-size:13px;color:#5A6C77}
+.caja{background:var(--gr);border-left:4px solid var(--az);border-radius:0 6px 6px 0;padding:15px 19px;margin:20px 0}
+.caja h3{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+.caja ul{margin:6px 0 0;padding-left:20px}
+.caja li{margin:4px 0}
+.paso{border:1px solid #E3E8EC;border-radius:9px;margin:22px 0;overflow:hidden}
+.paso>header{background:var(--gr);padding:14px 19px;display:flex;align-items:flex-start;gap:13px;cursor:pointer}
+.paso>header:hover{background:#EDF1F4}
+.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--az);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.paso>header .tit{flex:1}
+.paso>header h2{margin:0;font-size:18px;font-weight:600}
+.paso>header .obj{font-size:14px;color:#5A6C77;margin-top:3px}
+.paso>header .min{font-size:12px;color:#5A6C77;white-space:nowrap;padding-top:6px}
+.cuerpo{padding:6px 19px 19px}
+.hecho .num{background:#1D8348}
+.hecho>header{background:#EAF6EE}
+pre{background:#0E2B3D;color:#E8F4FA;padding:15px 17px;border-radius:7px;overflow-x:auto;font:13.5px/1.55 'SF Mono',Menlo,Consolas,monospace;margin:11px 0;position:relative}
+pre .k{color:#7FD3F7}
+pre .c{color:#7E96A6;font-style:italic}
+pre .s{color:#FFD79A}
+.copia{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.13);color:#E8F4FA;border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer}
+.copia:hover{background:rgba(255,255,255,.26)}
+.esp{border-left:3px solid #1D8348;background:#F2F9F4;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.esp b{color:#1D8348}
+.nota{border-left:3px solid #C89B14;background:#FDF8EC;padding:11px 15px;margin:11px 0;font-size:14.5px;border-radius:0 5px 5px 0}
+.comp{border:1px dashed var(--az);background:#F3FBFE;padding:13px 16px;margin:13px 0;border-radius:6px;font-size:14.5px}
+.comp h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--azo)}
+table{border-collapse:collapse;width:100%;margin:13px 0;font-size:14px}
+th,td{border:1px solid #E3E8EC;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--gr);font-weight:600}
+footer{border-top:1px solid #E3E8EC;padding:22px 24px;color:#5A6C77;font-size:13.5px;max-width:1080px;margin:0 auto}
+h2.sec{font-size:22px;margin:34px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--az)}
+code{background:var(--gr);padding:1.5px 5px;border-radius:3px;font:13.5px 'SF Mono',Menlo,monospace}
+.tabla-scroll{overflow-x:auto;margin:13px 0}
+.tabla-scroll table{margin:0}
+@media print{
+  .barra,.copia{display:none}
+  .paso>header{cursor:default}
+  /* al imprimir no hay scroll: las lineas largas se parten en vez de cortarse */
+  pre{white-space:pre-wrap;word-break:break-word;overflow-x:visible}
+  .tabla-scroll{overflow-x:visible}
+  .paso{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="marca">Snowflake &middot; Workshop de Evaluacion Funcional &middot; RFP 10010806</div>
+  <h1>T8 &middot; Migracion desde Cloudera</h1>
+  <div class="sub">Tomar codigo real de la linea base &mdash;HiveQL, Impala, PySpark y Oozie&mdash;, convertirlo, ejecutarlo y comparar el resultado contra la plataforma actual. La conversion no se evalua por el reporte: se evalua por los numeros.</div>
+  <div class="chips"><span class="chip">Track 8</span><span class="chip">30 minutos</span><span class="chip">Criterios 14 y 15</span><span class="chip">El proveedor ejecuta con el equipo</span></div>
+</div>
+
+<div class="barra">
+  <button class="btn" onclick="bajarSQL()">Descargar SQL completo</button>
+  <button class="btn sec" onclick="bajarEvidencia()">Descargar evidencia del track</button>
+  <button class="btn sec" onclick="window.print()">Imprimir</button>
+  <span class="prog" id="prog"></span>
+</div>
+
+<div class="wrap">
+  <div class="caja">
+    <h3>Quien ejecuta</h3>
+    <p style="margin:0">Es el <b>unico track</b> donde el Anexo 11 dice que el proveedor <i>ejecuta la muestra de migracion con el equipo</i>. Snowflake opera junto a Arquitectura. La muestra la suministra CredibanCo, anonimizada y libre de PCI y PII.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Criterios del Anexo 11 que este track acredita</h3>
+    <ul><li><b>14. Migracion desde Cloudera</b> &mdash; assessment y aceleradores aplicados a muestra real, con resultados visibles y medibles.</li><li><b>15. Migracion del DW Oracle</b> &mdash; estrategia y aceleradores sobre informacion de alto nivel.</li></ul>
+  </div>
+
+  <div class="caja">
+    <h3>Requisitos del Anexo 10 que se demuestran</h3>
+    <ul><li>11.1 Analizar y validar la linea base suministrada con metodologia, riesgos y dependencias.</li><li>11.2 Estrategia de ciclo de vida: que permanece, que se federa, que se mueve.</li><li>11.3 Aceleradores de conversion de codigo.</li><li>11.4 Muestra de migracion tangible y medible.</li><li>6.1 a 6.3 Modernizacion del Data Warehouse Oracle.</li></ul>
+  </div>
+
+  
+  <div class="caja">
+    <h3>La linea base que hay que absorber</h3>
+    <ul style="margin:6px 0 0">
+      <li>3 clusteres CDP 7.1.9, 29 servidores, 792 vCores, 6,74 TB de RAM</li>
+      <li>55 bases de datos, <b>13.003 tablas</b>, 110,88 TB usados en HDFS con replica 3x</li>
+      <li><b>439 workflows Oozie</b>: 418 batch en la ventana 00:00&ndash;07:00 y 21 de baja latencia</li>
+      <li>391.827 ejecuciones YARN analizadas, 98,4% de exito</li>
+      <li>98,5% en formatos columnares abiertos: 83,2% Parquet, 15,3% ORC</li>
+      <li>Tabla mayor: <code>autorizaciones_master_rt</code>, mas de 3.100 millones de filas</li>
+      <li>Se estima migrar el <b>80% de los objetos</b>. Apagado de Cloudera: junio de 2027</li>
+    </ul>
+  </div>
+
+  <h2 class="sec">Pasos</h2>
+  
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">1</div>
+    <div class="tit"><h2>Inventariar la muestra antes de convertir nada</h2><div class="obj">Clasificar el codigo por motor y por patron critico, que es lo que define el esfuerzo.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>Un assessment que solo cuenta objetos no sirve para estimar. Lo que define el esfuerzo son los patrones: un <code>INSERT OVERWRITE</code> sobre particion dinamica se traduce solo, una caida a RDD hay que reescribirla.</p><pre data-titulo="T8 paso 1: Inventariar la muestra antes de convertir nada"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- la muestra que entrego CredibanCo, ya disponible en el stage</span>
+<span class="k">SELECT</span> TECNOLOGIA, <span class="k">COUNT</span>(*) <span class="k">AS</span> ARCHIVOS, <span class="k">SUM</span>(SIZE) <span class="k">AS</span> BYTES
+<span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.VW_MUESTRA_CLOUDERA
+<span class="k">GROUP BY</span> TECNOLOGIA
+<span class="k">ORDER BY</span> ARCHIVOS <span class="k">DESC</span>;
+
+<span class="k">SELECT</span> RELATIVE_PATH, TECNOLOGIA, SIZE
+<span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.VW_MUESTRA_CLOUDERA
+<span class="k">ORDER BY</span> TECNOLOGIA, RELATIVE_PATH;</code></pre><pre data-titulo="T8 paso 1: Inventariar la muestra antes de convertir nada"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- inventario del assessment: patron critico y equivalente destino.</span>
+<span class="c">-- Esta tabla es el entregable que permite estimar, no el conteo de archivos.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_PLATAFORMA.MIGRACION.ASSESSMENT <span class="k">AS</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> VALUES
+  (<span class="s">&#x27;hive/01_crear_tablas_externas.hql&#x27;</span>,<span class="s">&#x27;HiveQL&#x27;</span>,<span class="s">&#x27;Tez&#x27;</span>,58,
+   <span class="s">&#x27;Tabla externa con particionado declarativo&#x27;</span>,<span class="s">&#x27;Tabla nativa o Iceberg mas stage externo&#x27;</span>,<span class="s">&#x27;AUTOMATICA&#x27;</span>),
+  (<span class="s">&#x27;hive/02_carga_incremental.hql&#x27;</span>,<span class="s">&#x27;HiveQL&#x27;</span>,<span class="s">&#x27;Tez&#x27;</span>,42,
+   <span class="s">&#x27;<span class="k">INSERT</span> OVERWRITE sobre particion dinamica&#x27;</span>,<span class="s">&#x27;<span class="k">MERGE</span> o tabla dinamica&#x27;</span>,<span class="s">&#x27;AUTOMATICA&#x27;</span>),
+  (<span class="s">&#x27;hive/03_agregado_ventas_comercio.hql&#x27;</span>,<span class="s">&#x27;HiveQL&#x27;</span>,<span class="s">&#x27;Tez&#x27;</span>,30,
+   <span class="s">&#x27;Funcion de ventana sobre agregado&#x27;</span>,<span class="s">&#x27;Identico en SQL estandar&#x27;</span>,<span class="s">&#x27;AUTOMATICA&#x27;</span>),
+  (<span class="s">&#x27;impala/04_consumo_analitico.sql&#x27;</span>,<span class="s">&#x27;Impala SQL&#x27;</span>,<span class="s">&#x27;Impala&#x27;</span>,38,
+   <span class="s">&#x27;INVALIDATE METADATA y hint STRAIGHT_JOIN&#x27;</span>,<span class="s">&#x27;Se elimina: no hay gestion manual de metadatos&#x27;</span>,<span class="s">&#x27;SE_ELIMINA&#x27;</span>),
+  (<span class="s">&#x27;spark/05_features_churn.py&#x27;</span>,<span class="s">&#x27;PySpark&#x27;</span>,<span class="s">&#x27;Spark 2.4&#x27;</span>,118,
+   <span class="s">&#x27;UDF de Python fila por fila, caida a RDD y escritura directa a HDFS&#x27;</span>,<span class="s">&#x27;Snowpark con funcion de ventana&#x27;</span>,<span class="s">&#x27;REESCRITURA&#x27;</span>),
+  (<span class="s">&#x27;spark/06_deteccion_fraude_stream.py&#x27;</span>,<span class="s">&#x27;PySpark&#x27;</span>,<span class="s">&#x27;Spark Streaming&#x27;</span>,72,
+   <span class="s">&#x27;Structured Streaming desde Kafka con watermark&#x27;</span>,<span class="s">&#x27;Openflow mas tabla dinamica incremental&#x27;</span>,<span class="s">&#x27;REESCRITURA&#x27;</span>),
+  (<span class="s">&#x27;oozie/wf_carga_autorizaciones.xml&#x27;</span>,<span class="s">&#x27;Oozie&#x27;</span>,<span class="s">&#x27;Oozie&#x27;</span>,92,
+   <span class="s">&#x27;Workflow con captura de falla y correo&#x27;</span>,<span class="s">&#x27;Grafo de tareas con finalizador&#x27;</span>,<span class="s">&#x27;AUTOMATICA&#x27;</span>),
+  (<span class="s">&#x27;oozie/coord_carga_autorizaciones.xml&#x27;</span>,<span class="s">&#x27;Oozie&#x27;</span>,<span class="s">&#x27;Oozie&#x27;</span>,38,
+   <span class="s">&#x27;Coordinador por dataset con done-flag&#x27;</span>,<span class="s">&#x27;Tarea disparada por stream o programacion&#x27;</span>,<span class="s">&#x27;AUTOMATICA&#x27;</span>)
+<span class="k">AS</span> s(ARCHIVO,TECNOLOGIA,MOTOR,LINEAS,PATRON_CRITICO,EQUIVALENTE_SNOWFLAKE,CLASIFICACION);
+
+<span class="k">SELECT</span> CLASIFICACION,
+       <span class="k">COUNT</span>(*)     <span class="k">AS</span> ARCHIVOS,
+       <span class="k">SUM</span>(LINEAS)  <span class="k">AS</span> LINEAS,
+       ROUND(100.0 * <span class="k">SUM</span>(LINEAS) / <span class="k">SUM</span>(<span class="k">SUM</span>(LINEAS)) <span class="k">OVER</span> (), 1) <span class="k">AS</span> PCT_LINEAS
+<span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.ASSESSMENT
+<span class="k">GROUP BY</span> CLASIFICACION
+<span class="k">ORDER BY</span> LINEAS <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> Sobre esta muestra, cerca del 55% de las lineas se convierte de forma automatica, un 7% desaparece por completo y el resto exige reescritura. Ese es el numero que sirve para estimar las 13.003 tablas y los 439 workflows.</div><div class="nota"><b>Atencion.</b> El caso mas interesante es la clasificacion <code>SE_ELIMINA</code>: <code>INVALIDATE METADATA</code> y <code>REFRESH</code> no se traducen porque no hay metadatos que sincronizar a mano. Cada linea que desaparece es mantenimiento que el equipo deja de hacer, y eso tambien es parte del caso de negocio de la migracion.</div><pre data-titulo="T8 paso 1: Inventariar la muestra antes de convertir nada"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- que patrones concentran el riesgo</span>
+<span class="k">SELECT</span> TECNOLOGIA, PATRON_CRITICO, CLASIFICACION, LINEAS
+<span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.ASSESSMENT
+<span class="k">WHERE</span> CLASIFICACION = <span class="s">&#x27;REESCRITURA&#x27;</span>
+<span class="k">ORDER BY</span> LINEAS <span class="k">DESC</span>;
+
+<span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T8&#x27;</span>,
+    <span class="s">&#x27;Assessment de la muestra por motor, patron critico y clasificacion de conversion&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.MIGRACION.ASSESSMENT sobre 8 artefactos de 4 motores&#x27;</span>,
+    <span class="s">&#x27;Clasificacion en automatica, reescritura y se-elimina con lineas por categoria, base para estimar las 13.003 tablas y 439 workflows de la linea base&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 11.1 analizar y validar la linea base&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Pidan el porcentaje de conversion automatica por PATRON, no por archivo.</b> Un conversor puede reportar 90% de exito y dejar sin resolver justo el 10% que concentra la logica de negocio. Y pregunten que pasa con el codigo que <i>desaparece</i>: si el conversor lo traduce literalmente en vez de eliminarlo, se migra el mantenimiento junto con el codigo.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">2</div>
+    <div class="tit"><h2>Convertir y ejecutar sobre el dato real</h2><div class="obj">Correr el codigo convertido y ver que produce el mismo resultado.</div></div>
+    <div class="min">12 min</div>
+  </header>
+  <div class="cuerpo"><p>Aqui se ejecuta la version convertida del agregado de HiveQL. Es la parte que el criterio 14 califica: resultados <b>visibles y medibles</b>, no un reporte de conversion.</p><div class="nota"><b>Atencion.</b> La conversion la produce <b>SnowConvert</b>, que analiza el repositorio completo y genera el equivalente mas el reporte de assessment. Lo que sigue es su salida para <code>03_agregado_ventas_comercio.hql</code>, ejecutada tal cual.</div><pre data-titulo="T8 paso 2: Convertir y ejecutar sobre el dato real"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ETL_BATCH;
+
+<span class="c">-- Original en HiveQL:</span>
+<span class="c">--   <span class="k">CREATE</span> <span class="k">TABLE</span> agg_ventas_mensuales_comercio STORED <span class="k">AS</span> PARQUET <span class="k">AS</span></span>
+<span class="c">--   <span class="k">SELECT</span> ... LAG(<span class="k">SUM</span>(...)) <span class="k">OVER</span> (<span class="k">PARTITION BY</span> comercio_id <span class="k">ORDER BY</span> anio, mes)</span>
+<span class="c">--   <span class="k">FROM</span> autorizaciones_master_rt a <span class="k">JOIN</span> dim_comercio c ...</span>
+<span class="c">--   <span class="k">GROUP BY</span> a.comercio_id, c.razon_social, c.sector, c.ciudad, a.anio, a.mes;</span>
+<span class="c">--</span>
+<span class="c">-- Convertido: sin STORED <span class="k">AS</span> PARQUET (el formato es propiedad de la tabla, no</span>
+<span class="c">-- del DDL) y con las particiones anio/mes derivadas de la fecha.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_PLATAFORMA.MIGRACION.AGG_VENTAS_CONVERTIDO <span class="k">AS</span>
+<span class="k">SELECT</span> a.COMERCIO_ID,
+       c.RAZON_SOCIAL,
+       c.SECTOR,
+       c.CIUDAD                                        <span class="k">AS</span> CIUDAD,
+       YEAR(a.FECHA)                                   <span class="k">AS</span> ANIO,
+       MONTH(a.FECHA)                                  <span class="k">AS</span> MES,
+       <span class="k">COUNT</span>(*)                                        <span class="k">AS</span> TRX_TOTAL,
+       <span class="k">SUM</span>(<span class="k">IFF</span>(a.APROBADA, 1, 0))                      <span class="k">AS</span> TRX_APROBADAS,
+       <span class="k">SUM</span>(<span class="k">IFF</span>(a.APROBADA, a.MONTO_COP, 0))            <span class="k">AS</span> MONTO_APROBADO_COP,
+       <span class="k">AVG</span>(<span class="k">IFF</span>(a.APROBADA, a.MONTO_COP, <span class="k">NULL</span>))         <span class="k">AS</span> TICKET_PROMEDIO_COP,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> a.TARJETAHABIENTE_ID)            <span class="k">AS</span> CLIENTES_UNICOS,
+       LAG(<span class="k">SUM</span>(<span class="k">IFF</span>(a.APROBADA, a.MONTO_COP, 0)))
+           <span class="k">OVER</span> (<span class="k">PARTITION BY</span> a.COMERCIO_ID <span class="k">ORDER BY</span> YEAR(a.FECHA), MONTH(a.FECHA))
+                                                       <span class="k">AS</span> MONTO_MES_ANTERIOR
+<span class="k">FROM</span> CB_SILVER.ADQUIRENCIA.AUTORIZACIONES a
+<span class="k">JOIN</span> CB_SILVER.ADQUIRENCIA.COMERCIOS c <span class="k">ON</span> c.COMERCIO_ID = a.COMERCIO_ID
+<span class="k">GROUP BY</span> a.COMERCIO_ID, c.RAZON_SOCIAL, c.SECTOR, c.CIUDAD,
+         YEAR(a.FECHA), MONTH(a.FECHA);
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> FILAS_PRODUCIDAS <span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.AGG_VENTAS_CONVERTIDO;</code></pre><pre data-titulo="T8 paso 2: Convertir y ejecutar sobre el dato real"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- reconciliacion: el codigo convertido contra el agregado que la</span>
+<span class="c">-- plataforma ya tenia. Si los numeros no cuadran, la conversion no sirve.</span>
+<span class="k">WITH</span> convertido <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">COUNT</span>(*)                      <span class="k">AS</span> FILAS,
+           <span class="k">SUM</span>(TRX_TOTAL)                <span class="k">AS</span> TRX,
+           ROUND(<span class="k">SUM</span>(MONTO_APROBADO_COP), 2) <span class="k">AS</span> MONTO,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID)   <span class="k">AS</span> COMERCIOS
+    <span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.AGG_VENTAS_CONVERTIDO
+),
+referencia <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">COUNT</span>(*)                      <span class="k">AS</span> FILAS,
+           <span class="k">SUM</span>(TRX_TOTAL)                <span class="k">AS</span> TRX,
+           ROUND(<span class="k">SUM</span>(MONTO_APROBADO_COP), 2) <span class="k">AS</span> MONTO,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> COMERCIO_ID)   <span class="k">AS</span> COMERCIOS
+    <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO
+)
+<span class="k">SELECT</span> <span class="s">&#x27;Filas&#x27;</span>         <span class="k">AS</span> METRICA, c.FILAS::VARCHAR <span class="k">AS</span> CONVERTIDO, r.FILAS::VARCHAR <span class="k">AS</span> REFERENCIA,
+       <span class="k">IFF</span>(c.FILAS = r.FILAS, <span class="s">&#x27;CUADRA&#x27;</span>, <span class="s">&#x27;REVISAR&#x27;</span>) <span class="k">AS</span> RESULTADO
+<span class="k">FROM</span> convertido c, referencia r
+<span class="k">UNION ALL</span>
+<span class="k">SELECT</span> <span class="s">&#x27;Transacciones&#x27;</span>, c.TRX::VARCHAR, r.TRX::VARCHAR,
+       <span class="k">IFF</span>(c.TRX = r.TRX, <span class="s">&#x27;CUADRA&#x27;</span>, <span class="s">&#x27;REVISAR&#x27;</span>) <span class="k">FROM</span> convertido c, referencia r
+<span class="k">UNION ALL</span>
+<span class="k">SELECT</span> <span class="s">&#x27;Monto aprobado&#x27;</span>, c.MONTO::VARCHAR, r.MONTO::VARCHAR,
+       <span class="k">IFF</span>(c.MONTO = r.MONTO, <span class="s">&#x27;CUADRA&#x27;</span>, <span class="s">&#x27;REVISAR&#x27;</span>) <span class="k">FROM</span> convertido c, referencia r
+<span class="k">UNION ALL</span>
+<span class="k">SELECT</span> <span class="s">&#x27;Comercios&#x27;</span>, c.COMERCIOS::VARCHAR, r.COMERCIOS::VARCHAR,
+       <span class="k">IFF</span>(c.COMERCIOS = r.COMERCIOS, <span class="s">&#x27;CUADRA&#x27;</span>, <span class="s">&#x27;REVISAR&#x27;</span>) <span class="k">FROM</span> convertido c, referencia r;</code></pre><div class="esp"><b>Resultado esperado.</b> Las cuatro metricas dicen <code>CUADRA</code>. Eso es <i>resultados visibles y medibles</i>: el codigo convertido produce exactamente lo mismo, y se puede mostrar en pantalla.</div><pre data-titulo="T8 paso 2: Convertir y ejecutar sobre el dato real"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- reconciliacion fila por fila, que es lo que pide una migracion real</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> COMBINACIONES_CON_DIFERENCIA
+<span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.AGG_VENTAS_CONVERTIDO x
+FULL <span class="k">OUTER</span> <span class="k">JOIN</span> (
+    <span class="k">SELECT</span> COMERCIO_ID, YEAR(MES) <span class="k">AS</span> ANIO, MONTH(MES) <span class="k">AS</span> MES,
+           TRX_TOTAL, MONTO_APROBADO_COP
+    <span class="k">FROM</span> CB_GOLD.PRODUCTOS.VENTAS_MENSUALES_COMERCIO
+) y
+  <span class="k">ON</span>  y.COMERCIO_ID = x.COMERCIO_ID
+  <span class="k">AND</span> y.ANIO = x.ANIO
+  <span class="k">AND</span> y.MES  = x.MES
+<span class="k">WHERE</span> x.COMERCIO_ID <span class="k">IS</span> <span class="k">NULL</span>
+   <span class="k">OR</span> y.COMERCIO_ID <span class="k">IS</span> <span class="k">NULL</span>
+   <span class="k">OR</span> x.TRX_TOTAL &lt;&gt; y.TRX_TOTAL
+   <span class="k">OR</span> ABS(x.MONTO_APROBADO_COP - y.MONTO_APROBADO_COP) &gt; 0.01;</code></pre><div class="esp"><b>Resultado esperado.</b> Cero diferencias. La comparacion incluye las filas que sobran y las que faltan en cada lado, no solo los totales: un total puede cuadrar con dos errores que se compensan.</div><pre data-titulo="T8 paso 2: Convertir y ejecutar sobre el dato real"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- la reescritura de PySpark: el mismo calculo del RDD, con una</span>
+<span class="c">-- funcion de ventana. Es el patron que el conversor marca como REESCRITURA.</span>
+<span class="k">SELECT</span> COMERCIO_ID,
+       ROUND(TENDENCIA_3M, 4) <span class="k">AS</span> TENDENCIA_3M_SNOWFLAKE,
+       MESES_ACTIVO
+<span class="k">FROM</span> CB_GOLD.PRODUCTOS.COMERCIO_FEATURES_CHURN
+<span class="k">WHERE</span> MESES_ACTIVO &gt;= 6
+<span class="k">ORDER BY</span> TENDENCIA_3M
+<span class="k">LIMIT</span> 10;</code></pre><div class="nota"><b>Atencion.</b> El job original resolvia esto con <code>groupByKey</code> y una funcion de Python que ordenaba la serie en memoria del ejecutor. En SQL es una funcion de ventana. La reescritura no es una traduccion literal: es la oportunidad de eliminar la razon por la que ese job necesitaba 20 ejecutores.</div><pre data-titulo="T8 paso 2: Convertir y ejecutar sobre el dato real"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T8&#x27;</span>,
+    <span class="s">&#x27;Codigo convertido ejecutado y reconciliado contra la referencia&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.MIGRACION.AGG_VENTAS_CONVERTIDO frente a VENTAS_MENSUALES_COMERCIO&#x27;</span>,
+    <span class="s">&#x27;Cuatro metricas de control cuadran y la reconciliacion fila por fila con FULL <span class="k">OUTER</span> <span class="k">JOIN</span> devuelve cero diferencias&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 11.3 aceleradores y 11.4 muestra de migracion medible&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Exijan la reconciliacion fila por fila, no el total.</b> Dos errores que se compensan dejan el total intacto. La prueba util es un <code>FULL OUTER JOIN</code> por la llave de negocio que muestre filas sobrantes, faltantes y diferentes. Pidan tambien ver el codigo convertido en pantalla: si nadie puede leerlo y explicarlo, nadie va a poder mantenerlo.</div></div>
+</section>
+<section class="paso">
+  <header onclick="marcar(this)">
+    <div class="num">3</div>
+    <div class="tit"><h2>Lo que NO se convierte y el DW Oracle</h2><div class="obj">Cerrar el alcance con honestidad: que permanece, que se federa y que se estima aparte.</div></div>
+    <div class="min">6 min</div>
+  </header>
+  <div class="cuerpo"><p>El criterio 15 evalua la estrategia del DW Oracle sobre informacion de alto nivel, porque no hay volumetria. Decir que se migra todo sin un assessment seria irresponsable.</p><pre data-titulo="T8 paso 3: Lo que NO se convierte y el DW Oracle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">USE</span> <span class="k">ROLE</span> ACCOUNTADMIN;
+<span class="k">USE</span> <span class="k">WAREHOUSE</span> WH_ANALITICA;
+
+<span class="c">-- destino de cada componente de la linea base. Kafka permanece: el propio</span>
+<span class="c">-- Anexo 10 pide mantener el patron de eventos.</span>
+<span class="k">CREATE</span> <span class="k">OR REPLACE</span> <span class="k">TABLE</span> CB_PLATAFORMA.MIGRACION.DESTINO_COMPONENTES <span class="k">AS</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> VALUES
+  (<span class="s">&#x27;HDFS&#x27;</span>,<span class="s">&#x27;Almacenamiento&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Almacenamiento de la plataforma mas Iceberg sobre el bucket propio&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;YARN&#x27;</span>,<span class="s">&#x27;Planificacion&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Warehouses por patron de carga&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;Hive&#x27;</span>,<span class="s">&#x27;SQL batch&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;SQL nativo y tablas dinamicas&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;Impala&#x27;</span>,<span class="s">&#x27;SQL interactivo&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;SQL nativo. Desaparece la gestion manual de metadatos&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;Oozie&#x27;</span>,<span class="s">&#x27;Orquestacion&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Grafos de tareas con finalizador&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;Ranger&#x27;</span>,<span class="s">&#x27;Autorizacion del plano de datos&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;RBAC y ABAC con politicas por etiqueta&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;KMS y KTS&#x27;</span>,<span class="s">&#x27;Llaves&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Cifrado con llave gestionada por el cliente&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;Hue&#x27;</span>,<span class="s">&#x27;Consola de consulta&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Snowsight&#x27;</span>,<span class="s">&#x27;Directa&#x27;</span>),
+  (<span class="s">&#x27;Knox&#x27;</span>,<span class="s">&#x27;Puerta de acceso&#x27;</span>,<span class="s">&#x27;INNECESARIO&#x27;</span>,<span class="s">&#x27;Servicio administrado con conectividad privada&#x27;</span>,<span class="s">&#x27;No aplica&#x27;</span>),
+  (<span class="s">&#x27;Spark&#x27;</span>,<span class="s">&#x27;Procesamiento distribuido&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Snowpark. Riesgo en RDD de bajo nivel y librerias JVM propias&#x27;</span>,<span class="s">&#x27;Requiere validacion&#x27;</span>),
+  (<span class="s">&#x27;Kudu&#x27;</span>,<span class="s">&#x27;Acceso de baja latencia&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Hybrid Tables o tablas interactivas. Validar QPS&#x27;</span>,<span class="s">&#x27;Requiere validacion&#x27;</span>),
+  (<span class="s">&#x27;NiFi&#x27;</span>,<span class="s">&#x27;Integracion&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;Openflow. Validar procesadores NAR propios&#x27;</span>,<span class="s">&#x27;Requiere validacion&#x27;</span>),
+  (<span class="s">&#x27;CDSW&#x27;</span>,<span class="s">&#x27;Ciencia de datos&#x27;</span>,<span class="s">&#x27;SE_REEMPLAZA&#x27;</span>,<span class="s">&#x27;ML nativo y contenedores. Validar R e imagenes propias&#x27;</span>,<span class="s">&#x27;Requiere validacion&#x27;</span>),
+  (<span class="s">&#x27;Kafka&#x27;</span>,<span class="s">&#x27;Mensajeria&#x27;</span>,<span class="s">&#x27;PERMANECE&#x27;</span>,<span class="s">&#x27;Se conserva. El Anexo 10 pide mantener el patron de eventos&#x27;</span>,<span class="s">&#x27;No se migra&#x27;</span>),
+  (<span class="s">&#x27;Schema Registry&#x27;</span>,<span class="s">&#x27;Gobierno de topicos&#x27;</span>,<span class="s">&#x27;PERMANECE&#x27;</span>,<span class="s">&#x27;Queda con Kafka como componente de terceros&#x27;</span>,<span class="s">&#x27;No se migra&#x27;</span>)
+<span class="k">AS</span> s(COMPONENTE,FUNCION,DESTINO,EQUIVALENTE,COMPLEJIDAD);
+
+<span class="k">SELECT</span> DESTINO, <span class="k">COUNT</span>(*) <span class="k">AS</span> COMPONENTES,
+       LISTAGG(COMPONENTE, <span class="s">&#x27;, &#x27;</span>) WITHIN GROUP (<span class="k">ORDER BY</span> COMPONENTE) <span class="k">AS</span> DETALLE
+<span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.DESTINO_COMPONENTES
+<span class="k">GROUP BY</span> DESTINO
+<span class="k">ORDER BY</span> COMPONENTES <span class="k">DESC</span>;</code></pre><div class="esp"><b>Resultado esperado.</b> De los 15 componentes, <b>solo Kafka y su registro de esquemas permanecen</b>, y permanecen porque CredibanCo lo pidio. Cuatro exigen validacion tecnica en el assessment y uno simplemente deja de existir.</div><pre data-titulo="T8 paso 3: Lo que NO se convierte y el DW Oracle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- los cuatro que hay que validar antes de comprometer fechas</span>
+<span class="k">SELECT</span> COMPONENTE, EQUIVALENTE
+<span class="k">FROM</span> CB_PLATAFORMA.MIGRACION.DESTINO_COMPONENTES
+<span class="k">WHERE</span> COMPLEJIDAD = <span class="s">&#x27;Requiere validacion&#x27;</span>
+<span class="k">ORDER BY</span> COMPONENTE;</code></pre><div class="nota"><b>Atencion.</b> Declarar estos cuatro como riesgo abierto es deliberado. Los procesadores NAR propios de NiFi, las librerias JVM de Spark, el QPS de Kudu y las imagenes de R de CDSW no se pueden dimensionar sin ver el codigo. Prometer lo contrario antes del assessment es lo que produce sobrecostos en la ola 2.</div><pre data-titulo="T8 paso 3: Lo que NO se convierte y el DW Oracle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- olas de migracion propuestas, con el criterio de corte</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> VALUES
+  (1,<span class="s">&#x27;Analitica y bodega&#x27;</span>,<span class="s">&#x27;Tablas Hive e Impala de consumo analitico y sus workflows batch&#x27;</span>,
+     <span class="s">&#x27;Sin dependencia de baja latencia. Es donde el 80% de objetos se mueve con conversion automatica&#x27;</span>,<span class="s">&#x27;Q4 2026&#x27;</span>),
+  (2,<span class="s">&#x27;Ingesta y NRT&#x27;</span>,<span class="s">&#x27;NiFi hacia Openflow, los 21 workflows de baja latencia y Kudu&#x27;</span>,
+     <span class="s">&#x27;Requiere validacion de procesadores propios y de QPS. Coexistencia con Kafka&#x27;</span>,<span class="s">&#x27;Q1 2027&#x27;</span>),
+  (3,<span class="s">&#x27;Ciencia de datos&#x27;</span>,<span class="s">&#x27;CDSW, los 12 modelos productivos y los 5 en desarrollo&#x27;</span>,
+     <span class="s">&#x27;Depende de que la ola 1 haya entregado los productos de datos&#x27;</span>,<span class="s">&#x27;Q1 2027&#x27;</span>),
+  (4,<span class="s">&#x27;Apagado&#x27;</span>,<span class="s">&#x27;Decomiso de los 3 clusteres&#x27;</span>,<span class="s">&#x27;Tras dos cierres mensuales en paralelo sin diferencias&#x27;</span>,<span class="s">&#x27;Q2 2027&#x27;</span>),
+  (5,<span class="s">&#x27;DW Oracle&#x27;</span>,<span class="s">&#x27;Fase posterior, sujeta a assessment&#x27;</span>,
+     <span class="s">&#x27;Sin volumetria en el pliego. Se cotiza contra la linea base agregada que CredibanCo entregue&#x27;</span>,<span class="s">&#x27;Por definir&#x27;</span>)
+<span class="k">AS</span> s(OLA,NOMBRE,ALCANCE,CRITERIO,VENTANA);</code></pre><div class="nota"><b>Atencion.</b> El apagado de Cloudera esta previsto para junio de 2027 y hay congelamiento tecnologico entre mediados de noviembre de 2026 y finales de enero de 2027. Las olas estan puestas alrededor de esa ventana, no en contra de ella.</div><pre data-titulo="T8 paso 3: Lo que NO se convierte y el DW Oracle"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="k">CALL</span> CB_PLATAFORMA.EVIDENCIA.LOG_EVIDENCIA(<span class="s">&#x27;T8&#x27;</span>,
+    <span class="s">&#x27;Destino componente por componente y plan de olas con riesgos declarados&#x27;</span>,
+    <span class="s">&#x27;CB_PLATAFORMA.MIGRACION.DESTINO_COMPONENTES y plan de 5 olas&#x27;</span>,
+    <span class="s">&#x27;De 15 componentes solo Kafka y su registro permanecen; 4 declarados como requieren validacion en el assessment; DW Oracle explicitamente sin cifra hasta tener volumetria&#x27;</span>,
+    <span class="s">&#x27;Anexo 10 - 11.2 estrategia de ciclo de vida y 6.3 absorcion de cargas del DW Oracle&#x27;</span>);</code></pre><div class="comp"><h4>Que preguntar al otro proveedor</h4><b>Pregunten que NO se puede migrar y que exige reescritura.</b> Una respuesta que diga que todo se migra automaticamente es la senal de alerta mas clara del ejercicio: significa que nadie mirO los procesadores NAR propios ni las UDF de Spark. Y pidan la fecha de apagado del cluster con su criterio de corte: sin criterio de corte, la coexistencia se vuelve permanente y CredibanCo termina pagando las dos plataformas.</div></div>
+</section>
+
+  <h2 class="sec">Cierre</h2>
+  <p>Queda el inventario de la muestra clasificado por motor y patron critico, el codigo convertido ejecutado sobre el dato real y la comparacion numerica que demuestra equivalencia.</p>
+  <pre data-titulo="T8: cierre y evidencia"><button class="copia" onclick="copiar(this)">copiar</button><code><span class="c">-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al</span>
+<span class="c">-- cierre, como exige el numeral 3.2 del Anexo 11.</span>
+<span class="k">SELECT</span> PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO
+<span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T8&#x27;</span>
+<span class="k">ORDER BY</span> MOMENTO;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK
+<span class="k">WHERE</span> TRACK = <span class="s">&#x27;T8&#x27;</span>;</code></pre>
+</div>
+
+<footer>
+  Snowflake Colombia &middot; HOL CredibanCo RFP 10010806 &middot; T8 Migracion desde Cloudera<br>
+  Datos sinteticos. Sin PAN real, sin datos personales reales y sin informacion productiva de CredibanCo.
+</footer>
+
+<script>
+var SQL_ID='T8';
+var SQL_NOMBRE='T8_migracion_desde_cloudera.sql';
+var SQL_CAB='/* ============================================================================\n   HOL CredibanCo - RFP 10010806\n   T8 - Migracion desde Cloudera\n\n   Equipo    : Arquitectura\n   Duracion  : 30 minutos\n   Prerrequisito: haber ejecutado install_arquitectura.sql en esta cuenta\n\n   Tomar codigo real de la linea base &mdash;HiveQL, Impala, PySpark y Oozie&mdash;, convertirlo, ejecutarlo y comparar el resultado contra la plataforma actual. La conversion no se evalua por el reporte: se evalua por los numeros.\n   ==========================================================================*/';
+var EVID="\n-- Resumen de lo ejecutado en este track. Es el artefacto que se entrega al\n-- cierre, como exige el numeral 3.2 del Anexo 11.\nSELECT PASO, OBJETO, RESULTADO, REQUISITO, EJECUTADO_POR, ROL, MOMENTO\nFROM CB_PLATAFORMA.EVIDENCIA.ARTEFACTOS\nWHERE TRACK = 'T8'\nORDER BY MOMENTO;\n\nSELECT * FROM CB_PLATAFORMA.EVIDENCIA.VW_EVIDENCIA_POR_TRACK\nWHERE TRACK = 'T8';\n";
+
+function marcar(el){el.parentElement.classList.toggle('hecho');prog();}
+function prog(){
+  var t=document.querySelectorAll('.paso').length;
+  var h=document.querySelectorAll('.paso.hecho').length;
+  document.getElementById('prog').textContent=h+' de '+t+' pasos completados';
+}
+function copiar(b){
+  var t=b.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    var o=b.textContent;b.textContent='copiado';setTimeout(function(){b.textContent=o},1200);
+  });
+}
+function bajar(nombre,texto){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(new Blob([texto],{type:'text/plain;charset=utf-8'}));
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function bajarSQL(){
+  var bloques=document.querySelectorAll('pre code');
+  var out=[SQL_CAB];
+  for(var i=0;i<bloques.length;i++){
+    var p=bloques[i].closest('pre');
+    if(p.dataset.titulo){out.push('\n\n-- ==========================================================================\n-- '+p.dataset.titulo+'\n-- ==========================================================================\n');}
+    out.push(bloques[i].innerText);
+  }
+  bajar(SQL_NOMBRE,out.join('\n'));
+}
+function bajarEvidencia(){
+  bajar('evidencia_'+SQL_ID+'.sql',EVID);
+}
+document.addEventListener('DOMContentLoaded',prog);
+
+</script>
+</body>
+</html>
